@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,22 +44,30 @@ const BlogCreatePage = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .insert({
-          title: formData.title,
-          excerpt: formData.excerpt,
-          content: formData.content,
-          cover_image_url: formData.cover_image_url,
-          tags: formData.tags,
-          status: formData.status,
-          slug: slug,
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      // Get existing posts from localStorage
+      const existingPosts = localStorage.getItem('blog_posts');
+      const posts = existingPosts ? JSON.parse(existingPosts) : [];
+      
+      // Create new post
+      const newPost = {
+        id: Date.now().toString(),
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        cover_image_url: formData.cover_image_url,
+        tags: formData.tags,
+        status: formData.status,
+        slug: slug,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add to posts array
+      posts.push(newPost);
+      
+      // Save back to localStorage
+      localStorage.setItem('blog_posts', JSON.stringify(posts));
 
       toast({
         title: "Post created successfully!",

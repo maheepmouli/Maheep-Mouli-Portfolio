@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Clock, Edit, ExternalLink } from 'lucide-react';
@@ -12,7 +11,7 @@ interface BlogPost {
   excerpt: string;
   slug: string;
   content: string;
-  cover_image_url: string;
+  cover_image_url?: string;
   tags: string[];
   created_at: string;
   updated_at: string;
@@ -34,21 +33,19 @@ const BlogPostPage = () => {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', postSlug)
-        .eq('status', 'published')
-        .single();
+      // Get posts from localStorage
+      const storedPosts = localStorage.getItem('blog_posts');
+      const posts = storedPosts ? JSON.parse(storedPosts) : [];
+      
+      // Find the post by slug and status
+      const foundPost = posts.find((p: BlogPost) => 
+        p.slug === postSlug && p.status === 'published'
+      );
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setNotFound(true);
-        } else {
-          throw error;
-        }
+      if (foundPost) {
+        setPost(foundPost);
       } else {
-        setPost(data);
+        setNotFound(true);
       }
     } catch (error) {
       console.error('Error fetching post:', error);

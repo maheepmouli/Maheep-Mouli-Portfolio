@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,7 @@ interface BlogPost {
   excerpt: string;
   slug: string;
   content: string;
-  cover_image_url: string;
+  cover_image_url?: string;
   tags: string[];
   created_at: string;
   status: string;
@@ -31,14 +30,16 @@ const BlogPage = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
+      // Get blog posts from localStorage
+      const storedPosts = localStorage.getItem('blog_posts');
+      const allPosts = storedPosts ? JSON.parse(storedPosts) : [];
+      
+      // Filter only published posts and sort by creation date
+      const publishedPosts = allPosts
+        .filter((post: BlogPost) => post.status === 'published')
+        .sort((a: BlogPost, b: BlogPost) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setPosts(publishedPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {

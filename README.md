@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# Maheep's Portfolio Website
 
-## Project info
+A modern, responsive portfolio website built with React, TypeScript, Vite, and Tailwind CSS.
 
-**URL**: https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaheepmouli%2FMaheep-Portfolio)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🎨 Modern, responsive design
+- 📱 Mobile-first approach
+- ⚡ Fast performance with Vite
+- 🎯 TypeScript for better development experience
+- 🎨 Tailwind CSS for styling
+- 📝 Rich text editor for content management
+- 🖼️ Image and video management
+- 📧 Contact form with email integration
+- 🔐 Admin panel for content management
+- 🎭 Custom animations and effects
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1) and start prompting.
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn UI
+- **Content Management**: TipTap Rich Text Editor
+- **Email**: Formspree integration
+- **Deployment**: Vercel (recommended)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Quick Start
 
-**Use your preferred IDE**
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/maheepmouli/Maheep-Portfolio.git
+   cd Maheep-Portfolio
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-Follow these steps:
+4. **Build for production**:
+   ```bash
+   npm run build
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Deployment
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Option 1: Deploy to Vercel (Recommended)
+Click the "Deploy with Vercel" button above or follow these steps:
+1. Go to [vercel.com](https://vercel.com)
+2. Sign in with your GitHub account
+3. Import the `maheepmouli/Maheep-Portfolio` repository
+4. Configure settings (Vite preset, build command: `npm run build`)
+5. Deploy!
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Option 2: Deploy to GitHub Pages
+```bash
+npm run deploy
 ```
 
-**Edit a file directly in GitHub**
+### Option 3: Deploy to Netlify
+1. Go to [netlify.com](https://netlify.com)
+2. Drag and drop the `dist` folder after building
+3. Or connect your GitHub repository for automatic deployments
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
 
-**Use GitHub Codespaces**
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Page components
+├── hooks/              # Custom React hooks
+├── services/           # API and data services
+├── styles/             # Global styles and CSS
+└── types/              # TypeScript type definitions
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Features Overview
 
-## What technologies are used for this project?
+### 🎨 UI/UX Features
+- Custom cursor wave effect
+- Animated gradient borders
+- Smooth scrolling navigation
+- Responsive design for all devices
+- Modern glassmorphism effects
 
-This project is built with:
+### 📝 Content Management
+- Rich text editor for project descriptions
+- Image upload with drag-and-drop
+- Video embedding (YouTube, Google Drive)
+- Project portfolio management
+- Blog post creation and editing
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### 🔐 Admin Features
+- Secure login system
+- Profile image management
+- Content editing capabilities
+- Project and blog management
 
-## How can I deploy this project?
+### 📧 Contact & Communication
+- Contact form with email integration
+- LinkedIn and resume links
+- Direct email integration
+- Professional collaboration requests
 
-Simply open [Lovable](https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1) and click on Share -> Publish.
+## Contributing
 
-## Can I connect a custom domain to my Lovable project?
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is open source and available under the [MIT License](LICENSE).
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Contact
+
+- **Email**: maheep.mouli.shashi@gmail.com
+- **LinkedIn**: [Maheep Mouli Shashi](https://linkedin.com/in/maheepmouli)
+- **Portfolio**: [Live Demo](https://your-vercel-url.vercel.app)
+
+---
+
+Built with ❤️ by Maheep Mouli Shashi

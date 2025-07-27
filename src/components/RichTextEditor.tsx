@@ -1,12 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { TextStyle } from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Highlight from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,14 +13,7 @@ import {
   ListOrdered, 
   Quote, 
   Code, 
-  Image as ImageIcon, 
-  Link as LinkIcon,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Palette,
-  Highlighter
+  Link as LinkIcon
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,33 +24,19 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = ({ content, onChange, placeholder }: RichTextEditorProps) => {
-  const [imageUrl, setImageUrl] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
-  const [showImageDialog, setShowImageDialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image.configure({
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg',
-        },
-      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
           class: 'text-primary underline',
         },
       }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
       Underline,
-      Color,
-      Highlight.configure({
-        multicolor: true,
-      }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -78,14 +52,6 @@ const RichTextEditor = ({ content, onChange, placeholder }: RichTextEditorProps)
   if (!editor) {
     return null;
   }
-
-  const addImage = () => {
-    if (imageUrl) {
-      editor.chain().focus().setImage({ src: imageUrl }).run();
-      setImageUrl('');
-      setShowImageDialog(false);
-    }
-  };
 
   const addLink = () => {
     if (linkUrl) {
@@ -175,66 +141,13 @@ const RichTextEditor = ({ content, onChange, placeholder }: RichTextEditorProps)
         <Code className="h-4 w-4" />
       </Button>
 
-      {/* Text Alignment */}
-      <Button
-        variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
-      >
-        <AlignLeft className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
-      >
-        <AlignCenter className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
-      >
-        <AlignRight className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-      >
-        <AlignJustify className="h-4 w-4" />
-      </Button>
-
       {/* Media */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setShowImageDialog(true)}
-      >
-        <ImageIcon className="h-4 w-4" />
-      </Button>
       <Button
         variant={editor.isActive('link') ? 'default' : 'ghost'}
         size="sm"
         onClick={() => setShowLinkDialog(true)}
       >
         <LinkIcon className="h-4 w-4" />
-      </Button>
-
-      {/* Colors */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => editor.chain().focus().setColor('#958DF1').run()}
-      >
-        <Palette className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editor.isActive('highlight') ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleHighlight().run()}
-      >
-        <Highlighter className="h-4 w-4" />
       </Button>
     </div>
   );
@@ -244,30 +157,6 @@ const RichTextEditor = ({ content, onChange, placeholder }: RichTextEditorProps)
       <MenuBar />
       <EditorContent editor={editor} className="min-h-[300px] p-4 focus:outline-none" placeholder={placeholder} />
       
-      {/* Image Dialog */}
-      {showImageDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Add Image</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={addImage}>Add Image</Button>
-                <Button variant="outline" onClick={() => setShowImageDialog(false)}>Cancel</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Link Dialog */}
       {showLinkDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

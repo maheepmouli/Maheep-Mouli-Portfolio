@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,8 +24,6 @@ import BlogEdit from "./pages/blog/edit/[slug]";
 // Portfolio pages
 import PortfolioCreate from "./pages/portfolio/create";
 import PortfolioEdit from "./pages/portfolio/edit/[id]";
-
-const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
@@ -64,43 +61,41 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Main Pages */}
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/contact" element={<Contact />} />
-              
-              {/* Authentication */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Admin */}
-              <Route path="/admin" element={<Admin />} />
-              
-              {/* Project Routes */}
-              <Route path="/portfolio/:slug" element={<ProjectDetail />} />
-              <Route path="/portfolio/create" element={<PortfolioCreate />} />
-              <Route path="/portfolio/edit/:id" element={<PortfolioEdit />} />
-              
-              {/* Blog Routes */}
-              <Route path="/blog" element={<BlogIndex />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route path="/blog/create" element={<BlogCreate />} />
-              <Route path="/blog/edit/:slug" element={<BlogEdit />} />
-              
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Main Pages */}
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+            
+            {/* Authentication */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Admin */}
+            <Route path="/admin" element={<Admin />} />
+            
+            {/* Project Routes */}
+            <Route path="/portfolio/:slug" element={<ProjectDetail />} />
+            <Route path="/portfolio/create" element={<PortfolioCreate />} />
+            <Route path="/portfolio/edit/:id" element={<PortfolioEdit />} />
+            
+            {/* Blog Routes */}
+            <Route path="/blog" element={<BlogIndex />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/blog/create" element={<BlogCreate />} />
+            <Route path="/blog/edit/:slug" element={<BlogEdit />} />
+            
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </TooltipProvider>
+    </AuthProvider>
   );
 };
 

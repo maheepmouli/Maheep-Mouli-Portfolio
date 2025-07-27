@@ -13,15 +13,13 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, testLogin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    console.log('Form submitted with:', { email, password: password ? '***' : 'empty' });
     
     try {
       const success = await login(email, password);
@@ -37,13 +35,34 @@ const Login = () => {
           description: "Invalid email or password. Please check your credentials.",
           variant: "destructive",
         });
-        console.log('Login failed - showing error toast');
       }
     } catch (error) {
       console.error('Login error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestLogin = async () => {
+    setLoading(true);
+    try {
+      const success = await testLogin();
+      if (success) {
+        toast({
+          title: "Test Login Successful!",
+          description: "You have been logged in for testing.",
+        });
+        navigate('/admin');
+      }
+    } catch (error) {
+      toast({
+        title: "Test Login Failed",
+        description: "An error occurred during test login.",
         variant: "destructive",
       });
     } finally {
@@ -102,21 +121,19 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
-            
-            {/* Debug info - remove in production */}
-            <div className="text-xs text-muted-foreground mt-4 p-2 bg-muted rounded">
-              <p><strong>Debug Info:</strong></p>
-              <p>Email: {email || 'not entered'}</p>
-              <p>Password: {password ? '***' : 'not entered'}</p>
-              <p>Try these credentials:</p>
-              <ul className="list-disc list-inside">
-                <li>maheep.mouli.shashi@gmail.com / maheepS@10</li>
-                <li>lionelmaheep559@gmail.com / maheepS@10</li>
-                <li>maheep.mouli.shashi@gmail.com / maheep123</li>
-                <li>lionelmaheep559@gmail.com / maheep123</li>
-              </ul>
-            </div>
           </form>
+          
+          {/* Test login button - remove in production */}
+          <div className="mt-4 pt-4 border-t">
+            <Button 
+              onClick={handleTestLogin} 
+              variant="outline" 
+              className="w-full" 
+              disabled={loading}
+            >
+              Test Login (Bypass)
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

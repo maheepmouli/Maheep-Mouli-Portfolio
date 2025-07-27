@@ -11,29 +11,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signOut: () => void;
   isLoading: boolean;
+  testLogin: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Admin credentials - multiple options for login
-const ADMIN_CREDENTIALS = [
-  {
-    email: 'maheep.mouli.shashi@gmail.com',
-    password: 'maheepS@10'
-  },
-  {
-    email: 'lionelmaheep559@gmail.com',
-    password: 'maheepS@10'
-  },
-  {
-    email: 'maheep.mouli.shashi@gmail.com',
-    password: 'maheep123'
-  },
-  {
-    email: 'lionelmaheep559@gmail.com',
-    password: 'maheep123'
-  }
-];
+// Simple admin credentials
+const ADMIN_EMAIL = 'maheep.mouli.shashi@gmail.com';
+const ADMIN_PASSWORD = 'maheep123';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -55,15 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('Login attempt:', { email, password: password ? '***' : 'empty' });
-    
-    // Check against all possible credentials
-    const isValidCredential = ADMIN_CREDENTIALS.some(
-      cred => cred.email === email && cred.password === password
-    );
-    
-    if (isValidCredential) {
-      console.log('Login successful!');
+    // Simple email/password check
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       const userData: User = {
         id: '1',
         email: email,
@@ -73,10 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('portfolio_user', JSON.stringify(userData));
       return true;
     }
-    
-    console.log('Login failed - invalid credentials');
-    console.log('Available credentials:', ADMIN_CREDENTIALS.map(c => c.email));
     return false;
+  };
+
+  const testLogin = async (): Promise<boolean> => {
+    // Auto-login for testing
+    const userData: User = {
+      id: '1',
+      email: ADMIN_EMAIL,
+      displayName: 'Maheep Mouli Shashi'
+    };
+    setUser(userData);
+    localStorage.setItem('portfolio_user', JSON.stringify(userData));
+    return true;
   };
 
   const signOut = () => {
@@ -85,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signOut, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signOut, isLoading, testLogin }}>
       {children}
     </AuthContext.Provider>
   );

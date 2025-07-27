@@ -34,8 +34,7 @@ const Contact = () => {
 
     try {
       // Using Formspree - a free service that sends emails directly
-      // You can sign up at https://formspree.io/ and get your endpoint
-      const formEndpoint = 'https://formspree.io/f/xwpqojby'; // Your actual Formspree endpoint
+      const formEndpoint = 'https://formspree.io/f/xwpqojby';
       
       const response = await fetch(formEndpoint, {
         method: 'POST',
@@ -60,7 +59,7 @@ const Contact = () => {
         // Reset form
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
-        throw new Error('Failed to send email');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
       console.error('Email sending error:', error);
@@ -90,6 +89,44 @@ This message was sent from your portfolio website contact form.`);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const testEmailConnection = async () => {
+    try {
+      const formEndpoint = 'https://formspree.io/f/xwpqojby';
+      const response = await fetch(formEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Test User',
+          email: 'test@example.com',
+          subject: 'Test Email',
+          message: 'This is a test email to verify the contact form is working.',
+          _replyto: 'test@example.com'
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Email Test Successful",
+          description: "The contact form is working correctly.",
+        });
+      } else {
+        toast({
+          title: "Email Test Failed",
+          description: `Status: ${response.status}. Please check your Formspree configuration.`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Email Test Error",
+        description: "There was an error testing the email connection.",
+        variant: "destructive"
+      });
+    }
   };
 
   const contactInfo = [
@@ -127,7 +164,7 @@ This message was sent from your portfolio website contact form.`);
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Let's <span className="kinetic-text">Collaborate</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto color-wave-text">
             Ready to bring computational design and urban technology to your next project? Let's discuss how we can create something extraordinary together.
           </p>
         </div>

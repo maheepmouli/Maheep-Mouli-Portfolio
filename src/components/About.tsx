@@ -33,8 +33,8 @@ const About = () => {
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               About <span className="kinetic-text">Maheep</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Bridging the gap between computational thinking and human-centered design
+            <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto color-wave-text">
+              I am a passionate computational designer and urban technologist with expertise in leveraging cutting-edge technologies to solve complex urban challenges. My work spans across computational design, AI/ML applications, BIM implementation, and sustainable urban development.
             </p>
           </div>
 

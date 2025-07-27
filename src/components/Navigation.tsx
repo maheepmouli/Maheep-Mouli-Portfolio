@@ -53,7 +53,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 hover:text-primary transition-colors">
-            <img src="/logo.png" alt="MMS Logo" className="h-10 w-10" />
+            <img src="/logo.png" alt="MMS Logo" className="h-12 w-12" />
             <span className="text-2xl font-bold text-foreground">MMS</span>
           </Link>
 

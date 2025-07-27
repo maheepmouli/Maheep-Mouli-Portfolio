@@ -4,10 +4,11 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, MapPin, Clock, Users, Mail, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ExternalLink, Github, MapPin, Clock, Users, Mail, ArrowLeft, Edit, Trash2, Play, Youtube, HardDrive } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { projectsService, Project, ProjectImage } from '@/services/projectsService';
+import { VideoItem } from '@/components/VideoManager';
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,28 @@ const ProjectDetail = () => {
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [projectImages, setProjectImages] = useState<ProjectImage[]>([]);
+
+  // Helper functions for video URLs
+  const getYouTubeEmbedUrl = (url: string) => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return url;
+  };
+
+  const getGoogleDriveEmbedUrl = (url: string) => {
+    const driveIdMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (driveIdMatch) {
+      return `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     if (id) {
@@ -190,6 +213,88 @@ Best regards,
                           <p className="text-sm">{image.caption}</p>
                         </div>
                       )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Project Videos */}
+            {project.videos && project.videos.length > 0 && (
+              <Card className="mb-12 p-8">
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle className="text-2xl font-bold">Project Videos</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-6">
+                  {project.videos.map((video: VideoItem) => (
+                    <div key={video.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          {video.type === 'youtube' ? <Youtube size={14} /> : <HardDrive size={14} />}
+                          {video.type === 'youtube' ? 'YouTube' : 'Google Drive'}
+                        </Badge>
+                        <h4 className="font-medium text-lg">{video.title}</h4>
+                      </div>
+                      {video.description && (
+                        <p className="text-muted-foreground">{video.description}</p>
+                      )}
+                      
+                      {/* Video Player */}
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted">
+                        <iframe
+                          src={
+                            video.type === 'youtube' 
+                              ? getYouTubeEmbedUrl(video.url)
+                              : getGoogleDriveEmbedUrl(video.url)
+                          }
+                          title={video.title}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Project Videos */}
+            {project.videos && project.videos.length > 0 && (
+              <Card className="mb-12 p-8">
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle className="text-2xl font-bold">Project Videos</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-6">
+                  {project.videos.map((video: VideoItem) => (
+                    <div key={video.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          {video.type === 'youtube' ? <Youtube size={14} /> : <HardDrive size={14} />}
+                          {video.type === 'youtube' ? 'YouTube' : 'Google Drive'}
+                        </Badge>
+                        <h4 className="font-medium text-lg">{video.title}</h4>
+                      </div>
+                      {video.description && (
+                        <p className="text-muted-foreground">{video.description}</p>
+                      )}
+                      
+                      {/* Video Player */}
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted">
+                        <iframe
+                          src={
+                            video.type === 'youtube' 
+                              ? getYouTubeEmbedUrl(video.url)
+                              : getGoogleDriveEmbedUrl(video.url)
+                          }
+                          title={video.title}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
                     </div>
                   ))}
                 </CardContent>

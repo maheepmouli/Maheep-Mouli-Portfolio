@@ -14,6 +14,7 @@ export interface Project {
   team_size?: string;
   technologies: string[];
   tags: string[];
+  videos?: any[]; // Add videos property
   created_at: string;
   updated_at: string;
 }

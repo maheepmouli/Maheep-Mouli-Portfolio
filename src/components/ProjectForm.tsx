@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import RichTextEditor from './RichTextEditor';
 import ImageManager from './ImageManager';
+import VideoManager, { VideoItem } from './VideoManager';
 import { projectsService, Project, ProjectImage } from '@/services/projectsService';
 
 interface ProjectFormProps {
@@ -33,6 +34,7 @@ interface ProjectData {
   duration?: string;
   team_size?: string;
   technologies: string[];
+  videos: VideoItem[];
 }
 
 const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
@@ -53,7 +55,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     location: '',
     duration: '',
     team_size: '',
-    technologies: []
+    technologies: [],
+    videos: []
   });
   
   const [newTag, setNewTag] = useState('');
@@ -95,7 +98,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         location: project.location || '',
         duration: project.duration || '',
         team_size: project.team_size || '',
-        technologies: project.technologies || []
+        technologies: project.technologies || [],
+        videos: project.videos || []
       });
 
       // Fetch project images
@@ -406,8 +410,20 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         <CardContent>
           <ImageManager
             images={projectImages}
-            onImagesChange={setProjectImages}
-            projectId={projectId}
+            onImagesChange={(images) => setProjectImages(images)}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Project Videos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Videos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <VideoManager
+            videos={formData.videos}
+            onVideosChange={(videos) => setFormData(prev => ({ ...prev, videos }))}
           />
         </CardContent>
       </Card>

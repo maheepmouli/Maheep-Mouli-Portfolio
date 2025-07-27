@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,9 @@ import {
   Move, 
   Settings,
   ExternalLink,
-  Copy
+  Copy,
+  FileImage,
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +26,7 @@ interface ProjectImage {
   width?: string;
   height?: string;
   alt_text?: string;
+  file?: File; // Add file property for local files
 }
 
 interface ImageManagerProps {
@@ -41,6 +44,8 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
   });
   const [editingImage, setEditingImage] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const addImage = () => {
@@ -106,6 +111,81 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     });
   };
 
+  const downloadImage = (image: ProjectImage) => {
+    if (image.file) {
+      // For local files, create a download link
+      const link = document.createElement('a');
+      link.href = image.image_url;
+      link.download = image.file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // For external URLs, try to download
+      const link = document.createElement('a');
+      link.href = image.image_url;
+      link.download = image.caption || 'image';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    toast({
+      title: "Download started",
+      description: "Image download has been initiated."
+    });
+  };
+
+  const handleFileUpload = (files: FileList | File[]) => {
+    setIsUploading(true);
+    const fileArray = Array.from(files);
+    const imageFiles = fileArray.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      toast({
+        title: "No image files",
+        description: "Please select only image files (JPG, PNG, GIF, etc.).",
+        variant: "destructive"
+      });
+      setIsUploading(false);
+      return;
+    }
+
+    // Process each image file
+    imageFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        const image: ProjectImage = {
+          image_url: imageUrl,
+          caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+          alt_text: file.name,
+          sort_order: images.length + index,
+          width: '100%',
+          height: 'auto',
+          file: file
+        };
+        
+        onImagesChange([...images, image]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    toast({
+      title: "Images uploaded",
+      description: `${imageFiles.length} image(s) have been added to your project.`
+    });
+    
+    setIsUploading(false);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFileUpload(e.target.files);
+    }
+  };
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -120,98 +200,140 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     e.preventDefault();
     setIsDragOver(false);
     
-    const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
-    if (imageFiles.length > 0) {
-      // For now, we'll just show a message about uploading
-      // In a real implementation, you'd upload to Supabase Storage
-      toast({
-        title: "Image files detected",
-        description: `Found ${imageFiles.length} image file(s). Please upload to a hosting service and use the URL.`
-      });
+    if (e.dataTransfer.files) {
+      handleFileUpload(e.dataTransfer.files);
     }
-  }, [toast]);
+  }, []);
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className="space-y-6">
-      {/* Add New Image */}
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Add New Image</h3>
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="new-image-url">Image URL *</Label>
-              <Input
-                id="new-image-url"
-                value={newImage.image_url}
-                onChange={(e) => setNewImage(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-image-caption">Caption</Label>
-              <Input
-                id="new-image-caption"
-                value={newImage.caption}
-                onChange={(e) => setNewImage(prev => ({ ...prev, caption: e.target.value }))}
-                placeholder="Image description"
-              />
-            </div>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <Label htmlFor="new-image-alt">Alt Text</Label>
-              <Input
-                id="new-image-alt"
-                value={newImage.alt_text}
-                onChange={(e) => setNewImage(prev => ({ ...prev, alt_text: e.target.value }))}
-                placeholder="Accessibility description"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-image-width">Width</Label>
-              <Input
-                id="new-image-width"
-                value={newImage.width}
-                onChange={(e) => setNewImage(prev => ({ ...prev, width: e.target.value }))}
-                placeholder="100% or 500px"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-image-height">Height</Label>
-              <Input
-                id="new-image-height"
-                value={newImage.height}
-                onChange={(e) => setNewImage(prev => ({ ...prev, height: e.target.value }))}
-                placeholder="auto or 300px"
-              />
-            </div>
-          </div>
-          <Button onClick={addImage} disabled={!newImage.image_url.trim()}>
-            <Plus size={16} className="mr-2" />
-            Add Image
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Drag & Drop Zone */}
       <Card 
         className={`border-2 border-dashed transition-colors ${
-          isDragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+          isDragOver 
+            ? 'border-primary bg-primary/5' 
+            : 'border-muted-foreground/25 hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <CardContent className="p-8 text-center">
-          <Upload size={48} className="mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Drag & Drop Images</h3>
-          <p className="text-muted-foreground">
-            Drag image files here to upload, or use the form above to add image URLs
-          </p>
+          <div className="flex flex-col items-center gap-4">
+            <div className={`p-4 rounded-full ${
+              isDragOver ? 'bg-primary/10' : 'bg-muted'
+            }`}>
+              <Upload size={32} className={isDragOver ? 'text-primary' : 'text-muted-foreground'} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                {isDragOver ? 'Drop images here' : 'Drag & drop images here'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Upload multiple images from your computer
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={triggerFileInput}
+                  disabled={isUploading}
+                >
+                  <FileImage size={16} className="mr-2" />
+                  {isUploading ? 'Uploading...' : 'Choose Files'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setNewImage(prev => ({ ...prev, image_url: '' }))}
+                >
+                  <ExternalLink size={16} className="mr-2" />
+                  Add URL Instead
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Supports: JPG, PNG, GIF, WebP (Max 10MB per file)
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+
+      {/* Add New Image by URL */}
+      {newImage.image_url === '' && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Add Image by URL</h3>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label htmlFor="new-image-url">Image URL *</Label>
+                <Input
+                  id="new-image-url"
+                  value={newImage.image_url}
+                  onChange={(e) => setNewImage(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-image-caption">Caption</Label>
+                <Input
+                  id="new-image-caption"
+                  value={newImage.caption}
+                  onChange={(e) => setNewImage(prev => ({ ...prev, caption: e.target.value }))}
+                  placeholder="Image description"
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <Label htmlFor="new-image-alt">Alt Text</Label>
+                <Input
+                  id="new-image-alt"
+                  value={newImage.alt_text}
+                  onChange={(e) => setNewImage(prev => ({ ...prev, alt_text: e.target.value }))}
+                  placeholder="Accessibility description"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-image-width">Width</Label>
+                <Input
+                  id="new-image-width"
+                  value={newImage.width}
+                  onChange={(e) => setNewImage(prev => ({ ...prev, width: e.target.value }))}
+                  placeholder="100% or 500px"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-image-height">Height</Label>
+                <Input
+                  id="new-image-height"
+                  value={newImage.height}
+                  onChange={(e) => setNewImage(prev => ({ ...prev, height: e.target.value }))}
+                  placeholder="auto or 300px"
+                />
+              </div>
+            </div>
+            <Button onClick={addImage} disabled={!newImage.image_url.trim()}>
+              <Plus size={16} className="mr-2" />
+              Add Image
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Image Gallery */}
       {images.length > 0 && (
@@ -224,7 +346,7 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                   <div className="flex items-start gap-4">
                     {/* Image Preview */}
                     <div className="flex-shrink-0">
-                      <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted">
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted">
                         <img
                           src={image.image_url}
                           alt={image.alt_text || image.caption || 'Project image'}
@@ -234,6 +356,11 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                             target.style.display = 'none';
                           }}
                         />
+                        {image.file && (
+                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-1">
+                            <FileImage size={12} />
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -324,6 +451,14 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                         title="Open in new tab"
                       >
                         <ExternalLink size={14} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => downloadImage(image)}
+                        title="Download image"
+                      >
+                        <Download size={14} />
                       </Button>
                       <Button
                         size="sm"

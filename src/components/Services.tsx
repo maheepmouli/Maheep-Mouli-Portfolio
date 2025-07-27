@@ -217,11 +217,32 @@ const Services = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                <Button size="lg" className="btn-hero">
+                <Button 
+                  size="lg" 
+                  className="btn-hero"
+                  onClick={() => {
+                    const subject = encodeURIComponent('Hire Request - Portfolio Services');
+                    const body = encodeURIComponent(`Hi Maheep,
+
+I saw your portfolio services and would like to discuss a collaboration opportunity with you.
+
+Services I'm interested in:
+- [List the services you're interested in]
+
+My project details:
+- [Describe your project needs]
+- [Timeline]
+- [Budget range]
+
+Please let me know when you're available for a call.
+
+Best regards,
+[Your name]`);
+                    
+                    window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
+                  }}
+                >
                   Hire Me
-                </Button>
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                  Schedule Consultation
                 </Button>
               </div>
             </div>

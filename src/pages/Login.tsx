@@ -21,6 +21,8 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     
+    console.log('Form submitted with:', { email, password: password ? '***' : 'empty' });
+    
     try {
       const success = await login(email, password);
       if (success) {
@@ -35,8 +37,10 @@ const Login = () => {
           description: "Invalid email or password. Please check your credentials.",
           variant: "destructive",
         });
+        console.log('Login failed - showing error toast');
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -98,6 +102,20 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+            
+            {/* Debug info - remove in production */}
+            <div className="text-xs text-muted-foreground mt-4 p-2 bg-muted rounded">
+              <p><strong>Debug Info:</strong></p>
+              <p>Email: {email || 'not entered'}</p>
+              <p>Password: {password ? '***' : 'not entered'}</p>
+              <p>Try these credentials:</p>
+              <ul className="list-disc list-inside">
+                <li>maheep.mouli.shashi@gmail.com / maheepS@10</li>
+                <li>lionelmaheep559@gmail.com / maheepS@10</li>
+                <li>maheep.mouli.shashi@gmail.com / maheep123</li>
+                <li>lionelmaheep559@gmail.com / maheep123</li>
+              </ul>
+            </div>
           </form>
         </CardContent>
       </Card>

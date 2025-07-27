@@ -19,10 +19,12 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with:', { email, password: password ? '***' : 'empty' });
     setLoading(true);
     
     try {
       const success = await login(email, password);
+      console.log('Login result:', success);
       if (success) {
         toast({
           title: "Welcome back!",
@@ -49,9 +51,11 @@ const Login = () => {
   };
 
   const handleTestLogin = async () => {
+    console.log('Test login button clicked');
     setLoading(true);
     try {
       const success = await testLogin();
+      console.log('Test login result:', success);
       if (success) {
         toast({
           title: "Test Login Successful!",
@@ -60,6 +64,7 @@ const Login = () => {
         navigate('/admin');
       }
     } catch (error) {
+      console.error('Test login error:', error);
       toast({
         title: "Test Login Failed",
         description: "An error occurred during test login.",

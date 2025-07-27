@@ -40,8 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log('Login attempt:', { email, password: password ? '***' : 'empty' });
+    console.log('Expected:', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+    
     // Simple email/password check
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      console.log('Login successful!');
       const userData: User = {
         id: '1',
         email: email,
@@ -51,10 +55,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('portfolio_user', JSON.stringify(userData));
       return true;
     }
+    
+    console.log('Login failed - credentials do not match');
     return false;
   };
 
   const testLogin = async (): Promise<boolean> => {
+    console.log('Test login called');
     // Auto-login for testing
     const userData: User = {
       id: '1',

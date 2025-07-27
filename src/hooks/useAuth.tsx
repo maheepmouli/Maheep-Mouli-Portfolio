@@ -40,15 +40,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('Login attempt:', { email, password: password ? '***' : 'empty' });
-    console.log('Expected:', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+    // Clean the inputs - trim whitespace and convert to lowercase for email
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
     
-    // Simple email/password check
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    console.log('Login attempt:', { 
+      originalEmail: email, 
+      cleanEmail, 
+      password: cleanPassword ? '***' : 'empty' 
+    });
+    console.log('Expected:', { 
+      email: ADMIN_EMAIL, 
+      password: ADMIN_PASSWORD 
+    });
+    
+    // Simple email/password check with cleaned inputs
+    if (cleanEmail === ADMIN_EMAIL && cleanPassword === ADMIN_PASSWORD) {
       console.log('Login successful!');
       const userData: User = {
         id: '1',
-        email: email,
+        email: ADMIN_EMAIL, // Use the original admin email
         displayName: 'Maheep Mouli Shashi'
       };
       setUser(userData);
@@ -57,6 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('Login failed - credentials do not match');
+    console.log('Email match:', cleanEmail === ADMIN_EMAIL);
+    console.log('Password match:', cleanPassword === ADMIN_PASSWORD);
     return false;
   };
 

@@ -75,6 +75,16 @@ const Login = () => {
     }
   };
 
+  const handleQuickTest = () => {
+    // Set the correct credentials and try to login
+    setEmail('maheep.mouli.shashi@gmail.com');
+    setPassword('maheep123');
+    toast({
+      title: "Credentials Set",
+      description: "Correct credentials have been filled in. Click Sign In to login.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <Card className="w-full max-w-md">
@@ -128,8 +138,20 @@ const Login = () => {
             </Button>
           </form>
           
-          {/* Test login button - remove in production */}
+          {/* Quick test button */}
           <div className="mt-4 pt-4 border-t">
+            <Button 
+              onClick={handleQuickTest} 
+              variant="secondary" 
+              className="w-full mb-2" 
+              disabled={loading}
+            >
+              Fill Correct Credentials
+            </Button>
+          </div>
+          
+          {/* Test login button - remove in production */}
+          <div className="mt-2">
             <Button 
               onClick={handleTestLogin} 
               variant="outline" 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +16,7 @@ interface BlogPost {
   excerpt: string;
   slug: string;
   content: string;
-  cover_image_url: string;
+  cover_image_url?: string;
   tags: string[];
   created_at: string;
   status: string;
@@ -51,23 +50,31 @@ const BlogEditPage = () => {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', postSlug)
-        .single();
-
-      if (error) throw error;
+      // Get posts from localStorage
+      const storedPosts = localStorage.getItem('blog_posts');
+      const posts = storedPosts ? JSON.parse(storedPosts) : [];
       
-      setPost(data);
-      setFormData({
-        title: data.title || '',
-        excerpt: data.excerpt || '',
-        content: data.content || '',
-        cover_image_url: data.cover_image_url || '',
-        tags: data.tags || [],
-        status: (data.status as 'draft' | 'published') || 'draft'
-      });
+      // Find the post by slug
+      const foundPost = posts.find((p: BlogPost) => p.slug === postSlug);
+
+      if (foundPost) {
+        setPost(foundPost);
+        setFormData({
+          title: foundPost.title || '',
+          excerpt: foundPost.excerpt || '',
+          content: foundPost.content || '',
+          cover_image_url: foundPost.cover_image_url || '',
+          tags: foundPost.tags || [],
+          status: (foundPost.status as 'draft' | 'published') || 'draft'
+        });
+      } else {
+        toast({
+          title: "Error loading post",
+          description: "Post not found or you don't have permission to edit it.",
+          variant: "destructive"
+        });
+        navigate('/blog');
+      }
     } catch (error) {
       console.error('Error fetching post:', error);
       toast({
@@ -92,29 +99,40 @@ const BlogEditPage = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      const { error } = await supabase
-        .from('blog_posts')
-        .update({
+      // Get existing posts from localStorage
+      const storedPosts = localStorage.getItem('blog_posts');
+      const posts = storedPosts ? JSON.parse(storedPosts) : [];
+      
+      // Find and update the post
+      const postIndex = posts.findIndex((p: BlogPost) => p.id === post?.id);
+      
+      if (postIndex !== -1) {
+        posts[postIndex] = {
+          ...posts[postIndex],
           title: formData.title,
           excerpt: formData.excerpt,
           content: formData.content,
           cover_image_url: formData.cover_image_url,
           tags: formData.tags,
           status: formData.status,
-          slug: newSlug
-        })
-        .eq('id', post?.id);
+          slug: newSlug,
+          updated_at: new Date().toISOString()
+        };
+        
+        // Save back to localStorage
+        localStorage.setItem('blog_posts', JSON.stringify(posts));
 
-      if (error) throw error;
+        toast({
+          title: "Post updated successfully!",
+          description: formData.status === 'published' 
+            ? "Your post is now live on the blog."
+            : "Your draft has been saved."
+        });
 
-      toast({
-        title: "Post updated successfully!",
-        description: formData.status === 'published' 
-          ? "Your post is now live on the blog."
-          : "Your draft has been saved."
-      });
-
-      navigate(`/blog/${newSlug}`);
+        navigate(`/blog/${newSlug}`);
+      } else {
+        throw new Error('Post not found');
+      }
     } catch (error) {
       console.error('Error updating post:', error);
       toast({

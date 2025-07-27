@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Simple admin credentials
 const ADMIN_EMAIL = 'maheep.mouli.shashi@gmail.com';
-const ADMIN_PASSWORD = 'maheep123';
+const ADMIN_PASSWORD = 'maheepS@10';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -89,6 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = () => {
     setUser(null);
     localStorage.removeItem('portfolio_user');
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   return (

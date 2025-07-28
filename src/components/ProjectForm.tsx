@@ -129,10 +129,14 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         const updatedProject = projectsService.updateProject(projectId, projectData);
         if (updatedProject) {
           toast({
-            title: "Success!",
-            description: "Project updated successfully."
+            title: "✅ Project Updated!",
+            description: "Your project has been successfully updated and is now live.",
           });
-          onSuccess?.();
+          
+          // Show success message for 2 seconds before redirecting
+          setTimeout(() => {
+            onSuccess?.();
+          }, 2000);
         } else {
           throw new Error("Failed to update project");
         }
@@ -140,14 +144,18 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         // Create new project
         const newProject = projectsService.createProject(projectData);
         toast({
-          title: "Success!",
-          description: "Project created successfully."
+          title: "🎉 Project Created!",
+          description: "Your new project has been successfully created and is now live.",
         });
-        onSuccess?.();
+        
+        // Show success message for 2 seconds before redirecting
+        setTimeout(() => {
+          onSuccess?.();
+        }, 2000);
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "Failed to save project. Please try again.",
         variant: "destructive"
       });

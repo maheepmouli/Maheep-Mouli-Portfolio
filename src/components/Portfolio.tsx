@@ -353,7 +353,7 @@ Best regards,
 
         {/* Filter Buttons */}
         <motion.div 
-          className="flex flex-wrap justify-center gap-4 mb-12"
+          className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -368,7 +368,7 @@ Best regards,
               <Button
                 variant={activeFilter === filter ? "default" : "outline"}
                 onClick={() => setActiveFilter(filter)}
-                className="transition-all duration-200"
+                className="transition-all duration-200 text-xs sm:text-sm px-3 sm:px-4 py-2"
               >
                 {filter}
               </Button>

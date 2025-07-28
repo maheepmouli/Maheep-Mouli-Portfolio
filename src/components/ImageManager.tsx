@@ -20,12 +20,14 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ProjectImage {
   id?: string;
+  project_id?: string;
   image_url: string;
   caption: string;
   sort_order: number;
   width?: string;
   height?: string;
   alt_text?: string;
+  created_at?: string;
   file?: File; // Add file property for local files
 }
 
@@ -298,6 +300,33 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                 />
               </div>
             </div>
+            
+            {/* Image Preview */}
+            {newImage.image_url && (
+              <div className="border rounded-lg p-4 bg-muted/20 mb-4">
+                <Label className="text-sm font-medium mb-2">Preview</Label>
+                <div className="relative group">
+                  <img 
+                    src={newImage.image_url} 
+                    alt="Preview" 
+                    className="w-full h-48 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="hidden absolute inset-0 bg-muted flex items-center justify-center rounded-lg">
+                    <div className="text-center text-muted-foreground">
+                      <ImageIcon size={48} className="mx-auto mb-2" />
+                      <p className="text-sm">Image not found</p>
+                    </div>
+                  </div>
+                </div>
+                {newImage.caption && (
+                  <p className="text-sm text-muted-foreground mt-2 italic">"{newImage.caption}"</p>
+                )}
+              </div>
+            )}
             <div className="grid md:grid-cols-3 gap-4 mb-4">
               <div>
                 <Label htmlFor="new-image-alt">Alt Text</Label>

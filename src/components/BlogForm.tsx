@@ -26,6 +26,8 @@ interface BlogData {
   tags: string[];
   status: 'draft' | 'published';
   videos: VideoItem[];
+  published_at?: string;
+  updated_at?: string;
 }
 
 const BlogForm = ({ slug, onSuccess, onCancel }: BlogFormProps) => {
@@ -101,16 +103,21 @@ const BlogForm = ({ slug, onSuccess, onCancel }: BlogFormProps) => {
       console.log('Saving blog post:', blogData);
       
       toast({
-        title: "Success",
-        description: isEditing ? "Blog post updated successfully!" : "Blog post created successfully!",
+        title: isEditing ? "✅ Blog Post Updated!" : "🎉 Blog Post Created!",
+        description: isEditing 
+          ? "Your blog post has been successfully updated and is now live."
+          : "Your new blog post has been successfully created and is now live.",
       });
 
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Show success message for 2 seconds before redirecting
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      }, 2000);
     } catch (error) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "Failed to save blog post. Please try again.",
         variant: "destructive"
       });

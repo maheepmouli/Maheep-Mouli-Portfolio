@@ -42,7 +42,7 @@ const About = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 mb-12 sm:mb-16">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-8 sm:mb-12 lg:mb-16">
             {/* Left Column - Philosophy & Location */}
             <div className="space-y-6 sm:space-y-8">
               {/* Design Philosophy */}

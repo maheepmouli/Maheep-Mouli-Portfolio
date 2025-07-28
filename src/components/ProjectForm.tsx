@@ -13,6 +13,7 @@ import ImageManager from './ImageManager';
 import VideoManager, { VideoItem } from './VideoManager';
 import { projectsService, Project, ProjectImage } from '@/services/projectsService';
 import { dynamicProjectsService } from '@/services/dynamicProjectsService';
+import { supabaseProjectsService } from '@/services/supabaseProjectsService';
 import { imageUploadService } from '@/services/imageUploadService';
 
 interface ProjectFormProps {
@@ -280,26 +281,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Creating new project');
         console.log('ProjectForm: Project data to create:', projectData);
         
-        // Create new project
-        const newProject = await projectsService.createProject(projectData);
+        // Create new project in Supabase
+        const newProject = await supabaseProjectsService.createProject(projectData);
         console.log('ProjectForm: Created project result:', newProject);
         
-        // Also create in dynamicProjectsService for portfolio sync
-        const dynamicProject = {
-          ...newProject,
-          image_url: newProject.image_url, // Explicitly preserve image_url
-          translations: {
-            en: newProject,
-            es: newProject,
-            ca: newProject
-          }
-        };
-        console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
-        console.log('ProjectForm: Image URL being synced for new project:', dynamicProject.image_url);
-        console.log('ProjectForm: Image URL type:', dynamicProject.image_url?.startsWith('data:') ? 'Base64' : 'URL');
-        console.log('ProjectForm: Image URL length:', dynamicProject.image_url?.length || 0);
-          const syncResult = await dynamicProjectsService.createProject(dynamicProject);
-          console.log('ProjectForm: Sync result:', syncResult);
+        if (!newProject) {
+          throw new Error("Failed to create project in Supabase");
+        }
         
         // Save project images for new project with error handling
         console.log('ProjectForm: Saving project images for new project:', projectImages);
@@ -322,25 +310,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         }
         
         toast({
-          title: "🎉 Project Created!",
+          title: "🎉 Project Created in Supabase!",
           description: "Your new project has been successfully created and is now live.",
-        });
-        
-        // Trigger custom event to notify Portfolio component
-        window.dispatchEvent(new CustomEvent('portfolio-updated', {
-          detail: { projectId: newProject.id, action: 'created', imageUrl: newProject.image_url }
-        }));
-        
-        // Also trigger a storage event to ensure all components update
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'dynamic_portfolio_projects',
-          newValue: localStorage.getItem('dynamic_portfolio_projects')
-        }));
-        
-        // Show success message and redirect immediately
-        toast({
-          title: "🎉 Project Created!",
-          description: "Redirecting to project details...",
         });
         
         // Redirect to the new project immediately

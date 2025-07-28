@@ -32,7 +32,7 @@ const Portfolio = () => {
       try {
         console.log('Portfolio: Loading projects for language:', language);
         
-        // Try to get projects from Supabase first
+        // Get projects from Supabase only
         const supabaseProjects = await supabaseProjectsService.getAllProjects();
         console.log('Portfolio: Supabase projects:', supabaseProjects);
         
@@ -62,31 +62,13 @@ const Portfolio = () => {
           
           console.log('Portfolio: Translated Supabase projects:', translatedProjects);
           setProjects(translatedProjects);
-          setIsLoading(false);
-          return;
+        } else {
+          console.log('Portfolio: No projects found in Supabase');
+          setProjects([]);
         }
-        
-        // Fallback to localStorage if no Supabase projects
-        console.log('Portfolio: No Supabase projects, falling back to localStorage');
-        const allProjects = dynamicProjectsService.getAllProjects();
-        
-        const translatedProjects = allProjects.map(project => {
-          const translation = project.translations?.[language as keyof typeof project.translations];
-          if (translation) {
-            const translatedProject = { ...project, ...translation } as DynamicProject;
-            if (project.image_url && !translatedProject.image_url) {
-              translatedProject.image_url = project.image_url;
-            }
-            return translatedProject;
-          }
-          return project;
-        });
-        
-        setProjects(translatedProjects);
       } catch (error) {
         console.error('Portfolio: Error loading projects:', error);
-        const allProjects = dynamicProjectsService.getAllProjects();
-        setProjects(allProjects);
+        setProjects([]);
       } finally {
         setIsLoading(false);
       }
@@ -183,7 +165,7 @@ const Portfolio = () => {
 
   const reloadProjects = async () => {
     try {
-      // Try to get fresh data from Supabase
+      // Get fresh data from Supabase
       const supabaseProjects = await supabaseProjectsService.getAllProjects();
       
       if (supabaseProjects.length > 0) {
@@ -211,30 +193,12 @@ const Portfolio = () => {
         });
         
         setProjects(translatedProjects);
-        return;
+      } else {
+        setProjects([]);
       }
-      
-      // Fallback to localStorage
-      const allProjects = dynamicProjectsService.getAllProjects();
-      
-      const translatedProjects = allProjects.map(project => {
-        const translation = project.translations?.[language as keyof typeof project.translations];
-        if (translation) {
-          const translatedProject = { ...project, ...translation } as DynamicProject;
-          if (project.image_url && !translatedProject.image_url) {
-            translatedProject.image_url = project.image_url;
-          }
-          return translatedProject;
-        }
-        return project;
-      });
-      
-      setProjects(translatedProjects);
     } catch (error) {
       console.error('Error reloading projects:', error);
-      // Fallback to localStorage on error
-      const allProjects = dynamicProjectsService.getAllProjects();
-      setProjects(allProjects);
+      setProjects([]);
     }
   };
 

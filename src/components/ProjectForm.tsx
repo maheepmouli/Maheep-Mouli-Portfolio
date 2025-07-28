@@ -12,6 +12,7 @@ import RichTextEditor from './RichTextEditor';
 import ImageManager from './ImageManager';
 import VideoManager, { VideoItem } from './VideoManager';
 import { projectsService, Project, ProjectImage } from '@/services/projectsService';
+import { dynamicProjectsService } from '@/services/dynamicProjectsService';
 
 interface ProjectFormProps {
   projectId?: string;
@@ -128,6 +129,17 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         // Update existing project
         const updatedProject = projectsService.updateProject(projectId, projectData);
         if (updatedProject) {
+          // Also update in dynamicProjectsService for portfolio sync
+          const dynamicProject = {
+            ...updatedProject,
+            translations: {
+              en: updatedProject,
+              es: updatedProject,
+              ca: updatedProject
+            }
+          };
+          dynamicProjectsService.updateProject(projectId, dynamicProject);
+          
           toast({
             title: "✅ Project Updated!",
             description: "Your project has been successfully updated and is now live.",
@@ -143,6 +155,18 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       } else {
         // Create new project
         const newProject = projectsService.createProject(projectData);
+        
+        // Also create in dynamicProjectsService for portfolio sync
+        const dynamicProject = {
+          ...newProject,
+          translations: {
+            en: newProject,
+            es: newProject,
+            ca: newProject
+          }
+        };
+        dynamicProjectsService.createProject(dynamicProject);
+        
         toast({
           title: "🎉 Project Created!",
           description: "Your new project has been successfully created and is now live.",
@@ -253,14 +277,86 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             />
           </div>
 
-          <div>
-            <Label htmlFor="image_url">Cover Image URL</Label>
-            <Input
-              id="image_url"
-              value={formData.image_url}
-              onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-              placeholder="https://example.com/image.jpg"
-            />
+          <div className="space-y-4">
+            <Label htmlFor="image_url">Cover Image</Label>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="image_url" className="text-sm text-muted-foreground">Image URL</Label>
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              <div>
+                <Label htmlFor="image_upload" className="text-sm text-muted-foreground">Or Upload from Device</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="image_upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const result = event.target?.result as string;
+                          setFormData(prev => ({ ...prev, image_url: result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const input = document.getElementById('image_upload') as HTMLInputElement;
+                      input?.click();
+                    }}
+                  >
+                    <Upload size={16} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Image Preview */}
+            {formData.image_url && (
+              <div className="border rounded-lg p-4 bg-muted/20">
+                <Label className="text-sm font-medium mb-2">Preview</Label>
+                <div className="relative group">
+                  <img
+                    src={formData.image_url}
+                    alt="Cover preview"
+                    className="w-full h-48 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="hidden absolute inset-0 bg-muted flex items-center justify-center rounded-lg">
+                    <div className="text-center text-muted-foreground">
+                      <ImageIcon size={48} className="mx-auto mb-2" />
+                      <p className="text-sm">Image not found</p>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                  className="mt-2"
+                >
+                  <X size={16} className="mr-2" />
+                  Remove Image
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -418,7 +514,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         <CardContent>
           <ImageManager
             images={projectImages}
-            onImagesChange={(images) => setProjectImages(images)}
+            onImagesChange={(images) => setProjectImages(images as any)}
           />
         </CardContent>
       </Card>

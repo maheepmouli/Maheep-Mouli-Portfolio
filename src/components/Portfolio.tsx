@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
-import { projectsService } from '@/services/projectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
@@ -77,46 +76,8 @@ const Portfolio = () => {
       setProjects(translatedProjects);
     };
 
-    // Also check for changes from projectsService
-    const checkForUpdates = () => {
-      const projectsServiceProjects = projectsService.getAllProjects();
-      if (projectsServiceProjects.length > 0) {
-        console.log('Found projects in projectsService, syncing...');
-        // Convert projectsService projects to dynamicProjectsService format
-        const convertedProjects = projectsServiceProjects.map(project => ({
-          ...project,
-          translations: {
-            en: project,
-            es: project,
-            ca: project
-          }
-        }));
-        
-        // Save to dynamicProjectsService
-        localStorage.setItem('dynamic_portfolio_projects', JSON.stringify(convertedProjects));
-        
-        // Reload projects
-        const allProjects = dynamicProjectsService.getAllProjects();
-        const translatedProjects = allProjects.map(project => {
-          const translation = project.translations?.[language as keyof typeof project.translations];
-          if (translation) {
-            return { ...project, ...translation } as DynamicProject;
-          }
-          return project;
-        });
-        setProjects(translatedProjects);
-      }
-    };
-
     window.addEventListener('storage', handleStorageChange);
-    
-    // Check for updates every 2 seconds
-    const interval = setInterval(checkForUpdates, 2000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [language]);
 
 

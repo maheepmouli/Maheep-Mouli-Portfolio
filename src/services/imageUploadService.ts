@@ -3,7 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Only create Supabase client if environment variables are available
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export interface UploadResult {
   url: string;
@@ -15,6 +18,12 @@ export const imageUploadService = {
   // Upload image to Supabase Storage
   async uploadImage(file: File, folder: string = 'project-images'): Promise<UploadResult> {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.warn('Supabase not configured, falling back to base64');
+        return { url: '', path: '', error: 'Supabase not configured' };
+      }
+
       // Generate unique filename
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
@@ -51,6 +60,11 @@ export const imageUploadService = {
   // Delete image from Supabase Storage
   async deleteImage(path: string): Promise<boolean> {
     try {
+      if (!supabase) {
+        console.warn('Supabase not configured, cannot delete image');
+        return false;
+      }
+
       const { error } = await supabase.storage
         .from('portfolio-assets')
         .remove([path]);

@@ -511,30 +511,31 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                           ctx?.drawImage(img, 0, 0, width, height);
                           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
                           
-                          // Upload to Supabase Storage instead of using base64
+                          // Try to upload to Supabase Storage, fallback to base64 if not configured
                           try {
                             const uploadResult = await imageUploadService.uploadBase64Image(
                               compressedDataUrl, 
                               `project-${Date.now()}.jpg`
                             );
                             
-                            if (uploadResult.error) {
+                            if (uploadResult.error && uploadResult.error.includes('not configured')) {
+                              // Fallback to base64 if Supabase is not configured
+                              console.log('Supabase not configured, using base64 fallback');
+                              setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
+                            } else if (uploadResult.error) {
                               toast({
                                 title: "Upload Failed",
                                 description: uploadResult.error,
                                 variant: "destructive"
                               });
                               return;
+                            } else {
+                              setFormData(prev => ({ ...prev, image_url: uploadResult.url }));
                             }
-                            
-                            setFormData(prev => ({ ...prev, image_url: uploadResult.url }));
                           } catch (error) {
                             console.error('Image upload failed:', error);
-                            toast({
-                              title: "Upload Failed",
-                              description: "Failed to upload image. Please try again.",
-                              variant: "destructive"
-                            });
+                            // Fallback to base64 on any error
+                            setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
                           }
                         };
                         

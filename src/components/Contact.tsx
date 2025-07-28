@@ -243,7 +243,7 @@ This message was sent from your portfolio website contact form.`);
                   <Button
                     variant="outline"
                     className="justify-start border-highlight/30 hover:bg-highlight/10"
-                    onClick={() => window.open("https://www.calameo.com/read/0075805642c8c8c8c8c8c", "_blank")}
+                    onClick={() => window.open("https://www.calameo.com/read/007995635f849de9a792d", "_blank")}
                   >
                     <Mail size={18} className="mr-2" />
                     Download Portfolio

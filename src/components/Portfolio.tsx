@@ -265,7 +265,9 @@ Best regards,
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6"> {t('portfolio.title')} </h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6"> 
+            My <span className="kinetic-text">Portfolio</span>
+          </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t('portfolio.subtitle')}
           </p>

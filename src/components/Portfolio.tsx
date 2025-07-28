@@ -187,12 +187,19 @@ const Portfolio = () => {
   const getOptimizedImageUrl = (url: string) => {
     if (!url) return '';
     
-    // For base64 images, return as-is
+    // For base64 images, return as-is (temporary until all images are migrated)
     if (url.startsWith('data:')) {
       return url;
     }
     
-    // For all external URLs, add cache-busting parameter to ensure fresh content
+    // For Supabase URLs, add cache-busting parameter
+    if (url.includes('supabase.co')) {
+      const timestamp = Date.now();
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}v=${timestamp}&t=${timestamp}`;
+    }
+    
+    // For other external URLs, add cache-busting parameter
     const timestamp = Date.now();
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}v=${timestamp}&t=${timestamp}`;

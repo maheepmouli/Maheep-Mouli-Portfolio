@@ -13,6 +13,7 @@ import ImageManager from './ImageManager';
 import VideoManager, { VideoItem } from './VideoManager';
 import { projectsService, Project, ProjectImage } from '@/services/projectsService';
 import { dynamicProjectsService } from '@/services/dynamicProjectsService';
+import { imageUploadService } from '@/services/imageUploadService';
 
 interface ProjectFormProps {
   projectId?: string;
@@ -486,7 +487,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                         const ctx = canvas.getContext('2d');
                         const img = new Image();
                         
-                        img.onload = () => {
+                        img.onload = async () => {
                           // Calculate new dimensions (max 800px width/height)
                           const maxSize = 800;
                           let { width, height } = img;
@@ -510,8 +511,31 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                           ctx?.drawImage(img, 0, 0, width, height);
                           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
                           
-
-                          setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
+                          // Upload to Supabase Storage instead of using base64
+                          try {
+                            const uploadResult = await imageUploadService.uploadBase64Image(
+                              compressedDataUrl, 
+                              `project-${Date.now()}.jpg`
+                            );
+                            
+                            if (uploadResult.error) {
+                              toast({
+                                title: "Upload Failed",
+                                description: uploadResult.error,
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            
+                            setFormData(prev => ({ ...prev, image_url: uploadResult.url }));
+                          } catch (error) {
+                            console.error('Image upload failed:', error);
+                            toast({
+                              title: "Upload Failed",
+                              description: "Failed to upload image. Please try again.",
+                              variant: "destructive"
+                            });
+                          }
                         };
                         
                         img.src = URL.createObjectURL(file);

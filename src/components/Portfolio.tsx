@@ -8,69 +8,78 @@ import { Eye, Edit, Trash2, BookOpen, Plus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDynamicTranslatedProjects, DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
+import { DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { getTranslatedProjects, deleteProject } = useDynamicTranslatedProjects();
   
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
   const [projects, setProjects] = useState<DynamicProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  const loadProjects = useCallback(() => {
+  // Load projects on mount and when language changes
+  useEffect(() => {
     setIsLoading(true);
     try {
       console.log('Loading projects for language:', language);
       
-      // Use the hook to get translated projects
-      const translatedProjects = getTranslatedProjects();
-      console.log('Translated projects from hook:', translatedProjects);
-      console.log('Projects length:', translatedProjects.length);
+      // Get all projects from the service
+      const allProjects = dynamicProjectsService.getAllProjects();
+      console.log('All projects from service:', allProjects);
       
       // If no projects exist, initialize with sample data
-      if (translatedProjects.length === 0) {
+      if (allProjects.length === 0) {
         console.log('No projects found, initializing with sample data...');
         dynamicProjectsService.clearAllData();
-        const sampleProjects = getTranslatedProjects();
+        const sampleProjects = dynamicProjectsService.getAllProjects();
+        console.log('Sample projects after initialization:', sampleProjects);
         setProjects(sampleProjects);
-        setIsInitialized(true);
         setIsLoading(false);
         return;
       }
       
+      // Apply translations immediately
+      const translatedProjects = allProjects.map(project => {
+        const translation = project.translations?.[language as keyof typeof project.translations];
+        if (translation) {
+          return { ...project, ...translation } as DynamicProject;
+        }
+        return project;
+      });
+      
       setProjects(translatedProjects);
-      setIsInitialized(true);
     } catch (error) {
       console.error('Error loading projects:', error);
-      // On error, try to get projects without translations
       const allProjects = dynamicProjectsService.getAllProjects();
       setProjects(allProjects);
-      setIsInitialized(true);
     } finally {
       setIsLoading(false);
     }
-  }, [language, getTranslatedProjects]);
+  }, [language]); // Run on mount and when language changes
 
-  // Load projects on mount and language change
-  useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+
+
+  // Force re-render when language changes by adding a key
+  const portfolioKey = `portfolio-${language}`;
+
+  const reloadProjects = () => {
+    const allProjects = dynamicProjectsService.getAllProjects();
+    setProjects(allProjects);
+  };
 
   const handleDeleteProject = (projectId: string, projectTitle: string) => {
     if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {
-      const success = deleteProject(projectId);
+      const success = dynamicProjectsService.deleteProject(projectId);
       if (success) {
         toast({
           title: "Project Deleted",
           description: `"${projectTitle}" has been removed from your portfolio.`,
         });
-        loadProjects(); // Reload projects after deletion
+        reloadProjects(); // Reload projects after deletion
       } else {
         toast({
           title: "Error",
@@ -102,7 +111,7 @@ Best regards,
 
   const handleDebugReset = () => {
     dynamicProjectsService.clearAllData();
-    loadProjects();
+    reloadProjects();
     toast({
       title: "Debug Reset",
       description: "Project data has been reset and reinitialized.",
@@ -240,7 +249,7 @@ Best regards,
   };
 
   return (
-    <section id="portfolio" className="section-spacing">
+    <section id="portfolio" className="section-spacing" key={portfolioKey}>
       <div className="container mx-auto px-6">
         <motion.div 
           className="text-center mb-16"
@@ -283,7 +292,6 @@ Best regards,
                   console.log('Current language:', language);
                   console.log('Current projects:', projects);
                   console.log('All projects from service:', dynamicProjectsService.getAllProjects());
-                  console.log('Translated projects from hook:', getTranslatedProjects());
                   toast({
                     title: "Debug Info",
                     description: `Language: ${language}, Projects: ${projects.length}`,
@@ -296,7 +304,7 @@ Best regards,
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  loadProjects();
+                  reloadProjects();
                   toast({
                     title: "Reload Projects",
                     description: "Projects reloaded manually",

@@ -29,9 +29,22 @@ const Portfolio = () => {
       const allProjects = getTranslatedProjects();
       console.log('Loaded dynamic projects:', allProjects);
       console.log('Projects length:', allProjects.length);
-      setProjects(allProjects);
+      
+      // If no projects found, force initialize with sample data
+      if (allProjects.length === 0) {
+        console.log('No projects found, forcing initialization...');
+        dynamicProjectsService.clearAllData();
+        const sampleProjects = dynamicProjectsService.getAllProjects();
+        setProjects(sampleProjects);
+      } else {
+        setProjects(allProjects);
+      }
     } catch (error) {
       console.error('Error loading projects:', error);
+      // Force initialization on error
+      dynamicProjectsService.clearAllData();
+      const sampleProjects = dynamicProjectsService.getAllProjects();
+      setProjects(sampleProjects);
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +103,15 @@ Best regards,
 
   const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
   const featuredProjects = projects.filter(project => project.featured);
+
+  console.log('Portfolio Debug:', {
+    projectsLength: projects.length,
+    featuredProjectsLength: featuredProjects.length,
+    filteredProjectsLength: filteredProjects.length,
+    isLoading,
+    projects: projects,
+    featuredProjects: featuredProjects
+  });
 
   // Animation variants
   const containerVariants = {
@@ -256,7 +278,7 @@ Best regards,
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           </div>
-        ) : featuredProjects.length > 0 ? (
+        ) : (
           <motion.div 
             className="mb-16"
             initial={{ opacity: 0, y: 30 }}
@@ -273,6 +295,8 @@ Best regards,
             >
               {t('portfolio.featuredProjects')}
             </motion.h3>
+            
+            {/* Always show projects, even if empty */}
             <motion.div 
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               variants={containerVariants}
@@ -280,12 +304,26 @@ Best regards,
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {featuredProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} isFeatured={true} />
-              ))}
+              {featuredProjects.length > 0 ? (
+                featuredProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} isFeatured={true} />
+                ))
+              ) : (
+                // Show all projects if no featured projects
+                projects.slice(0, 3).map((project) => (
+                  <ProjectCard key={project.id} project={project} isFeatured={true} />
+                ))
+              )}
             </motion.div>
+            
+            {/* Debug info */}
+            {projects.length === 0 && (
+              <div className="text-center mt-8 p-4 bg-muted rounded-lg">
+                <p className="text-muted-foreground">No projects found. Click the Debug Reset button to initialize sample projects.</p>
+              </div>
+            )}
           </motion.div>
-        ) : null}
+        )}
 
         {/* Filter Buttons */}
         <motion.div 
@@ -317,7 +355,7 @@ Best regards,
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
-        ) : filteredProjects.length > 0 ? (
+        ) : (
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={containerVariants}
@@ -325,13 +363,23 @@ Best regards,
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))
+            ) : (
+              // Show all projects if no filtered projects
+              projects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))
+            )}
           </motion.div>
-        ) : (
+        )}
+
+        {/* Show message if no projects at all */}
+        {!isLoading && projects.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No projects found matching the selected filter.</p>
+            <p className="text-muted-foreground text-lg">No projects found. Please use the Debug Reset button to initialize sample projects.</p>
           </div>
         )}
 

@@ -148,20 +148,16 @@ const About = () => {
                 <h3 className="text-xl sm:text-2xl font-bold">Professional Experience</h3>
               </div>
               <p className="text-muted-foreground mb-6 text-sm sm:text-base">
-                5+ years of experience in architectural design, computational design, and urban technology
+                3+ years of experience in architectural design, computational design, and urban technology
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm sm:text-base">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm sm:text-base">
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-primary">50+</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-primary">10+</div>
                   <div className="text-muted-foreground">Projects Completed</div>
                 </div>
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-accent">5+</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-accent">3+</div>
                   <div className="text-muted-foreground">Years Experience</div>
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-highlight">100%</div>
-                  <div className="text-muted-foreground">Client Satisfaction</div>
                 </div>
               </div>
             </Card>

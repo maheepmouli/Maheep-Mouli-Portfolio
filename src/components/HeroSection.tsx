@@ -293,16 +293,12 @@ const HeroSection = () => {
             custom={5}
           >
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">50+</div>
+              <div className="text-2xl font-bold text-white">10+</div>
               <div className="text-sm">Projects Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">5+</div>
+              <div className="text-2xl font-bold text-white">3+</div>
               <div className="text-sm">Years Experience</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">100%</div>
-              <div className="text-sm">Client Satisfaction</div>
             </div>
           </motion.div>
         </motion.div>

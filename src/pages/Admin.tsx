@@ -2,6 +2,7 @@ import React from 'react';
 import Navigation from '@/components/Navigation';
 import Admin from '@/components/Admin';
 import { useToast } from '@/hooks/use-toast';
+import { MigrationTool } from '@/components/MigrationTool';
 
 
 const AdminPage = () => {
@@ -31,7 +32,12 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <Admin />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Admin />
+          <MigrationTool />
+        </div>
+      </div>
     </div>
   );
 };

@@ -37,19 +37,31 @@ export const supabaseProjectsService = {
         return [];
       }
 
+      console.log('Supabase: Attempting to fetch projects...');
+      console.log('Supabase: URL:', supabaseUrl);
+      console.log('Supabase: Key configured:', !!supabaseKey);
+
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching projects from Supabase:', error);
+        console.error('Supabase: Error fetching projects:', error);
+        console.error('Supabase: Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return [];
       }
 
+      console.log('Supabase: Successfully fetched projects:', data);
+      console.log('Supabase: Number of projects found:', data?.length || 0);
       return data || [];
     } catch (error) {
-      console.error('Error in getAllProjects:', error);
+      console.error('Supabase: Exception in getAllProjects:', error);
       return [];
     }
   },

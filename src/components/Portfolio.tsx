@@ -181,7 +181,11 @@ const Portfolio = () => {
 
   // Force re-render when language changes or projects update
   const [refreshKey, setRefreshKey] = useState(0);
-  const portfolioKey = `portfolio-${language}-${refreshKey}-${Date.now()}`;
+  const [forceRefresh, setForceRefresh] = useState(0);
+  const portfolioKey = `portfolio-${language}-${refreshKey}-${forceRefresh}-${Date.now()}`;
+
+  // Add a timestamp to force fresh content loading
+  const contentVersion = Date.now();
 
   // Utility function to handle image URLs with aggressive cache-busting
   const getOptimizedImageUrl = (url: string) => {
@@ -192,17 +196,11 @@ const Portfolio = () => {
       return url;
     }
     
-    // For Supabase URLs, add cache-busting parameter
-    if (url.includes('supabase.co')) {
-      const timestamp = Date.now();
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}v=${timestamp}&t=${timestamp}`;
-    }
-    
-    // For other external URLs, add cache-busting parameter
+    // For all external URLs, add aggressive cache-busting parameters
     const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2);
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}v=${timestamp}&t=${timestamp}`;
+    return `${url}${separator}v=${timestamp}&t=${timestamp}&r=${randomId}&cb=${contentVersion}`;
   };
 
   const reloadProjects = () => {
@@ -222,6 +220,22 @@ const Portfolio = () => {
     });
     
     setProjects(translatedProjects);
+  };
+
+  // Force refresh for visitors to see latest content
+  const forceRefreshForVisitors = () => {
+    setForceRefresh(prev => prev + 1);
+    setRefreshKey(prev => prev + 1);
+    
+    // Clear any cached data
+    localStorage.removeItem('dynamic_portfolio_projects');
+    localStorage.removeItem('portfolio_projects');
+    
+    // Reload projects
+    reloadProjects();
+    
+    // Force browser to reload fresh content
+    window.location.reload();
   };
 
   const handleDeleteProject = (projectId: string, projectTitle: string) => {
@@ -450,6 +464,26 @@ const Portfolio = () => {
                   {t('portfolio.addNewProject')}
                 </Button>
               </Link>
+            </motion.div>
+          )}
+          
+          {/* Hidden refresh button for visitors (only in development) */}
+          {process.env.NODE_ENV === 'development' && (
+            <motion.div 
+              className="flex justify-center mt-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={forceRefreshForVisitors}
+                className="text-xs"
+              >
+                🔄 Force Refresh (Dev)
+              </Button>
             </motion.div>
           )}
         </motion.div>

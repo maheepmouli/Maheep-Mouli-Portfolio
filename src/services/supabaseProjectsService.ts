@@ -62,6 +62,8 @@ export const supabaseProjectsService = {
         return null;
       }
 
+      console.log('Supabase: Attempting to create project with data:', projectData);
+
       const { data, error } = await supabase
         .from('projects')
         .insert([{
@@ -73,13 +75,20 @@ export const supabaseProjectsService = {
         .single();
 
       if (error) {
-        console.error('Error creating project:', error);
+        console.error('Supabase: Error creating project:', error);
+        console.error('Supabase: Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return null;
       }
-      
+
+      console.log('Supabase: Project created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error in createProject:', error);
+      console.error('Supabase: Exception in createProject:', error);
       return null;
     }
   },

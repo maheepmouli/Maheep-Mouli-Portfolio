@@ -62,6 +62,9 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     videos: []
   });
   
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  
   const [newTag, setNewTag] = useState('');
   const [newTechnology, setNewTechnology] = useState('');
   const [loading, setLoading] = useState(false);
@@ -183,6 +186,17 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       console.log('ProjectForm: Form submitted');
       console.log('ProjectForm: Current form data:', formData);
       console.log('ProjectForm: User authenticated:', !!user);
+      
+      // Validate required fields
+      if (!formData.title || !formData.description) {
+        toast({
+          title: "❌ Missing Required Fields",
+          description: "Please fill in title and description.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       setLoading(true);
 
     try {
@@ -285,12 +299,47 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         
         // Create new project in Supabase
         console.log('ProjectForm: Attempting to create project in Supabase...');
-        const newProject = await supabaseProjectsService.createProject(projectData);
-        console.log('ProjectForm: Created project result:', newProject);
+        console.log('ProjectForm: Project data being sent:', projectData);
         
-        if (!newProject) {
-          console.error('ProjectForm: Supabase returned null/undefined for new project');
-          throw new Error("Failed to create project in Supabase - no project returned");
+        let newProject;
+        try {
+          newProject = await supabaseProjectsService.createProject(projectData);
+          console.log('ProjectForm: Created project result:', newProject);
+          
+          if (!newProject) {
+            console.error('ProjectForm: Supabase returned null/undefined for new project');
+            throw new Error("Failed to create project in Supabase - no project returned");
+          }
+          
+          console.log('ProjectForm: Project created successfully with ID:', newProject.id);
+        
+        // Upload image if provided
+        if (imageFile) {
+          console.log('ProjectForm: Uploading cover image...');
+          try {
+            const imageUrl = await uploadImageToSupabase(imageFile);
+            
+            // Update project with image URL
+            const updatedProject = await supabaseProjectsService.updateProject(newProject.id, {
+              image_url: imageUrl
+            });
+            
+            if (updatedProject) {
+              console.log('ProjectForm: Project updated with image URL:', imageUrl);
+            }
+          } catch (imageError) {
+            console.error('ProjectForm: Image upload failed:', imageError);
+            toast({
+              title: "⚠️ Image Upload Failed",
+              description: "Project created but image upload failed. You can update the image later.",
+              variant: "destructive"
+            });
+          }
+        }
+        
+        } catch (supabaseError) {
+          console.error('ProjectForm: Supabase error details:', supabaseError);
+          throw new Error(`Supabase error: ${supabaseError}`);
         }
         
         // Save project images for new project with error handling
@@ -394,6 +443,42 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImageToSupabase = async (file: File): Promise<string> => {
+    try {
+      console.log('ProjectForm: Uploading image to Supabase...');
+      
+      // Import imageUploadService dynamically
+      const { imageUploadService } = await import('@/services/imageUploadService');
+      
+      const result = await imageUploadService.uploadImage(file, 'project-images');
+      
+      if (result.error) {
+        console.error('ProjectForm: Image upload error:', result.error);
+        throw new Error(result.error);
+      }
+      
+      console.log('ProjectForm: Image uploaded successfully:', result.url);
+      return result.url;
+    } catch (error) {
+      console.error('ProjectForm: Image upload failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Basic Information */}
@@ -454,69 +539,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     id="image_upload"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // Compress the image before storing
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const img = new Image();
-                        
-                        img.onload = async () => {
-                          // Calculate new dimensions (max 800px width/height)
-                          const maxSize = 800;
-                          let { width, height } = img;
-                          
-                          if (width > height) {
-                            if (width > maxSize) {
-                              height = (height * maxSize) / width;
-                              width = maxSize;
-                            }
-                          } else {
-                            if (height > maxSize) {
-                              width = (width * maxSize) / height;
-                              height = maxSize;
-                            }
-                          }
-                          
-                          canvas.width = width;
-                          canvas.height = height;
-                          
-                          // Draw and compress
-                          ctx?.drawImage(img, 0, 0, width, height);
-                          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
-                          
-                          // Try to upload to Supabase Storage, fallback to base64 if not configured
-                          try {
-                            const uploadResult = await imageUploadService.uploadBase64Image(
-                              compressedDataUrl, 
-                              `project-${Date.now()}.jpg`
-                            );
-                            
-                            if (uploadResult.error && uploadResult.error.includes('not configured')) {
-                              // Fallback to base64 if Supabase is not configured
-                              console.log('Supabase not configured, using base64 fallback');
-                              setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
-                            } else if (uploadResult.error) {
-                              toast({
-                                title: "Upload Failed",
-                                description: uploadResult.error,
-                                variant: "destructive"
-                              });
-                              return;
-                            } else {
-                              setFormData(prev => ({ ...prev, image_url: uploadResult.url }));
-                            }
-                          } catch (error) {
-                            console.error('Image upload failed:', error);
-                            // Fallback to base64 on any error
-                            setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
-                          }
-                        };
-                        
-                        img.src = URL.createObjectURL(file);
-                      }
-                    }}
+                    onChange={handleImageUpload}
                     className="cursor-pointer"
                   />
                   <Button

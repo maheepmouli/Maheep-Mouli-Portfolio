@@ -34,7 +34,7 @@ const About = () => {
           {/* Section Header */}
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
-              {t('about.title')} <span className="kinetic-text">Maheep</span>
+              About <span className="kinetic-text">Maheep</span>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
               {t('about.description')}

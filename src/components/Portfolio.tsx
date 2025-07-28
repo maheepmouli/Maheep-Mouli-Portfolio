@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, Eye, Edit, Trash2, Plus } from 'lucide-react';
+import { ExternalLink, Github, Eye, Edit, Trash2, Plus, BookOpen } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -313,13 +313,13 @@ Best regards,
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button 
-                  className="btn-hero"
-                  onClick={() => window.open("https://www.calameo.com/read/007995635f849de9a792d", "_blank")}
-                >
-                  <ExternalLink size={18} className="mr-2" />
-                  Digital Portfolio
-                </Button>
+                            <Button 
+              className="btn-hero"
+              onClick={() => window.open("https://www.calameo.com/read/007995635f849de9a792d", "_blank")}
+            >
+              <BookOpen size={18} className="mr-2" />
+              Digital Portfolio
+            </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 

@@ -8,6 +8,7 @@ const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [profileImage, setProfileImage] = useState('/maheep.jpg');
   const [currentDescriptor, setCurrentDescriptor] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll();
   
@@ -31,6 +32,17 @@ const Hero = () => {
     if (savedProfileImage) {
       setProfileImage(savedProfileImage);
     }
+
+    // Mouse tracking for dynamic background
+    const handleMouseMove = (e: MouseEvent) => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        setMousePosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+      }
+    };
 
     // GSAP animations for background elements
     gsap.fromTo('.floating-element', 
@@ -59,7 +71,12 @@ const Hero = () => {
       setCurrentDescriptor((prev) => (prev + 1) % descriptors.length);
     }, 2000);
 
-    return () => clearInterval(interval);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, [descriptors.length]);
 
   const textVariants = {
@@ -70,7 +87,7 @@ const Hero = () => {
       transition: {
         delay: i * 0.1,
         duration: 0.8,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     })
   };
@@ -82,7 +99,7 @@ const Hero = () => {
       opacity: 1,
       transition: {
         duration: 1,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     }
   };
@@ -94,48 +111,112 @@ const Hero = () => {
       className="relative h-screen flex items-center justify-center text-center overflow-hidden"
       style={{ y, opacity }}
     >
-      {/* Enhanced Background Pattern */}
-      <div className="absolute inset-0 gradient-bg bg-gradient-to-br from-background via-background to-muted/20"></div>
+      {/* Enhanced Dynamic Background */}
+      <div className="absolute inset-0 gradient-bg bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Mouse-following radial gradient */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`
+          }}
+        />
+      </div>
       
-      {/* Animated Background Elements */}
+      {/* Enhanced Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* Large floating blobs */}
         <motion.div 
-          className="floating-element absolute top-20 left-20 w-32 h-32 bg-primary/10 rounded-full blur-3xl"
+          className="floating-element absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl"
           animate={{ 
             scale: [1, 1.2, 1],
-            rotate: [0, 180, 360]
+            rotate: [0, 180, 360],
+            x: [0, 30, 0],
+            y: [0, -30, 0]
           }}
           transition={{ 
-            duration: 8, 
+            duration: 20, 
             repeat: -1, 
             ease: "linear" 
           }}
         />
         <motion.div 
-          className="floating-element absolute bottom-20 right-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl"
+          className="floating-element absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"
           animate={{ 
             scale: [1.2, 1, 1.2],
-            rotate: [360, 180, 0]
+            rotate: [360, 180, 0],
+            x: [0, -20, 0],
+            y: [0, 40, 0]
           }}
           transition={{ 
-            duration: 10, 
+            duration: 25, 
             repeat: -1, 
             ease: "linear" 
           }}
         />
         <motion.div 
-          className="floating-element absolute top-1/2 left-1/4 w-24 h-24 bg-highlight/20 rounded-full blur-2xl"
+          className="floating-element absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-full blur-2xl"
           animate={{ 
             y: [-10, 10, -10],
-            x: [-5, 5, -5]
+            x: [-5, 5, -5],
+            scale: [1, 1.1, 1]
           }}
           transition={{ 
-            duration: 6, 
+            duration: 15, 
+            repeat: -1, 
+            ease: "easeInOut" 
+          }}
+        />
+
+        {/* Additional floating elements */}
+        <motion.div 
+          className="absolute top-1/4 right-1/4 w-32 h-32 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full blur-2xl"
+          animate={{ 
+            rotate: [0, 360],
+            scale: [1, 1.3, 1]
+          }}
+          transition={{ 
+            duration: 12, 
+            repeat: -1, 
+            ease: "linear" 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-1/3 left-1/3 w-48 h-48 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-full blur-2xl"
+          animate={{ 
+            y: [0, -20, 0],
+            rotate: [360, 0]
+          }}
+          transition={{ 
+            duration: 18, 
             repeat: -1, 
             ease: "easeInOut" 
           }}
         />
       </div>
+
+      {/* Particle System */}
+      {Array.from({ length: 15 }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-blue-400/40 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -100, 0],
+            x: [0, Math.sin(i) * 30, 0],
+            opacity: [0, 1, 0],
+            scale: [0, 1, 0],
+          }}
+          transition={{
+            duration: 4 + i * 0.3,
+            repeat: -1,
+            delay: i * 0.2,
+            ease: "easeInOut" as const
+          }}
+        />
+      ))}
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6">
@@ -279,37 +360,35 @@ const Hero = () => {
           </motion.div>
         </motion.div>
 
-        {/* Enhanced Scroll Indicator - Removed */}
-        {/* <motion.div 
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: -1, ease: "easeInOut" }}
+        {/* Enhanced Floating Elements */}
+        <motion.div 
+          className="absolute top-1/4 right-10 hidden lg:block"
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 3, repeat: -1, ease: "easeInOut" }}
         >
-          <ArrowDown className="w-6 h-6 text-muted-foreground" />
-        </motion.div> */}
+          <div className="w-2 h-2 bg-primary rounded-full"></div>
+        </motion.div>
+        <motion.div 
+          className="absolute bottom-1/4 left-10 hidden lg:block"
+          animate={{ 
+            scale: [1.5, 1, 1.5],
+            opacity: [1, 0.5, 1]
+          }}
+          transition={{ duration: 4, repeat: -1, ease: "easeInOut" }}
+        >
+          <div className="w-3 h-3 bg-accent rounded-full"></div>
+        </motion.div>
       </div>
 
-      {/* Enhanced Floating Elements */}
-      <motion.div 
-        className="absolute top-1/4 right-10 hidden lg:block"
-        animate={{ 
-          scale: [1, 1.5, 1],
-          opacity: [0.5, 1, 0.5]
-        }}
-        transition={{ duration: 3, repeat: -1, ease: "easeInOut" }}
-      >
-        <div className="w-2 h-2 bg-primary rounded-full"></div>
-      </motion.div>
-      <motion.div 
-        className="absolute bottom-1/4 left-10 hidden lg:block"
-        animate={{ 
-          scale: [1.5, 1, 1.5],
-          opacity: [1, 0.5, 1]
-        }}
-        transition={{ duration: 4, repeat: -1, ease: "easeInOut" }}
-      >
-        <div className="w-3 h-3 bg-accent rounded-full"></div>
-      </motion.div>
+      {/* Noise Texture Overlay */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="w-full h-full" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }} />
+      </div>
     </motion.section>
   );
 };

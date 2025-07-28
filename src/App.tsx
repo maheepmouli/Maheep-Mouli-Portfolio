@@ -27,26 +27,29 @@ import BlogEdit from "./pages/blog/edit/[slug]";
 import PortfolioCreate from "./pages/portfolio/create";
 import PortfolioEdit from "./pages/portfolio/edit/[id]";
 
-// Page transition variants
+// Enhanced page transition variants
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 20
+    y: 30,
+    scale: 0.98
   },
   in: {
     opacity: 1,
-    y: 0
+    y: 0,
+    scale: 1
   },
   out: {
     opacity: 0,
-    y: -20
+    y: -30,
+    scale: 0.98
   }
 };
 
 const pageTransition = {
   type: "tween" as const,
-  ease: "anticipate" as const,
-  duration: 0.4
+  ease: [0.25, 0.46, 0.45, 0.94] as const,
+  duration: 0.6
 };
 
 // Animated Routes Component

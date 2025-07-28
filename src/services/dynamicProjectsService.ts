@@ -7,7 +7,7 @@ export interface DynamicProject {
   description: string;
   content: string;
   image_url: string;
-  status: 'draft' | 'published' | 'Live Demo' | 'Case Study' | 'Built' | 'Research' | 'Completed' | 'Development';
+  status: 'draft' | 'published' | 'Live Demo' | 'Case Study' | 'Built' | 'Research' | 'Completed' | 'Development' | 'Demo en Vivo' | 'Demo en Viu' | 'Estudio de Caso' | 'Estudi de Cas' | 'Construido' | 'Construït' | 'Investigación' | 'Recerca';
   featured: boolean;
   project_url?: string;
   github_url?: string;
@@ -38,7 +38,6 @@ export interface ProjectTranslation {
 }
 
 const STORAGE_KEY = 'dynamic_portfolio_projects';
-const TRANSLATIONS_STORAGE_KEY = 'dynamic_project_translations';
 
 // Initialize with sample data if no projects exist
 const initializeSampleData = (): DynamicProject[] => [
@@ -246,19 +245,34 @@ const initializeSampleData = (): DynamicProject[] => [
 
 // Database-like functions
 export const dynamicProjectsService = {
+  // Clear all data (for debugging)
+  clearAllData: () => {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('Cleared all project data');
+  },
+
   // Get all projects
   getAllProjects: (): DynamicProject[] => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      console.log('Stored projects:', stored);
+      
       if (!stored) {
+        console.log('No stored projects found, initializing with sample data');
         const initialData = initializeSampleData();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
         return initialData;
       }
-      return JSON.parse(stored);
+      
+      const parsed = JSON.parse(stored);
+      console.log('Parsed projects:', parsed);
+      return parsed;
     } catch (error) {
       console.error('Error loading projects:', error);
-      return initializeSampleData();
+      // Fallback to sample data if there's an error
+      const initialData = initializeSampleData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+      return initialData;
     }
   },
 
@@ -353,7 +367,9 @@ export const useDynamicTranslatedProjects = () => {
   const { language } = useLanguage();
 
   const getTranslatedProjects = (): DynamicProject[] => {
+    console.log('Getting translated projects for language:', language);
     const projects = dynamicProjectsService.getAllProjects();
+    console.log('All projects:', projects);
     
     return projects.map(project => {
       // If project has translations for current language, use them

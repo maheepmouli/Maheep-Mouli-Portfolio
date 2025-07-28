@@ -8,7 +8,7 @@ import { Eye, Edit, Trash2, BookOpen, Plus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDynamicTranslatedProjects, DynamicProject } from '@/services/dynamicProjectsService';
+import { useDynamicTranslatedProjects, DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
@@ -25,8 +25,10 @@ const Portfolio = () => {
   const loadProjects = useCallback(() => {
     setIsLoading(true);
     try {
+      console.log('Loading projects...');
       const allProjects = getTranslatedProjects();
       console.log('Loaded dynamic projects:', allProjects);
+      console.log('Projects length:', allProjects.length);
       setProjects(allProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -75,6 +77,15 @@ Best regards,
 [Your name]`);
     
     window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const handleDebugReset = () => {
+    dynamicProjectsService.clearAllData();
+    loadProjects();
+    toast({
+      title: "Debug Reset",
+      description: "Project data has been reset and reinitialized.",
+    });
   };
 
   const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
@@ -227,6 +238,13 @@ Best regards,
                   {t('portfolio.addNewProject')}
                 </Button>
               </Link>
+              <Button 
+                variant="outline" 
+                onClick={handleDebugReset}
+                className="ml-4"
+              >
+                Debug Reset
+              </Button>
             </motion.div>
           )}
         </motion.div>

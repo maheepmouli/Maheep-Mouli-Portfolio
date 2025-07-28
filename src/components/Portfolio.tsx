@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,19 @@ const Portfolio = () => {
   const [projects, setProjects] = useState<TranslatedProject[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { getTranslatedProjects } = useTranslatedProjects();
   
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
-  useEffect(() => {
-    const loadProjects = () => {
-      const allProjects = getTranslatedProjects();
-      setProjects(allProjects);
-    };
-    loadProjects();
+  const loadProjects = useCallback(() => {
+    const allProjects = getTranslatedProjects();
+    setProjects(allProjects);
   }, [getTranslatedProjects]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects, language]);
 
   const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
   const featuredProjects = projects.filter(project => project.featured);

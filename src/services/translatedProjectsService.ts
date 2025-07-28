@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCallback } from 'react';
 
 export interface TranslatedProject {
   id: string;
@@ -238,7 +239,7 @@ const baseProjects = [
 export const useTranslatedProjects = () => {
   const { language } = useLanguage();
   
-  const getTranslatedProjects = (): TranslatedProject[] => {
+  const getTranslatedProjects = useCallback((): TranslatedProject[] => {
     return baseProjects.map(baseProject => {
       const translations = projectTranslations[language as keyof typeof projectTranslations] || projectTranslations.en;
       const projectTranslation = translations[baseProject.id as keyof typeof translations];
@@ -259,7 +260,7 @@ export const useTranslatedProjects = () => {
         ...projectTranslation
       } as TranslatedProject;
     });
-  };
+  }, [language]);
   
   return { getTranslatedProjects };
 }; 

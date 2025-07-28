@@ -75,8 +75,68 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
 
   const fetchProject = async () => {
     try {
+      console.log('ProjectForm: Fetching project with ID:', projectId);
       const project = projectsService.getProjectById(projectId!);
+      console.log('ProjectForm: Retrieved project:', project);
+      
       if (!project) {
+        console.log('ProjectForm: Project not found in projectsService, checking dynamicProjectsService...');
+        const dynamicProject = dynamicProjectsService.getProjectById(projectId!);
+        console.log('ProjectForm: Retrieved from dynamicProjectsService:', dynamicProject);
+        
+        if (dynamicProject) {
+          // Convert dynamic project to regular project format
+          const regularProject = {
+            id: dynamicProject.id,
+            title: dynamicProject.title,
+            subtitle: dynamicProject.subtitle,
+            description: dynamicProject.description,
+            content: dynamicProject.content,
+            image_url: dynamicProject.image_url,
+            status: dynamicProject.status,
+            featured: dynamicProject.featured,
+            project_url: dynamicProject.project_url,
+            github_url: dynamicProject.github_url,
+            location: dynamicProject.location,
+            duration: dynamicProject.duration,
+            team_size: dynamicProject.team_size,
+            technologies: dynamicProject.technologies,
+            tags: dynamicProject.tags,
+            videos: dynamicProject.videos || [],
+            created_at: dynamicProject.created_at,
+            updated_at: dynamicProject.updated_at
+          };
+          
+          setFormData({
+            title: regularProject.title || '',
+            subtitle: regularProject.subtitle || '',
+            description: regularProject.description || '',
+            content: regularProject.content || '',
+            image_url: regularProject.image_url || '',
+            tags: regularProject.tags || [],
+            status: (regularProject.status as any) || 'draft',
+            featured: regularProject.featured || false,
+            project_url: regularProject.project_url || '',
+            github_url: regularProject.github_url || '',
+            location: regularProject.location || '',
+            duration: regularProject.duration || '',
+            team_size: regularProject.team_size || '',
+            technologies: regularProject.technologies || [],
+            videos: (regularProject.videos || []) as any
+          });
+          
+          // Fetch project images
+          try {
+            const images = projectsService.getProjectImages(projectId!);
+            console.log('ProjectForm: Loaded project images:', images);
+            setProjectImages(images || []);
+          } catch (error) {
+            console.error('ProjectForm: Error loading project images:', error);
+            setProjectImages([]);
+          }
+          return;
+        }
+        
         toast({
           title: "Error",
           description: "Project not found.",
@@ -107,6 +167,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       const images = projectsService.getProjectImages(projectId!);
       setProjectImages(images);
     } catch (error) {
+      console.error('ProjectForm: Error fetching project:', error);
       toast({
         title: "Error",
         description: "Failed to load project data.",
@@ -126,9 +187,37 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       };
 
       if (isEditing && projectId) {
+        console.log('ProjectForm: Updating project with ID:', projectId);
+        console.log('ProjectForm: Project data to update:', projectData);
+        
         // Update existing project
         const updatedProject = projectsService.updateProject(projectId, projectData);
+        console.log('ProjectForm: Updated project result:', updatedProject);
+        
         if (updatedProject) {
+          console.log('ProjectForm: Successfully updated project:', updatedProject);
+          
+          // Save project images with error handling
+          console.log('ProjectForm: Saving project images:', projectImages);
+          try {
+            projectImages.forEach((image, index) => {
+              if (!image.id && image.image_url) {
+                // This is a new image, add it to the service
+                projectsService.addProjectImage(projectId, {
+                  image_url: image.image_url,
+                  caption: image.caption || '',
+                  alt_text: image.alt_text || '',
+                  width: image.width || '100%',
+                  height: image.height || 'auto',
+                  sort_order: index
+                });
+              }
+            });
+          } catch (error) {
+            console.error('ProjectForm: Error saving images:', error);
+            // Don't fail the entire save if images fail
+          }
+          
           // Also update in dynamicProjectsService for portfolio sync
           const dynamicProject = {
             ...updatedProject,
@@ -138,23 +227,52 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
               ca: updatedProject
             }
           };
-          dynamicProjectsService.updateProject(projectId, dynamicProject);
+          console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
+          const syncResult = dynamicProjectsService.updateProject(projectId, dynamicProject);
+          console.log('ProjectForm: Sync result:', syncResult);
+          
+          // Verify the project exists in both services
+          const verifyDynamic = dynamicProjectsService.getProjectById(projectId);
+          const verifyRegular = projectsService.getProjectById(projectId);
+          console.log('ProjectForm: Verification - Dynamic service:', verifyDynamic ? 'Found' : 'Not found');
+          console.log('ProjectForm: Verification - Regular service:', verifyRegular ? 'Found' : 'Not found');
+          
+          // Check localStorage directly
+          const dynamicStorage = localStorage.getItem('dynamic_portfolio_projects');
+          const regularStorage = localStorage.getItem('portfolio_projects');
+          console.log('ProjectForm: localStorage - Dynamic:', dynamicStorage ? 'Has data' : 'Empty');
+          console.log('ProjectForm: localStorage - Regular:', regularStorage ? 'Has data' : 'Empty');
           
           toast({
             title: "✅ Project Updated!",
             description: "Your project has been successfully updated and is now live.",
           });
           
-          // Show success message for 2 seconds before redirecting
+          // Trigger custom event to notify Portfolio component
+          window.dispatchEvent(new CustomEvent('portfolio-updated', {
+            detail: { projectId: projectId, action: 'updated' }
+          }));
+          
+          // Show success message and redirect immediately
+          toast({
+            title: "✅ Project Updated!",
+            description: "Redirecting to project details...",
+          });
+          
+          // Redirect to the updated project immediately
           setTimeout(() => {
-            onSuccess?.();
-          }, 2000);
+            window.location.href = `/portfolio/${projectId}`;
+          }, 1000);
         } else {
           throw new Error("Failed to update project");
         }
       } else {
+        console.log('ProjectForm: Creating new project');
+        console.log('ProjectForm: Project data to create:', projectData);
+        
         // Create new project
         const newProject = projectsService.createProject(projectData);
+        console.log('ProjectForm: Created project result:', newProject);
         
         // Also create in dynamicProjectsService for portfolio sync
         const dynamicProject = {
@@ -165,17 +283,50 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             ca: newProject
           }
         };
-        dynamicProjectsService.createProject(dynamicProject);
+        console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
+        const syncResult = dynamicProjectsService.createProject(dynamicProject);
+        console.log('ProjectForm: Sync result:', syncResult);
+        
+        // Save project images for new project with error handling
+        console.log('ProjectForm: Saving project images for new project:', projectImages);
+        try {
+          projectImages.forEach((image, index) => {
+            if (image.image_url) {
+              projectsService.addProjectImage(newProject.id, {
+                image_url: image.image_url,
+                caption: image.caption || '',
+                alt_text: image.alt_text || '',
+                width: image.width || '100%',
+                height: image.height || 'auto',
+                sort_order: index
+              });
+            }
+          });
+        } catch (error) {
+          console.error('ProjectForm: Error saving images for new project:', error);
+          // Don't fail the entire save if images fail
+        }
         
         toast({
           title: "🎉 Project Created!",
           description: "Your new project has been successfully created and is now live.",
         });
         
-        // Show success message for 2 seconds before redirecting
+        // Trigger custom event to notify Portfolio component
+        window.dispatchEvent(new CustomEvent('portfolio-updated', {
+          detail: { projectId: newProject.id, action: 'created' }
+        }));
+        
+        // Show success message and redirect immediately
+        toast({
+          title: "🎉 Project Created!",
+          description: "Redirecting to project details...",
+        });
+        
+        // Redirect to the new project immediately
         setTimeout(() => {
-          onSuccess?.();
-        }, 2000);
+          window.location.href = `/portfolio/${newProject.id}`;
+        }, 1000);
       }
     } catch (error) {
       toast({
@@ -512,10 +663,22 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           <CardTitle>Project Images</CardTitle>
         </CardHeader>
         <CardContent>
-          <ImageManager
-            images={projectImages}
-            onImagesChange={(images) => setProjectImages(images as any)}
-          />
+                        <ImageManager
+                images={projectImages}
+                onImagesChange={(images) => {
+                  try {
+                    console.log('ProjectForm: Images changed:', images);
+                    setProjectImages(images as any);
+                  } catch (error) {
+                    console.error('ProjectForm: Error updating project images:', error);
+                    toast({
+                      title: "Error updating images",
+                      description: "Failed to update image list. Please try again.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+              />
         </CardContent>
       </Card>
 

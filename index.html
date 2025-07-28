@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     
     <!-- Primary Meta Tags -->
     <title>Maheep Mouli Shashi - Computational Designer & Urban Technologist</title>
@@ -87,5 +88,11 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Prevent quirks mode -->
+    <script>
+      if (document.compatMode === 'BackCompat') {
+        console.warn('Quirks mode detected. This may cause layout issues.');
+      }
+    </script>
   </body>
 </html> 

@@ -5,6 +5,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Pages
 import Index from "./pages/Index";
@@ -209,16 +210,18 @@ const App = () => {
   }, []);
 
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 };
 

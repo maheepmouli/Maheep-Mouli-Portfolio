@@ -37,6 +37,9 @@ interface ImageManagerProps {
 }
 
 const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
+  // Safety check for images array
+  const safeImages = Array.isArray(images) ? images : [];
+  
   const [newImage, setNewImage] = useState({
     image_url: '',
     caption: '',
@@ -54,12 +57,12 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     if (newImage.image_url.trim()) {
       const image: ProjectImage = {
         ...newImage,
-        sort_order: images.length,
+        sort_order: safeImages.length,
         width: newImage.width || '100%',
         height: newImage.height || 'auto'
       };
       
-      onImagesChange([...images, image]);
+      onImagesChange([...safeImages, image]);
       setNewImage({
         image_url: '',
         caption: '',
@@ -76,33 +79,89 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
   };
 
   const removeImage = (index: number) => {
-    const updatedImages = images.filter((_, i) => i !== index);
-    onImagesChange(updatedImages);
-    toast({
-      title: "Image removed",
-      description: "Image has been removed from your project."
-    });
+    try {
+      console.log('ImageManager: Removing image at index:', index);
+      const updatedImages = safeImages.filter((_, i) => i !== index);
+      onImagesChange(updatedImages);
+      toast({
+        title: "Image removed",
+        description: "Image has been removed from your project."
+      });
+    } catch (error) {
+      console.error('ImageManager: Error removing image:', error);
+      toast({
+        title: "Error removing image",
+        description: "Failed to remove image. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateImage = (index: number, updates: Partial<ProjectImage>) => {
-    const updatedImages = images.map((image, i) => 
-      i === index ? { ...image, ...updates } : image
-    );
-    onImagesChange(updatedImages);
-    setEditingImage(null);
+    try {
+      console.log('ImageManager: Updating image at index:', index, 'with updates:', updates);
+      const updatedImages = safeImages.map((image, i) => 
+        i === index ? { ...image, ...updates } : image
+      );
+      onImagesChange(updatedImages);
+      setEditingImage(null);
+    } catch (error) {
+      console.error('ImageManager: Error updating image:', error);
+      toast({
+        title: "Error updating image",
+        description: "Failed to update image. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const moveImage = (fromIndex: number, toIndex: number) => {
-    const updatedImages = [...images];
-    const [movedImage] = updatedImages.splice(fromIndex, 1);
-    updatedImages.splice(toIndex, 0, movedImage);
-    
-    // Update sort_order
-    updatedImages.forEach((image, index) => {
-      image.sort_order = index;
-    });
-    
-    onImagesChange(updatedImages);
+    try {
+      console.log('ImageManager: Moving image from', fromIndex, 'to', toIndex);
+      
+      // Validate indices
+      if (fromIndex < 0 || fromIndex >= safeImages.length || 
+          toIndex < 0 || toIndex >= safeImages.length) {
+        console.error('ImageManager: Invalid indices for move operation');
+        toast({
+          title: "Invalid operation",
+          description: "Cannot move image to that position.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const updatedImages = [...safeImages];
+      const [movedImage] = updatedImages.splice(fromIndex, 1);
+      updatedImages.splice(toIndex, 0, movedImage);
+      
+      // Update sort_order with proper error handling
+      updatedImages.forEach((image, index) => {
+        try {
+          if (image && typeof image === 'object') {
+            image.sort_order = index;
+          }
+        } catch (error) {
+          console.error('ImageManager: Error updating sort_order for image:', error);
+        }
+      });
+      
+      console.log('ImageManager: Updated images after move:', updatedImages);
+      onImagesChange(updatedImages);
+      
+      toast({
+        title: "Image moved",
+        description: "Image position has been updated."
+      });
+    } catch (error) {
+      console.error('ImageManager: Error moving image:', error);
+      // Don't let image errors affect the session
+      toast({
+        title: "Error moving image",
+        description: "Failed to rearrange image. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const copyImageUrl = (url: string) => {
@@ -140,46 +199,84 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
   };
 
   const handleFileUpload = (files: FileList | File[]) => {
-    setIsUploading(true);
-    const fileArray = Array.from(files);
-    const imageFiles = fileArray.filter(file => file.type.startsWith('image/'));
-    
-    if (imageFiles.length === 0) {
+    try {
+      setIsUploading(true);
+      const fileArray = Array.from(files);
+      const imageFiles = fileArray.filter(file => file.type.startsWith('image/'));
+      
+      console.log('ImageManager: Processing', imageFiles.length, 'image files');
+      
+      if (imageFiles.length === 0) {
+        toast({
+          title: "No image files",
+          description: "Please select only image files (JPG, PNG, GIF, etc.).",
+          variant: "destructive"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Process all images first, then add them all at once
+      const newImages: ProjectImage[] = [];
+      let processedCount = 0;
+      
+      imageFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const imageUrl = e.target?.result as string;
+            const image: ProjectImage = {
+              image_url: imageUrl,
+              caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+              alt_text: file.name,
+              sort_order: safeImages.length + index,
+              width: '100%',
+              height: 'auto',
+              file: file
+            };
+            
+            newImages.push(image);
+            processedCount++;
+            
+            // When all images are processed, add them to the list
+            if (processedCount === imageFiles.length) {
+              console.log('ImageManager: Adding', newImages.length, 'new images');
+              onImagesChange([...safeImages, ...newImages]);
+              
+              toast({
+                title: "Images uploaded",
+                description: `${newImages.length} image(s) have been added to your project.`
+              });
+              setIsUploading(false);
+            }
+          } catch (error) {
+            console.error('ImageManager: Error processing image:', error);
+            processedCount++;
+            if (processedCount === imageFiles.length) {
+              setIsUploading(false);
+            }
+          }
+        };
+        
+        reader.onerror = () => {
+          console.error('ImageManager: Error reading file:', file.name);
+          processedCount++;
+          if (processedCount === imageFiles.length) {
+            setIsUploading(false);
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error('ImageManager: Error in handleFileUpload:', error);
       toast({
-        title: "No image files",
-        description: "Please select only image files (JPG, PNG, GIF, etc.).",
+        title: "Upload error",
+        description: "Failed to upload images. Please try again.",
         variant: "destructive"
       });
       setIsUploading(false);
-      return;
     }
-
-    // Process each image file
-    imageFiles.forEach((file, index) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        const image: ProjectImage = {
-          image_url: imageUrl,
-          caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
-          alt_text: file.name,
-          sort_order: images.length + index,
-          width: '100%',
-          height: 'auto',
-          file: file
-        };
-        
-        onImagesChange([...images, image]);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    toast({
-      title: "Images uploaded",
-      description: `${imageFiles.length} image(s) have been added to your project.`
-    });
-    
-    setIsUploading(false);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,7 +343,7 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                   disabled={isUploading}
                 >
                   <FileImage size={16} className="mr-2" />
-                  {isUploading ? 'Uploading...' : 'Choose Files'}
+                  {isUploading ? 'Processing Images...' : 'Choose Files'}
                 </Button>
                 <Button 
                   type="button" 
@@ -261,6 +358,12 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
             <p className="text-xs text-muted-foreground">
               Supports: JPG, PNG, GIF, WebP (Max 10MB per file)
             </p>
+            {isUploading && (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span>Processing images...</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -368,9 +471,9 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
       {images.length > 0 && (
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Project Images ({images.length})</h3>
+                          <h3 className="text-lg font-semibold mb-4">Project Images ({safeImages.length})</h3>
             <div className="space-y-4">
-              {images.map((image, index) => (
+                              {safeImages.map((image, index) => (
                 <div key={index} className="border rounded-lg p-4">
                   <div className="flex items-start gap-4">
                     {/* Image Preview */}

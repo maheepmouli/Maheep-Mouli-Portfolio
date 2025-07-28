@@ -23,6 +23,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Load user from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('portfolio_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        console.log('Auth: Loaded user from localStorage:', userData);
+      }
+    } catch (error) {
+      console.error('Auth: Error loading user from localStorage:', error);
+      // Don't clear the session on error, just log it
+    }
+  }, []);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     // Clean the inputs - trim whitespace and convert to lowercase for email
     const cleanEmail = email.trim().toLowerCase();
@@ -52,10 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = () => {
-    setUser(null);
-    localStorage.removeItem('portfolio_user');
-    // Redirect to home page instead of login
-    window.location.href = '/';
+    try {
+      console.log('Auth: Signing out user');
+      setUser(null);
+      localStorage.removeItem('portfolio_user');
+      // Redirect to home page instead of login
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Auth: Error during sign out:', error);
+      // Even if there's an error, try to clear the user state
+      setUser(null);
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
+import { projectsService } from '@/services/projectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
@@ -23,48 +24,56 @@ const Portfolio = () => {
 
   // Load projects on mount and when language changes
   useEffect(() => {
+    console.log('Portfolio: Language changed to:', language);
     setIsLoading(true);
-    try {
-      console.log('Loading projects for language:', language);
-      
-      // Get all projects from the service
-      const allProjects = dynamicProjectsService.getAllProjects();
-      console.log('All projects from service:', allProjects);
-      
-      // If no projects exist, initialize with sample data
-      if (allProjects.length === 0) {
-        console.log('No projects found, initializing with sample data...');
-        dynamicProjectsService.clearAllData();
-        const sampleProjects = dynamicProjectsService.getAllProjects();
-        console.log('Sample projects after initialization:', sampleProjects);
-        setProjects(sampleProjects);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Apply translations immediately
-      const translatedProjects = allProjects.map(project => {
-        const translation = project.translations?.[language as keyof typeof project.translations];
-        if (translation) {
-          return { ...project, ...translation } as DynamicProject;
+    
+    const loadProjects = () => {
+      try {
+        console.log('Portfolio: Loading projects for language:', language);
+        
+        // Get all projects from the service
+        const allProjects = dynamicProjectsService.getAllProjects();
+        console.log('Portfolio: All projects from service:', allProjects);
+        
+        // If no projects exist, initialize with sample data
+        if (allProjects.length === 0) {
+          console.log('Portfolio: No projects found, initializing with sample data...');
+          dynamicProjectsService.clearAllData();
+          const sampleProjects = dynamicProjectsService.getAllProjects();
+          console.log('Portfolio: Sample projects after initialization:', sampleProjects);
+          setProjects(sampleProjects);
+          setIsLoading(false);
+          return;
         }
-        return project;
-      });
-      
-      setProjects(translatedProjects);
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      const allProjects = dynamicProjectsService.getAllProjects();
-      setProjects(allProjects);
-    } finally {
-      setIsLoading(false);
-    }
+        
+        // Apply translations immediately
+        const translatedProjects = allProjects.map(project => {
+          const translation = project.translations?.[language as keyof typeof project.translations];
+          if (translation) {
+            return { ...project, ...translation } as DynamicProject;
+          }
+          return project;
+        });
+        
+        console.log('Portfolio: Translated projects:', translatedProjects);
+        setProjects(translatedProjects);
+      } catch (error) {
+        console.error('Portfolio: Error loading projects:', error);
+        const allProjects = dynamicProjectsService.getAllProjects();
+        setProjects(allProjects);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Force reload when language changes
+    loadProjects();
   }, [language]); // Run on mount and when language changes
 
   // Listen for storage changes to reload projects when they're updated
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('Storage changed, reloading projects...');
+      console.log('Portfolio: Storage changed, reloading projects...');
       const allProjects = dynamicProjectsService.getAllProjects();
       const translatedProjects = allProjects.map(project => {
         const translation = project.translations?.[language as keyof typeof project.translations];
@@ -76,18 +85,35 @@ const Portfolio = () => {
       setProjects(translatedProjects);
     };
 
+    const handleCustomStorageChange = (event: CustomEvent) => {
+      console.log('Portfolio: Custom storage event received:', event.detail);
+      handleStorageChange();
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('portfolio-updated', handleCustomStorageChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('portfolio-updated', handleCustomStorageChange as EventListener);
+    };
   }, [language]);
 
 
 
   // Force re-render when language changes by adding a key
-  const portfolioKey = `portfolio-${language}`;
+    const portfolioKey = `portfolio-${language}`;
 
   const reloadProjects = () => {
     const allProjects = dynamicProjectsService.getAllProjects();
-    setProjects(allProjects);
+    const translatedProjects = allProjects.map(project => {
+      const translation = project.translations?.[language as keyof typeof project.translations];
+      if (translation) {
+        return { ...project, ...translation } as DynamicProject;
+      }
+      return project;
+    });
+    setProjects(translatedProjects);
   };
 
   const handleDeleteProject = (projectId: string, projectTitle: string) => {
@@ -254,7 +280,10 @@ Best regards,
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <Link to={`/portfolio/${project.id}`}>
+              <Link to={`/portfolio/${project.id || 'unknown'}`} onClick={() => {
+                console.log('Portfolio: Clicking View Project for:', project.id, project.title);
+                console.log('Portfolio: Current URL will be:', `/portfolio/${project.id || 'unknown'}`);
+              }}>
                 <Button size="sm" className="btn-hero flex-1">
                   <Eye size={16} className="mr-2" />
                   View Project
@@ -305,21 +334,22 @@ Best regards,
               >
                 Debug Reset
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  console.log('Current language:', language);
-                  console.log('Current projects:', projects);
-                  console.log('All projects from service:', dynamicProjectsService.getAllProjects());
-                  toast({
-                    title: "Debug Info",
-                    description: `Language: ${language}, Projects: ${projects.length}`,
-                  });
-                }}
-                className="ml-2"
-              >
-                Debug Info
-              </Button>
+                              <Button
+                  variant="outline"
+                  onClick={() => {
+                    console.log('Current language:', language);
+                    console.log('Current projects:', projects);
+                    console.log('All projects from service:', dynamicProjectsService.getAllProjects());
+                    console.log('All projects from projectsService:', projectsService.getAllProjects());
+                    toast({
+                      title: "Debug Info",
+                      description: `Language: ${language}, Projects: ${projects.length}`,
+                    });
+                  }}
+                  className="ml-2"
+                >
+                  Debug Info
+                </Button>
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -332,6 +362,34 @@ Best regards,
                 className="ml-2"
               >
                 Reload
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  console.log('Portfolio: Current projects with IDs:', projects.map(p => ({ id: p.id, title: p.title })));
+                  toast({
+                    title: "Project IDs",
+                    description: `Found ${projects.length} projects`,
+                  });
+                }}
+                className="ml-2"
+              >
+                Check IDs
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  const currentUrl = window.location.href;
+                  console.log('Portfolio: Current URL:', currentUrl);
+                  console.log('Portfolio: Available routes:', projects.map(p => `/portfolio/${p.id}`));
+                  toast({
+                    title: "Routing Debug",
+                    description: `Current: ${currentUrl}`,
+                  });
+                }}
+                className="ml-2"
+              >
+                Debug Routes
               </Button>
             </motion.div>
           )}

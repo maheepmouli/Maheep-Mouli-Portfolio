@@ -6,9 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, LinkedinIcon, Send, Globe, Calendar, MessageCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Contact = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -162,10 +164,10 @@ This message was sent from your portfolio website contact form.`);
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Let's <span className="kinetic-text">Collaborate</span>
+            {t('contact.title')} <span className="kinetic-text">Collaborate</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto color-wave-text">
-            Ready to bring computational design and urban technology to your next project? Let's discuss how we can create something extraordinary together.
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -174,7 +176,7 @@ This message was sent from your portfolio website contact form.`);
             {/* Contact Information */}
             <div className="space-y-8">
               <Card className="p-8 hover-lift">
-                <h3 className="text-2xl font-bold mb-6">Get in Touch</h3>
+                <h3 className="text-2xl font-bold mb-6">{t('contact.getInTouch')}</h3>
                 <div className="space-y-6">
                   {contactInfo.map((info, index) => (
                     <div key={index} className="flex items-center gap-4">
@@ -204,7 +206,7 @@ This message was sent from your portfolio website contact form.`);
                 <div className="flex items-start gap-4 mb-4">
                   <Globe className="text-primary mt-1" size={24} />
                   <div>
-                    <h4 className="text-lg font-bold mb-2">Availability</h4>
+                    <h4 className="text-lg font-bold mb-2">{t('contact.availability')}</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-primary" />
@@ -252,7 +254,7 @@ This message was sent from your portfolio website contact form.`);
 
             {/* Contact Form */}
             <Card className="p-8 hover-lift">
-              <h3 className="text-2xl font-bold mb-6">Send a Message</h3>
+                              <h3 className="text-2xl font-bold mb-6">{t('contact.sendMessage')}</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>

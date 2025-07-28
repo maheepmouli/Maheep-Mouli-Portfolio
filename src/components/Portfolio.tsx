@@ -8,12 +8,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { projectsService, Project } from '@/services/projectsService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Portfolio = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [projects, setProjects] = useState<Project[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
@@ -210,9 +212,9 @@ Best regards,
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6"> My <span className="kinetic-text">Portfolio</span> </h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6"> {t('portfolio.title')} <span className="kinetic-text">Portfolio</span> </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Exploring the intersection of computational design, urban technology, and AI-driven solutions
+            {t('portfolio.subtitle')}
           </p>
           
           {user && (
@@ -226,7 +228,7 @@ Best regards,
               <Link to="/portfolio/create">
                 <Button className="btn-hero">
                   <Plus size={18} className="mr-2" />
-                  Add New Project
+                  {t('portfolio.addNewProject')}
                 </Button>
               </Link>
             </motion.div>
@@ -243,7 +245,7 @@ Best regards,
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Featured Projects
+              {t('portfolio.featuredProjects')}
             </motion.h3>
             <motion.div 
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -313,13 +315,13 @@ Best regards,
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button 
-              className="btn-hero"
-              onClick={() => window.open("https://www.calameo.com/read/007995635f849de9a792d", "_blank")}
-            >
-              <BookOpen size={18} className="mr-2" />
-              Digital Portfolio
-            </Button>
+                                              <Button 
+                    className="btn-hero"
+                    onClick={() => window.open("https://www.calameo.com/read/007995635f849de9a792d", "_blank")}
+                  >
+                    <BookOpen size={18} className="mr-2" />
+                    {t('portfolio.digitalPortfolio')}
+                  </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 

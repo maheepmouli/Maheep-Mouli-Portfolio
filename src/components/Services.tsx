@@ -12,8 +12,11 @@ import {
   Database,
   Monitor
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Services = () => {
+  const { t } = useLanguage();
+  
   const services = [
     {
       id: 1,
@@ -119,10 +122,10 @@ const Services = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="kinetic-text">Services</span> & Expertise
+            <span className="kinetic-text">{t('services.title')}</span> & Expertise
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Comprehensive design and technology solutions for the built environment
+            {t('services.subtitle')}
           </p>
         </div>
 

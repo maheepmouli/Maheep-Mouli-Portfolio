@@ -384,7 +384,7 @@ const ProjectDetail = () => {
                   {project.videos.map((video, index) => (
                     <motion.div 
                       key={index}
-                      className="space-y-2"
+                      className="space-y-3"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.7 + index * 0.1 }}
@@ -420,7 +420,18 @@ const ProjectDetail = () => {
                           </>
                         )}
                       </div>
+                      
+                      {/* Video Embed */}
                       {renderVideoEmbed(typeof video === 'string' ? video : (video as any).url)}
+                      
+                      {/* Video Description */}
+                      {(video as any).description && (
+                        <div className="mt-3 p-3 bg-muted/20 rounded-lg">
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {(video as any).description}
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -490,12 +501,14 @@ const ProjectDetail = () => {
                 className="prose prose-lg max-w-none"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.9 }}
               >
                 <h3 className="text-xl font-semibold mb-4">Project Details</h3>
                 <div 
-                  className="text-muted-foreground leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: project.content }}
+                  className="text-muted-foreground leading-relaxed whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ 
+                    __html: project.content.replace(/\n/g, '<br>') 
+                  }}
                 />
               </motion.div>
             )}

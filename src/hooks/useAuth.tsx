@@ -23,18 +23,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount with session timeout
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('portfolio_user');
-      if (storedUser) {
+      const lastLogin = localStorage.getItem('portfolio_last_login');
+      
+      if (storedUser && lastLogin) {
+        const loginTime = new Date(lastLogin).getTime();
+        const currentTime = new Date().getTime();
+        const sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours
+        
+        // Check if session has expired
+        if (currentTime - loginTime > sessionTimeout) {
+          console.log('Auth: Session expired, clearing user data');
+          localStorage.removeItem('portfolio_user');
+          localStorage.removeItem('portfolio_last_login');
+          setUser(null);
+          return;
+        }
+        
         const userData = JSON.parse(storedUser);
         setUser(userData);
         console.log('Auth: Loaded user from localStorage:', userData);
       }
     } catch (error) {
       console.error('Auth: Error loading user from localStorage:', error);
-      // Don't clear the session on error, just log it
+      // Clear corrupted data
+      localStorage.removeItem('portfolio_user');
+      localStorage.removeItem('portfolio_last_login');
+      setUser(null);
     }
   }, []);
 
@@ -59,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(userData);
       localStorage.setItem('portfolio_user', JSON.stringify(userData));
+      localStorage.setItem('portfolio_last_login', new Date().toISOString());
       return true;
     }
     
@@ -71,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Auth: Signing out user');
       setUser(null);
       localStorage.removeItem('portfolio_user');
+      localStorage.removeItem('portfolio_last_login');
       // Redirect to home page instead of login
       window.location.href = '/';
     } catch (error) {

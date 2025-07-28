@@ -198,6 +198,44 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     });
   };
 
+  // Function to compress image
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 800px width/height)
+        const maxSize = 800;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 with reduced quality
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressedDataUrl);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileUpload = (files: FileList | File[]) => {
     try {
       setIsUploading(true);
@@ -220,53 +258,42 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
       const newImages: ProjectImage[] = [];
       let processedCount = 0;
       
-      imageFiles.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const imageUrl = e.target?.result as string;
-            const image: ProjectImage = {
-              image_url: imageUrl,
-              caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
-              alt_text: file.name,
-              sort_order: safeImages.length + index,
-              width: '100%',
-              height: 'auto',
-              file: file
-            };
+      imageFiles.forEach(async (file, index) => {
+        try {
+          // Compress the image before processing
+          const compressedImageUrl = await compressImage(file);
+          
+          const image: ProjectImage = {
+            image_url: compressedImageUrl,
+            caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+            alt_text: file.name,
+            sort_order: safeImages.length + index,
+            width: '100%',
+            height: 'auto',
+            file: file
+          };
+          
+          newImages.push(image);
+          processedCount++;
+          
+          // When all images are processed, add them to the list
+          if (processedCount === imageFiles.length) {
+            console.log('ImageManager: Adding', newImages.length, 'new images');
+            onImagesChange([...safeImages, ...newImages]);
             
-            newImages.push(image);
-            processedCount++;
-            
-            // When all images are processed, add them to the list
-            if (processedCount === imageFiles.length) {
-              console.log('ImageManager: Adding', newImages.length, 'new images');
-              onImagesChange([...safeImages, ...newImages]);
-              
-              toast({
-                title: "Images uploaded",
-                description: `${newImages.length} image(s) have been added to your project.`
-              });
-              setIsUploading(false);
-            }
-          } catch (error) {
-            console.error('ImageManager: Error processing image:', error);
-            processedCount++;
-            if (processedCount === imageFiles.length) {
-              setIsUploading(false);
-            }
+            toast({
+              title: "Images uploaded",
+              description: `${newImages.length} image(s) have been added to your project.`
+            });
+            setIsUploading(false);
           }
-        };
-        
-        reader.onerror = () => {
-          console.error('ImageManager: Error reading file:', file.name);
+        } catch (error) {
+          console.error('ImageManager: Error processing image:', error);
           processedCount++;
           if (processedCount === imageFiles.length) {
             setIsUploading(false);
           }
-        };
-        
-        reader.readAsDataURL(file);
+        }
       });
     } catch (error) {
       console.error('ImageManager: Error in handleFileUpload:', error);

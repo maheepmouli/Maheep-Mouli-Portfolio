@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { googleDriveService } from './googleDriveService';
 
 export interface DynamicProject {
   id: string;
@@ -39,6 +40,7 @@ export interface ProjectTranslation {
 }
 
 const STORAGE_KEY = 'dynamic_portfolio_projects';
+const DRIVE_BACKUP_KEY = 'dynamic_portfolio_drive_backup';
 
 // Initialize with sample data if no projects exist
 const initializeSampleData = (): DynamicProject[] => [
@@ -284,7 +286,7 @@ export const dynamicProjectsService = {
   },
 
   // Create new project
-  createProject: (projectData: Omit<DynamicProject, 'id' | 'created_at' | 'updated_at'>): DynamicProject => {
+  createProject: async (projectData: Omit<DynamicProject, 'id' | 'created_at' | 'updated_at'>): Promise<DynamicProject> => {
     const projects = dynamicProjectsService.getAllProjects();
     const newProject: DynamicProject = {
       ...projectData,
@@ -294,12 +296,58 @@ export const dynamicProjectsService = {
     };
     
     projects.push(newProject);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    } catch (error) {
+      console.error('Storage quota exceeded during project creation. Attempting to clean up...');
+      
+      // Try to clean up by removing old projects or large images
+      const cleanedProjects = projects.map(project => {
+        // Remove base64 images that are too large (keep only URLs)
+        if (project.image_url && project.image_url.startsWith('data:')) {
+          return {
+            ...project,
+            image_url: '' // Remove large base64 image
+          };
+        }
+        return project;
+      });
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedProjects));
+        console.log('Successfully saved after cleanup');
+      } catch (cleanupError) {
+        console.error('Still cannot save after cleanup:', cleanupError);
+        // As a last resort, try to save only essential data
+        const minimalProjects = cleanedProjects.map(project => ({
+          id: project.id,
+          title: project.title,
+          subtitle: project.subtitle,
+          description: project.description,
+          status: project.status,
+          featured: project.featured,
+          technologies: project.technologies,
+          tags: project.tags,
+          created_at: project.created_at,
+          updated_at: project.updated_at
+        }));
+        
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalProjects));
+          console.log('Saved minimal project data');
+        } catch (finalError) {
+          console.error('Cannot save even minimal data:', finalError);
+          throw new Error('Storage quota exceeded and cleanup failed');
+        }
+      }
+    }
+    
     return newProject;
   },
 
   // Update project
-  updateProject: (id: string, updates: Partial<DynamicProject>): DynamicProject | null => {
+  updateProject: async (id: string, updates: Partial<DynamicProject>): Promise<DynamicProject | null> => {
     const projects = dynamicProjectsService.getAllProjects();
     const projectIndex = projects.findIndex(p => p.id === id);
     
@@ -311,7 +359,68 @@ export const dynamicProjectsService = {
       updated_at: new Date().toISOString()
     };
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    } catch (error) {
+      console.error('Storage quota exceeded. Attempting to clean up...');
+      
+      // Try to clean up by removing old projects or large images
+      const cleanedProjects = projects.map(project => {
+        // Remove base64 images that are too large (keep only URLs)
+        if (project.image_url && project.image_url.startsWith('data:')) {
+          return {
+            ...project,
+            image_url: '' // Remove large base64 image
+          };
+        }
+        return project;
+      });
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedProjects));
+        console.log('Successfully saved after cleanup');
+      } catch (cleanupError) {
+        console.error('Still cannot save after cleanup:', cleanupError);
+        // As a last resort, try to save only essential data
+        const minimalProjects = cleanedProjects.map(project => ({
+          id: project.id,
+          title: project.title,
+          subtitle: project.subtitle,
+          description: project.description,
+          status: project.status,
+          featured: project.featured,
+          technologies: project.technologies,
+          tags: project.tags,
+          created_at: project.created_at,
+          updated_at: project.updated_at
+        }));
+        
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalProjects));
+          console.log('Saved minimal project data');
+        } catch (finalError) {
+          console.error('Cannot save even minimal data:', finalError);
+          
+          // Try Google Drive as last resort
+          if (googleDriveService.isAvailable()) {
+            try {
+              console.log('Attempting to save to Google Drive...');
+              const driveFileId = await googleDriveService.uploadProjectData(id, projects);
+              if (driveFileId) {
+                localStorage.setItem(DRIVE_BACKUP_KEY, driveFileId);
+                console.log('Successfully saved to Google Drive:', driveFileId);
+                return projects[projectIndex];
+              }
+            } catch (driveError) {
+              console.error('Google Drive upload failed:', driveError);
+            }
+          }
+          
+          throw new Error('Storage quota exceeded and all backup methods failed');
+        }
+      }
+    }
+    
     return projects[projectIndex];
   },
 
@@ -360,6 +469,29 @@ export const dynamicProjectsService = {
   getProjectsByStatus: (status: string): DynamicProject[] => {
     const projects = dynamicProjectsService.getAllProjects();
     return projects.filter(project => project.status === status);
+  },
+
+  // Clear storage and reinitialize with sample data
+  clearStorage: (): void => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      console.log('Storage cleared successfully');
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  },
+
+  // Get storage usage info
+  getStorageInfo: (): { used: number; available: number } => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const used = data ? new Blob([data]).size : 0;
+      const available = 5 * 1024 * 1024; // 5MB typical localStorage limit
+      return { used, available };
+    } catch (error) {
+      console.error('Error getting storage info:', error);
+      return { used: 0, available: 0 };
+    }
   }
 };
 

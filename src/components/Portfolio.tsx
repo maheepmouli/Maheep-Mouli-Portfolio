@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, Edit, Trash2, BookOpen, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, BookOpen, Plus, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -209,11 +209,25 @@ Best regards,
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl">
           <div className="relative overflow-hidden">
-            <img 
-              src={project.image_url} 
-              alt={project.title}
-              className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-            />
+                    <img 
+          src={project.image_url} 
+          alt={project.title}
+          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+          onError={(e) => {
+            console.log('Portfolio: Image failed to load for project:', project.title, project.image_url);
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
+          onLoad={() => {
+            console.log('Portfolio: Image loaded successfully for project:', project.title, project.image_url);
+          }}
+        />
+            <div className="hidden absolute inset-0 bg-muted flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <ImageIcon size={48} className="mx-auto mb-2" />
+                <p className="text-sm">No cover image</p>
+              </div>
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             {/* Admin Actions */}
@@ -390,6 +404,61 @@ Best regards,
                 className="ml-2"
               >
                 Debug Routes
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  console.log('Portfolio: All projects data:', projects);
+                  projects.forEach((project, index) => {
+                    console.log(`Project ${index + 1}:`, {
+                      id: project.id,
+                      title: project.title,
+                      image_url: project.image_url,
+                      hasImage: !!project.image_url,
+                      imageLength: project.image_url?.length || 0
+                    });
+                  });
+                  toast({
+                    title: "Image Debug",
+                    description: `Checked ${projects.length} projects`,
+                  });
+                }}
+                className="ml-2"
+              >
+                Check Images
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  // Reset all projects to have their original sample image URLs
+                  const allProjects = dynamicProjectsService.getAllProjects();
+                  const updatedProjects = allProjects.map(project => {
+                    if (project.id === '1') {
+                      return { ...project, image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop" };
+                    } else if (project.id === '2') {
+                      return { ...project, image_url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=600&fit=crop" };
+                    } else if (project.id === '3') {
+                      return { ...project, image_url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop" };
+                    }
+                    return project;
+                  });
+                  
+                  // Update each project
+                  updatedProjects.forEach(project => {
+                    dynamicProjectsService.updateProject(project.id, project);
+                  });
+                  
+                  // Reload projects
+                  reloadProjects();
+                  
+                  toast({
+                    title: "Reset Images",
+                    description: "All project cover images have been reset to sample URLs",
+                  });
+                }}
+                className="ml-2"
+              >
+                Reset Images
               </Button>
             </motion.div>
           )}

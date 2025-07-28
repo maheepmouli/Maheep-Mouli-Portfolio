@@ -178,9 +178,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('ProjectForm: Form submitted');
     setLoading(true);
 
     try {
+      console.log('ProjectForm: Starting form submission');
+      console.log('ProjectForm: Current form data:', formData);
+      console.log('ProjectForm: Current project images:', projectImages);
       const projectData = {
         ...formData,
         technologies: formData.technologies
@@ -221,6 +225,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           // Also update in dynamicProjectsService for portfolio sync
           const dynamicProject = {
             ...updatedProject,
+            image_url: updatedProject.image_url, // Explicitly preserve image_url
             translations: {
               en: updatedProject,
               es: updatedProject,
@@ -228,7 +233,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             }
           };
           console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
-          const syncResult = dynamicProjectsService.updateProject(projectId, dynamicProject);
+          console.log('ProjectForm: Image URL being synced:', dynamicProject.image_url);
+          const syncResult = await dynamicProjectsService.updateProject(projectId, dynamicProject);
           console.log('ProjectForm: Sync result:', syncResult);
           
           // Verify the project exists in both services
@@ -242,11 +248,6 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           const regularStorage = localStorage.getItem('portfolio_projects');
           console.log('ProjectForm: localStorage - Dynamic:', dynamicStorage ? 'Has data' : 'Empty');
           console.log('ProjectForm: localStorage - Regular:', regularStorage ? 'Has data' : 'Empty');
-          
-          toast({
-            title: "✅ Project Updated!",
-            description: "Your project has been successfully updated and is now live.",
-          });
           
           // Trigger custom event to notify Portfolio component
           window.dispatchEvent(new CustomEvent('portfolio-updated', {
@@ -277,15 +278,17 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         // Also create in dynamicProjectsService for portfolio sync
         const dynamicProject = {
           ...newProject,
+          image_url: newProject.image_url, // Explicitly preserve image_url
           translations: {
             en: newProject,
             es: newProject,
             ca: newProject
           }
         };
-        console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
-        const syncResult = dynamicProjectsService.createProject(dynamicProject);
-        console.log('ProjectForm: Sync result:', syncResult);
+                  console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
+          console.log('ProjectForm: Image URL being synced for new project:', dynamicProject.image_url);
+          const syncResult = await dynamicProjectsService.createProject(dynamicProject);
+          console.log('ProjectForm: Sync result:', syncResult);
         
         // Save project images for new project with error handling
         console.log('ProjectForm: Saving project images for new project:', projectImages);
@@ -329,12 +332,24 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         }, 1000);
       }
     } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "Failed to save project. Please try again.",
-        variant: "destructive"
-      });
+      console.error('ProjectForm: Error during form submission:', error);
+      
+      // Check if it's a storage quota error
+      if (error instanceof Error && error.message.includes('quota')) {
+        toast({
+          title: "❌ Storage Full",
+          description: "Your browser storage is full. Please clear some data or use smaller images.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "❌ Error",
+          description: "Failed to save project. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
+      console.log('ProjectForm: Form submission completed');
       setLoading(false);
     }
   };
@@ -740,7 +755,11 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={loading}>
+        <Button 
+          type="submit" 
+          disabled={loading}
+          onClick={() => console.log('ProjectForm: Submit button clicked')}
+        >
           <Save size={16} className="mr-2" />
           {loading ? 'Saving...' : (isEditing ? 'Update Project' : 'Create Project')}
         </Button>

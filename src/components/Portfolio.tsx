@@ -14,6 +14,7 @@ import { useTranslatedProjects, TranslatedProject } from '@/services/translatedP
 const Portfolio = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [projects, setProjects] = useState<TranslatedProject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -22,8 +23,16 @@ const Portfolio = () => {
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
   const loadProjects = useCallback(() => {
-    const allProjects = getTranslatedProjects();
-    setProjects(allProjects);
+    setIsLoading(true);
+    try {
+      const allProjects = getTranslatedProjects();
+      console.log('Loaded projects:', allProjects); // Debug log
+      setProjects(allProjects);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [getTranslatedProjects]);
 
   useEffect(() => {
@@ -239,7 +248,22 @@ Best regards,
         </motion.div>
 
         {/* Featured Projects */}
-        {featuredProjects.length > 0 && (
+        {isLoading ? (
+          <div className="max-w-6xl mx-auto mb-16">
+            <motion.h3 
+              className="text-3xl font-bold mb-8 text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              {t('portfolio.featuredProjects')}
+            </motion.h3>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        ) : featuredProjects.length > 0 ? (
           <div className="max-w-6xl mx-auto mb-16">
             <motion.h3 
               className="text-3xl font-bold mb-8 text-center"
@@ -262,7 +286,7 @@ Best regards,
               ))}
             </motion.div>
           </div>
-        )}
+        ) : null}
 
         {/* Project Filters */}
         <div className="max-w-6xl mx-auto mb-12">
@@ -291,17 +315,27 @@ Best regards,
           </motion.div>
 
           {/* All Projects Grid */}
-          <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </motion.div>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredProjects.length > 0 ? (
+            <motion.div 
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </motion.div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg">No projects found matching the selected filter.</p>
+            </div>
+          )}
         </div>
 
         {/* CTA Section */}

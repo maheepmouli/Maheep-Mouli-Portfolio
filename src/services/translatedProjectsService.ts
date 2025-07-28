@@ -240,7 +240,10 @@ export const useTranslatedProjects = () => {
   const { language } = useLanguage();
   
   const getTranslatedProjects = useCallback((): TranslatedProject[] => {
-    return baseProjects.map(baseProject => {
+    console.log('Getting translated projects for language:', language);
+    console.log('Base projects count:', baseProjects.length);
+    
+    const result = baseProjects.map(baseProject => {
       const translations = projectTranslations[language as keyof typeof projectTranslations] || projectTranslations.en;
       const projectTranslation = translations[baseProject.id as keyof typeof translations];
       
@@ -260,6 +263,9 @@ export const useTranslatedProjects = () => {
         ...projectTranslation
       } as TranslatedProject;
     });
+    
+    console.log('Translated projects result:', result);
+    return result;
   }, [language]);
   
   return { getTranslatedProjects };

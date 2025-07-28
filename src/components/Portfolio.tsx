@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
 import { projectsService } from '@/services/projectsService';
+import { supabaseProjectsService } from '@/services/supabaseProjectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
@@ -27,83 +28,60 @@ const Portfolio = () => {
     console.log('Portfolio: Language changed to:', language);
     setIsLoading(true);
     
-    const loadProjects = () => {
+    const loadProjects = async () => {
       try {
         console.log('Portfolio: Loading projects for language:', language);
         
-        // Debug: Check what's in localStorage
-        const dynamicData = localStorage.getItem('dynamic_portfolio_projects');
-        const regularData = localStorage.getItem('portfolio_projects');
+        // Try to get projects from Supabase first
+        const supabaseProjects = await supabaseProjectsService.getAllProjects();
+        console.log('Portfolio: Supabase projects:', supabaseProjects);
         
-        console.log('Portfolio: localStorage check:');
-        console.log('Portfolio: - dynamic_portfolio_projects:', dynamicData ? 'exists' : 'not found');
-        console.log('Portfolio: - portfolio_projects:', regularData ? 'exists' : 'not found');
-        
-        if (dynamicData) {
-          try {
-            const parsed = JSON.parse(dynamicData);
-            console.log('Portfolio: - dynamic data has', parsed.length, 'projects');
-          } catch (e) {
-            console.log('Portfolio: - dynamic data is corrupted');
-          }
+        if (supabaseProjects.length > 0) {
+          // Convert Supabase projects to DynamicProject format
+          const dynamicProjects = supabaseProjects.map(project => ({
+            ...project,
+            translations: {
+              en: project,
+              es: project,
+              ca: project
+            }
+          })) as DynamicProject[];
+          
+          // Apply translations
+          const translatedProjects = dynamicProjects.map(project => {
+            const translation = project.translations?.[language as keyof typeof project.translations];
+            if (translation) {
+              const translatedProject = { ...project, ...translation } as DynamicProject;
+              if (project.image_url && !translatedProject.image_url) {
+                translatedProject.image_url = project.image_url;
+              }
+              return translatedProject;
+            }
+            return project;
+          });
+          
+          console.log('Portfolio: Translated Supabase projects:', translatedProjects);
+          setProjects(translatedProjects);
+          setIsLoading(false);
+          return;
         }
         
-        if (regularData) {
-          try {
-            const parsed = JSON.parse(regularData);
-            console.log('Portfolio: - regular data has', parsed.length, 'projects');
-          } catch (e) {
-            console.log('Portfolio: - regular data is corrupted');
-          }
-        }
-        
-        // Get all projects from the service
+        // Fallback to localStorage if no Supabase projects
+        console.log('Portfolio: No Supabase projects, falling back to localStorage');
         const allProjects = dynamicProjectsService.getAllProjects();
-        console.log('Portfolio: All projects from service:', allProjects);
-        console.log('Portfolio: Sample project structure:', allProjects[0]);
         
-        // Check if projects are missing image_urls and force refresh
-        const projectsWithImages = allProjects.filter(p => p.image_url);
-        console.log('Portfolio: Projects with images:', projectsWithImages.length, 'out of', allProjects.length);
-        
-        // If no projects exist or if projects are missing images, initialize with sample data
-        if (allProjects.length === 0 || projectsWithImages.length < allProjects.length) {
-          console.log('Portfolio: No projects found, initializing with sample data...');
-          localStorage.removeItem('dynamic_portfolio_projects');
-          const sampleProjects = dynamicProjectsService.getAllProjects();
-          console.log('Portfolio: Sample projects after initialization:', sampleProjects);
-          setProjects(sampleProjects);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Ensure we have projects before proceeding
-        if (allProjects.length === 0) {
-          console.log('Portfolio: Still no projects after initialization, setting empty array');
-          setProjects([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Apply translations immediately
         const translatedProjects = allProjects.map(project => {
           const translation = project.translations?.[language as keyof typeof project.translations];
           if (translation) {
-            // Preserve the original image_url when applying translations
             const translatedProject = { ...project, ...translation } as DynamicProject;
-            // Ensure image_url is preserved from the original project
             if (project.image_url && !translatedProject.image_url) {
               translatedProject.image_url = project.image_url;
-              console.log(`Portfolio: Fixed missing image_url for project "${project.title}"`);
             }
-            console.log(`Portfolio: Project "${project.title}" - Original image_url: ${project.image_url}, Translated image_url: ${translatedProject.image_url}`);
             return translatedProject;
           }
           return project;
         });
         
-        console.log('Portfolio: Translated projects:', translatedProjects);
-        console.log('Portfolio: Image URLs:', translatedProjects.map(p => ({ title: p.title, image_url: p.image_url })));
         setProjects(translatedProjects);
       } catch (error) {
         console.error('Portfolio: Error loading projects:', error);
@@ -203,23 +181,61 @@ const Portfolio = () => {
     return `${url}${separator}v=${timestamp}&t=${timestamp}&r=${randomId}&cb=${contentVersion}`;
   };
 
-  const reloadProjects = () => {
-    const allProjects = dynamicProjectsService.getAllProjects();
-    
-    const translatedProjects = allProjects.map(project => {
-      const translation = project.translations?.[language as keyof typeof project.translations];
-      if (translation) {
-        const translatedProject = { ...project, ...translation } as DynamicProject;
-        // Ensure image_url is preserved from the original project
-        if (project.image_url && !translatedProject.image_url) {
-          translatedProject.image_url = project.image_url;
-        }
-        return translatedProject;
+  const reloadProjects = async () => {
+    try {
+      // Try to get fresh data from Supabase
+      const supabaseProjects = await supabaseProjectsService.getAllProjects();
+      
+      if (supabaseProjects.length > 0) {
+        // Convert Supabase projects to DynamicProject format
+        const dynamicProjects = supabaseProjects.map(project => ({
+          ...project,
+          translations: {
+            en: project,
+            es: project,
+            ca: project
+          }
+        })) as DynamicProject[];
+        
+        // Apply translations
+        const translatedProjects = dynamicProjects.map(project => {
+          const translation = project.translations?.[language as keyof typeof project.translations];
+          if (translation) {
+            const translatedProject = { ...project, ...translation } as DynamicProject;
+            if (project.image_url && !translatedProject.image_url) {
+              translatedProject.image_url = project.image_url;
+            }
+            return translatedProject;
+          }
+          return project;
+        });
+        
+        setProjects(translatedProjects);
+        return;
       }
-      return project;
-    });
-    
-    setProjects(translatedProjects);
+      
+      // Fallback to localStorage
+      const allProjects = dynamicProjectsService.getAllProjects();
+      
+      const translatedProjects = allProjects.map(project => {
+        const translation = project.translations?.[language as keyof typeof project.translations];
+        if (translation) {
+          const translatedProject = { ...project, ...translation } as DynamicProject;
+          if (project.image_url && !translatedProject.image_url) {
+            translatedProject.image_url = project.image_url;
+          }
+          return translatedProject;
+        }
+        return project;
+      });
+      
+      setProjects(translatedProjects);
+    } catch (error) {
+      console.error('Error reloading projects:', error);
+      // Fallback to localStorage on error
+      const allProjects = dynamicProjectsService.getAllProjects();
+      setProjects(allProjects);
+    }
   };
 
   // Force refresh for visitors to see latest content

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabaseProjectsService } from '@/services/supabaseProjectsService';
 
 const BlogCreatePage = () => {
   const navigate = useNavigate();
@@ -44,13 +45,8 @@ const BlogCreatePage = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      // Get existing posts from localStorage
-      const existingPosts = localStorage.getItem('blog_posts');
-      const posts = existingPosts ? JSON.parse(existingPosts) : [];
-      
-      // Create new post
+      // Create new blog post in Supabase
       const newPost = {
-        id: Date.now().toString(),
         title: formData.title,
         excerpt: formData.excerpt,
         content: formData.content,
@@ -58,29 +54,41 @@ const BlogCreatePage = () => {
         tags: formData.tags,
         status: formData.status,
         slug: slug,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        user_id: user.id
       };
-      
-      // Add to posts array
-      posts.push(newPost);
-      
-      // Save back to localStorage
-      localStorage.setItem('blog_posts', JSON.stringify(posts));
+
+      // For now, we'll use the projects table as a temporary solution
+      // In a real app, you'd have a separate blogs table
+      const blogAsProject = {
+        title: formData.title,
+        subtitle: formData.excerpt,
+        description: formData.excerpt,
+        content: formData.content,
+        image_url: formData.cover_image_url,
+        status: formData.status,
+        featured: false,
+        technologies: formData.tags,
+        tags: formData.tags
+      };
+
+      const createdProject = await supabaseProjectsService.createProject(blogAsProject);
+
+      if (!createdProject) {
+        throw new Error("Failed to create blog post in Supabase");
+      }
 
       toast({
-        title: "Post created successfully!",
+        title: "Blog post created successfully!",
         description: formData.status === 'published' 
           ? "Your post is now live on the blog."
           : "Your draft has been saved."
       });
 
-      navigate(`/blog/${slug}`);
+      navigate('/blog');
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error('Error creating blog post:', error);
       toast({
-        title: "Error creating post",
+        title: "Error creating blog post",
         description: "Please try again.",
         variant: "destructive"
       });

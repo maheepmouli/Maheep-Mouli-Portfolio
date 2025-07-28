@@ -26,9 +26,9 @@ const Portfolio = () => {
   const loadProjects = useCallback(() => {
     setIsLoading(true);
     try {
-      console.log('Loading projects...');
+      console.log('Loading projects for language:', language);
       
-      // Get projects directly from the service instead of the hook
+      // Get projects directly from the service
       const allProjects = dynamicProjectsService.getAllProjects();
       console.log('Loaded projects directly:', allProjects);
       console.log('Projects length:', allProjects.length);
@@ -44,39 +44,44 @@ const Portfolio = () => {
       
       console.log('Translated projects:', translatedProjects);
       
-      // If no projects found, force initialize with sample data
-      if (translatedProjects.length === 0) {
-        console.log('No projects found, forcing initialization...');
-        dynamicProjectsService.clearAllData();
-        const sampleProjects = dynamicProjectsService.getAllProjects();
-        setProjects(sampleProjects);
-        setIsInitialized(true);
-      } else {
-        setProjects(translatedProjects);
-        setIsInitialized(true);
-      }
+      // Always set projects, even if empty (don't force reinitialize)
+      setProjects(translatedProjects);
+      setIsInitialized(true);
     } catch (error) {
       console.error('Error loading projects:', error);
-      // Force initialization on error
-      dynamicProjectsService.clearAllData();
-      const sampleProjects = dynamicProjectsService.getAllProjects();
-      setProjects(sampleProjects);
+      // On error, try to get projects without translations
+      const allProjects = dynamicProjectsService.getAllProjects();
+      setProjects(allProjects);
       setIsInitialized(true);
     } finally {
       setIsLoading(false);
     }
-  }, [language]); // Only depend on language, not the hook
+  }, [language]);
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
+  // Ensure projects are loaded on mount
+  useEffect(() => {
+    if (projects.length === 0 && !isLoading) {
+      console.log('No projects found on mount, initializing...');
+      const allProjects = dynamicProjectsService.getAllProjects();
+      if (allProjects.length === 0) {
+        // Force initialize with sample data
+        dynamicProjectsService.clearAllData();
+        const sampleProjects = dynamicProjectsService.getAllProjects();
+        setProjects(sampleProjects);
+      } else {
+        setProjects(allProjects);
+      }
+    }
+  }, [projects.length, isLoading]);
+
   // Reload projects when language changes
   useEffect(() => {
-    if (isInitialized) {
-      loadProjects();
-    }
-  }, [language, loadProjects, isInitialized]);
+    loadProjects();
+  }, [language, loadProjects]);
 
   const handleDeleteProject = (projectId: string, projectTitle: string) => {
     if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {
@@ -292,6 +297,21 @@ Best regards,
                 className="ml-4"
               >
                 Debug Reset
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  console.log('Current language:', language);
+                  console.log('Current projects:', projects);
+                  console.log('All projects from service:', dynamicProjectsService.getAllProjects());
+                  toast({
+                    title: "Debug Info",
+                    description: `Language: ${language}, Projects: ${projects.length}`,
+                  });
+                }}
+                className="ml-2"
+              >
+                Debug Info
               </Button>
             </motion.div>
           )}

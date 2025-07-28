@@ -181,9 +181,9 @@ const Portfolio = () => {
 
   // Force re-render when language changes or projects update
   const [refreshKey, setRefreshKey] = useState(0);
-  const portfolioKey = `portfolio-${language}-${refreshKey}`;
+  const portfolioKey = `portfolio-${language}-${refreshKey}-${Date.now()}`;
 
-  // Utility function to handle image URLs
+  // Utility function to handle image URLs with aggressive cache-busting
   const getOptimizedImageUrl = (url: string) => {
     if (!url) return '';
     
@@ -192,12 +192,10 @@ const Portfolio = () => {
       return url;
     }
     
-    // For external URLs, add cache-busting parameter
-    if (url.includes('supabase.co') || url.includes('unsplash.com') || url.includes('images.unsplash.com')) {
-      return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
-    }
-    
-    return url;
+    // For all external URLs, add cache-busting parameter to ensure fresh content
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}v=${timestamp}&t=${timestamp}`;
   };
 
   const reloadProjects = () => {

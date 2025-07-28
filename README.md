@@ -1,73 +1,32 @@
-# Welcome to your Lovable project
+# 🧠 Maheep Portfolio — Architect × Urban Technologist
 
-## Project info
+A modern, interactive, and CMS-powered personal portfolio site built using **Next.js 15 App Router**, **Tailwind CSS**, **Framer Motion**, and **Supabase**.
 
-**URL**: https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1
+Live ➡️ [maheep-portfolio.vercel.app](https://maheep-portfolio.vercel.app)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+- 🎬 Kinetic landing page with smooth text reveals and transitions
+- 📁 Filterable **Projects** section with animated cards
+- ✍️ **Blog** section with searchable content
+- 🔐 Secure **Admin Dashboard** to upload new blogs/projects (via Supabase)
+- 📄 Resume viewer + custom about section
+- 💡 Fully responsive and mobile-friendly
+- 🎨 Styled with Tailwind CSS + Framer Motion
+- ⚡ Hosted on Vercel
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tech Stack
 
-**Use your preferred IDE**
+| Frontend        | Backend / CMS         | Styling & Animation |
+|-----------------|------------------------|----------------------|
+| Next.js (App Router) | Supabase (Auth, Storage, DB) | Tailwind CSS, Framer Motion |
+| React 18        | PostgreSQL (via Supabase) | Custom animated transitions |
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📁 Project Structure
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/1ebda2f9-8a6c-4828-83fd-631dab2666b1) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

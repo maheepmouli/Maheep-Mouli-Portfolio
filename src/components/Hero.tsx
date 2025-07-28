@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowDown, ChevronDown, LinkedinIcon, FileText } from 'lucide-react';
 import gsap from 'gsap';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -11,6 +12,7 @@ const Hero = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll();
+  const { t } = useLanguage();
   
   const descriptors = [
     "Architecture.",
@@ -281,7 +283,7 @@ const Hero = () => {
             variants={textVariants}
             custom={2}
           >
-            Computational Designer & Urban Technologist
+            {t('hero.subtitle')}
           </motion.p>
           
           <motion.p 
@@ -289,7 +291,7 @@ const Hero = () => {
             variants={textVariants}
             custom={3}
           >
-            Exploring the intersection of computational design, urban technology, and AI-driven solutions to create sustainable, innovative environments.
+            {t('hero.description')}
           </motion.p>
 
           {/* Dynamic Descriptor Text */}
@@ -324,7 +326,7 @@ const Hero = () => {
                   }
                 }}
               >
-                Learn More
+                {t('hero.learnMore')}
               </Button>
             </motion.div>
             
@@ -354,7 +356,7 @@ const Hero = () => {
                 onClick={() => window.open("/Maheep_mouli_resume.pdf", "_blank")}
               >
                 <FileText size={20} className="mr-2" />
-                Resume
+                {t('hero.resume')}
               </Button>
             </motion.div>
           </motion.div>

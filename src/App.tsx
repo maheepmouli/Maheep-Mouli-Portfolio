@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from "@/hooks/useAuth";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -208,14 +209,16 @@ const App = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-        <Toaster />
-      </TooltipProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 };
 

@@ -4,12 +4,15 @@ import { Menu, X, Settings, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,12 +23,12 @@ const Navigation = () => {
   }, []);
 
   const navItems = [
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-    { label: 'Portfolio', href: '/portfolio' },
-    { label: 'Services', href: '/services' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Contact', href: '/contact' }
+    { label: t('nav.home'), href: '/' },
+    { label: t('nav.about'), href: '/about' },
+    { label: t('nav.portfolio'), href: '/portfolio' },
+    { label: t('nav.services'), href: '/services' },
+    { label: t('nav.blog'), href: '/blog' },
+    { label: t('nav.contact'), href: '/contact' }
   ];
 
   const isHomePage = location.pathname === '/';
@@ -141,6 +144,11 @@ const Navigation = () => {
 
           {/* Desktop CTA & User Menu */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Language Switcher */}
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <LanguageSwitcher />
+            </motion.div>
+            
             {user ? (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -247,6 +255,16 @@ const Navigation = () => {
                     </Link>
                   </motion.div>
                 ))}
+                
+                {/* Language Switcher for Mobile */}
+                <motion.div 
+                  className="flex flex-col space-y-2 mt-4 pt-4 border-t border-border"
+                  variants={menuItemVariants}
+                >
+                  <div className="px-4 py-2">
+                    <LanguageSwitcher />
+                  </div>
+                </motion.div>
                 
                 {user ? (
                   <motion.div 

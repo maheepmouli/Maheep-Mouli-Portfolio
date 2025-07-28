@@ -155,11 +155,15 @@ const ProjectDetail = () => {
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  // Helper function to get Google Drive video ID
-  const getGoogleDriveVideoId = (url: string): string | null => {
-    const regExp = /\/d\/([a-zA-Z0-9-_]+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
+
+
+  // Helper function to get Google Drive embed URL
+  const getGoogleDriveEmbedUrl = (url: string): string => {
+    const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/);
+    if (fileIdMatch) {
+      return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+    }
+    return url;
   };
 
   // Helper function to render video embed
@@ -179,20 +183,37 @@ const ProjectDetail = () => {
           </div>
         );
       }
-    } else if (videoUrl.includes('drive.google.com')) {
-      const videoId = getGoogleDriveVideoId(videoUrl);
-      if (videoId) {
-        return (
-          <div className="relative w-full h-0 pb-[56.25%]">
-            <iframe
-              src={`https://drive.google.com/file/d/${videoId}/preview`}
-              title="Google Drive video player"
-              className="absolute top-0 left-0 w-full h-full rounded-lg"
-              allowFullScreen
-            />
-          </div>
-        );
-      }
+    }
+    
+    // Handle Google Drive videos
+    if (videoUrl.includes('drive.google.com')) {
+      return (
+        <div className="relative w-full h-0 pb-[56.25%]">
+          <iframe
+            src={getGoogleDriveEmbedUrl(videoUrl)}
+            title="Google Drive video player"
+            className="absolute top-0 left-0 w-full h-full rounded-lg"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      );
+    }
+    
+    // Alternative: Try to embed as HTML5 video for supported formats
+    if (videoUrl.match(/\.(mp4|webm|ogg)$/i)) {
+      return (
+        <video 
+          controls 
+          className="w-full h-64 rounded-lg"
+          preload="metadata"
+        >
+          <source src={videoUrl} type="video/mp4" />
+          <source src={videoUrl} type="video/webm" />
+          <source src={videoUrl} type="video/ogg" />
+          Your browser does not support the video tag.
+        </video>
+      );
     }
     
     // Fallback for other video URLs
@@ -238,18 +259,7 @@ const ProjectDetail = () => {
             <p className="text-muted-foreground mb-6">
               Please wait while we fetch the project details.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                console.log('ProjectDetail: Debug - Current ID:', id);
-                console.log('ProjectDetail: Debug - All dynamic projects:', dynamicProjectsService.getAllProjects());
-                console.log('ProjectDetail: Debug - All regular projects:', projectsService.getAllProjects());
-                console.log('ProjectDetail: Debug - Project images:', projectImages);
-                console.log('ProjectDetail: Debug - localStorage images:', localStorage.getItem('portfolio_images'));
-              }}
-            >
-              Debug Project Data
-            </Button>
+
           </div>
         </div>
       </div>
@@ -660,4 +670,4 @@ const ProjectDetail = () => {
   );
 };
 
-export default ProjectDetail; 
+export default ProjectDetail;

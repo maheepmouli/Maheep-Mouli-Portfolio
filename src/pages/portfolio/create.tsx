@@ -392,7 +392,7 @@ const ProjectCreate = () => {
                       <Input
                         value={newVideo}
                         onChange={(e) => setNewVideo(e.target.value)}
-                        placeholder="https://youtube.com/watch?v=... or https://drive.google.com/..."
+                        placeholder="https://youtube.com/watch?v=... or https://drive.google.com/file/d/..."
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVideo())}
                       />
                       <Button type="button" onClick={addVideo} size="sm">

@@ -195,7 +195,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Project data to update:', projectData);
         
         // Update existing project
-        const updatedProject = projectsService.updateProject(projectId, projectData);
+        const updatedProject = await projectsService.updateProject(projectId, projectData);
         console.log('ProjectForm: Updated project result:', updatedProject);
         
         if (updatedProject) {
@@ -234,6 +234,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           };
           console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
           console.log('ProjectForm: Image URL being synced:', dynamicProject.image_url);
+          console.log('ProjectForm: Image URL type:', dynamicProject.image_url?.startsWith('data:') ? 'Base64' : 'URL');
+          console.log('ProjectForm: Image URL length:', dynamicProject.image_url?.length || 0);
           const syncResult = await dynamicProjectsService.updateProject(projectId, dynamicProject);
           console.log('ProjectForm: Sync result:', syncResult);
           
@@ -251,7 +253,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           
           // Trigger custom event to notify Portfolio component
           window.dispatchEvent(new CustomEvent('portfolio-updated', {
-            detail: { projectId: projectId, action: 'updated' }
+            detail: { projectId: projectId, action: 'updated', imageUrl: updatedProject.image_url }
+          }));
+          
+          // Also trigger a storage event to ensure all components update
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'dynamic_portfolio_projects',
+            newValue: localStorage.getItem('dynamic_portfolio_projects')
           }));
           
           // Show success message and redirect immediately
@@ -272,7 +280,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Project data to create:', projectData);
         
         // Create new project
-        const newProject = projectsService.createProject(projectData);
+        const newProject = await projectsService.createProject(projectData);
         console.log('ProjectForm: Created project result:', newProject);
         
         // Also create in dynamicProjectsService for portfolio sync
@@ -285,8 +293,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             ca: newProject
           }
         };
-                  console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
-          console.log('ProjectForm: Image URL being synced for new project:', dynamicProject.image_url);
+        console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
+        console.log('ProjectForm: Image URL being synced for new project:', dynamicProject.image_url);
+        console.log('ProjectForm: Image URL type:', dynamicProject.image_url?.startsWith('data:') ? 'Base64' : 'URL');
+        console.log('ProjectForm: Image URL length:', dynamicProject.image_url?.length || 0);
           const syncResult = await dynamicProjectsService.createProject(dynamicProject);
           console.log('ProjectForm: Sync result:', syncResult);
         
@@ -317,7 +327,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         
         // Trigger custom event to notify Portfolio component
         window.dispatchEvent(new CustomEvent('portfolio-updated', {
-          detail: { projectId: newProject.id, action: 'created' }
+          detail: { projectId: newProject.id, action: 'created', imageUrl: newProject.image_url }
+        }));
+        
+        // Also trigger a storage event to ensure all components update
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'dynamic_portfolio_projects',
+          newValue: localStorage.getItem('dynamic_portfolio_projects')
         }));
         
         // Show success message and redirect immediately
@@ -465,12 +481,40 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          const result = event.target?.result as string;
-                          setFormData(prev => ({ ...prev, image_url: result }));
+                        // Compress the image before storing
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        
+                        img.onload = () => {
+                          // Calculate new dimensions (max 800px width/height)
+                          const maxSize = 800;
+                          let { width, height } = img;
+                          
+                          if (width > height) {
+                            if (width > maxSize) {
+                              height = (height * maxSize) / width;
+                              width = maxSize;
+                            }
+                          } else {
+                            if (height > maxSize) {
+                              width = (width * maxSize) / height;
+                              height = maxSize;
+                            }
+                          }
+                          
+                          canvas.width = width;
+                          canvas.height = height;
+                          
+                          // Draw and compress
+                          ctx?.drawImage(img, 0, 0, width, height);
+                          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+                          
+
+                          setFormData(prev => ({ ...prev, image_url: compressedDataUrl }));
                         };
-                        reader.readAsDataURL(file);
+                        
+                        img.src = URL.createObjectURL(file);
                       }
                     }}
                     className="cursor-pointer"
@@ -491,7 +535,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             </div>
             
             {/* Image Preview */}
-            {formData.image_url && (
+            {formData.image_url ? (
               <div className="border rounded-lg p-4 bg-muted/20">
                 <Label className="text-sm font-medium mb-2">Preview</Label>
                 <div className="relative group">
@@ -511,16 +555,97 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     </div>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                  className="mt-2"
-                >
-                  <X size={16} className="mr-2" />
-                  Remove Image
-                </Button>
+                                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                                        onClick={() => {
+                    // Clear the image URL
+                    setFormData(prev => ({ ...prev, image_url: '' }));
+                    
+                    // Immediately update both services to ensure sync
+                    if (projectId) {
+                      // Update in regular service
+                      const currentProject = projectsService.getProjectById(projectId);
+                      if (currentProject) {
+                        const updatedProject = {
+                          ...currentProject,
+                          image_url: ''
+                        };
+                        projectsService.updateProject(projectId, updatedProject);
+                      }
+                      
+                      // Update in dynamic service
+                      const dynamicProject = dynamicProjectsService.getProjectById(projectId);
+                      if (dynamicProject) {
+                        const updatedDynamicProject = {
+                          ...dynamicProject,
+                          image_url: '',
+                          translations: {
+                            en: { ...dynamicProject, image_url: '' },
+                            es: { ...dynamicProject, image_url: '' },
+                            ca: { ...dynamicProject, image_url: '' }
+                          }
+                        };
+                        dynamicProjectsService.updateProject(projectId, updatedDynamicProject);
+                      }
+                    }
+                    
+                    // Trigger immediate sync to portfolio
+                    window.dispatchEvent(new CustomEvent('portfolio-updated', {
+                      detail: { projectId: projectId, action: 'image-removed', imageUrl: '' }
+                    }));
+                    
+                    // Also trigger storage event
+                    window.dispatchEvent(new StorageEvent('storage', {
+                      key: 'dynamic_portfolio_projects',
+                      newValue: localStorage.getItem('dynamic_portfolio_projects')
+                    }));
+                    
+                    toast({
+                      title: "✅ Image Removed Successfully!",
+                      description: "Cover image has been removed from both services. The portfolio should update immediately.",
+                    });
+                  }}
+                    >
+                      <X size={16} className="mr-2" />
+                      Remove Image
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Force refresh the portfolio view
+                        window.dispatchEvent(new CustomEvent('portfolio-updated', {
+                          detail: { projectId: projectId, action: 'force-refresh', imageUrl: formData.image_url }
+                        }));
+                        toast({
+                          title: "Portfolio Refreshed",
+                          description: "Portfolio view has been refreshed to show current changes.",
+                        });
+                      }}
+                    >
+                      🔄 Refresh Portfolio
+                    </Button>
+
+                  </div>
+              </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-muted/20">
+                <Label className="text-sm font-medium mb-2">No Cover Image</Label>
+                <div className="h-48 bg-muted flex items-center justify-center rounded-lg">
+                  <div className="text-center text-muted-foreground">
+                    <ImageIcon size={48} className="mx-auto mb-2" />
+                    <p className="text-sm">No cover image selected</p>
+                    <p className="text-xs text-muted-foreground mt-1">Upload an image above to set as cover</p>
+                  </div>
+                </div>
+                <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-300">
+                  ✅ <strong>Image Removed:</strong> The cover image has been successfully removed from this project. The portfolio view should update immediately.
+                </div>
+
               </div>
             )}
           </div>

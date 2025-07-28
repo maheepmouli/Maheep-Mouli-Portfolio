@@ -31,17 +31,56 @@ const Portfolio = () => {
       try {
         console.log('Portfolio: Loading projects for language:', language);
         
+        // Debug: Check what's in localStorage
+        const dynamicData = localStorage.getItem('dynamic_portfolio_projects');
+        const regularData = localStorage.getItem('portfolio_projects');
+        
+        console.log('Portfolio: localStorage check:');
+        console.log('Portfolio: - dynamic_portfolio_projects:', dynamicData ? 'exists' : 'not found');
+        console.log('Portfolio: - portfolio_projects:', regularData ? 'exists' : 'not found');
+        
+        if (dynamicData) {
+          try {
+            const parsed = JSON.parse(dynamicData);
+            console.log('Portfolio: - dynamic data has', parsed.length, 'projects');
+          } catch (e) {
+            console.log('Portfolio: - dynamic data is corrupted');
+          }
+        }
+        
+        if (regularData) {
+          try {
+            const parsed = JSON.parse(regularData);
+            console.log('Portfolio: - regular data has', parsed.length, 'projects');
+          } catch (e) {
+            console.log('Portfolio: - regular data is corrupted');
+          }
+        }
+        
         // Get all projects from the service
         const allProjects = dynamicProjectsService.getAllProjects();
         console.log('Portfolio: All projects from service:', allProjects);
+        console.log('Portfolio: Sample project structure:', allProjects[0]);
         
-        // If no projects exist, initialize with sample data
-        if (allProjects.length === 0) {
+        // Check if projects are missing image_urls and force refresh
+        const projectsWithImages = allProjects.filter(p => p.image_url);
+        console.log('Portfolio: Projects with images:', projectsWithImages.length, 'out of', allProjects.length);
+        
+        // If no projects exist or if projects are missing images, initialize with sample data
+        if (allProjects.length === 0 || projectsWithImages.length < allProjects.length) {
           console.log('Portfolio: No projects found, initializing with sample data...');
-          dynamicProjectsService.clearAllData();
+          localStorage.removeItem('dynamic_portfolio_projects');
           const sampleProjects = dynamicProjectsService.getAllProjects();
           console.log('Portfolio: Sample projects after initialization:', sampleProjects);
           setProjects(sampleProjects);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Ensure we have projects before proceeding
+        if (allProjects.length === 0) {
+          console.log('Portfolio: Still no projects after initialization, setting empty array');
+          setProjects([]);
           setIsLoading(false);
           return;
         }
@@ -50,12 +89,21 @@ const Portfolio = () => {
         const translatedProjects = allProjects.map(project => {
           const translation = project.translations?.[language as keyof typeof project.translations];
           if (translation) {
-            return { ...project, ...translation } as DynamicProject;
+            // Preserve the original image_url when applying translations
+            const translatedProject = { ...project, ...translation } as DynamicProject;
+            // Ensure image_url is preserved from the original project
+            if (project.image_url && !translatedProject.image_url) {
+              translatedProject.image_url = project.image_url;
+              console.log(`Portfolio: Fixed missing image_url for project "${project.title}"`);
+            }
+            console.log(`Portfolio: Project "${project.title}" - Original image_url: ${project.image_url}, Translated image_url: ${translatedProject.image_url}`);
+            return translatedProject;
           }
           return project;
         });
         
         console.log('Portfolio: Translated projects:', translatedProjects);
+        console.log('Portfolio: Image URLs:', translatedProjects.map(p => ({ title: p.title, image_url: p.image_url })));
         setProjects(translatedProjects);
       } catch (error) {
         console.error('Portfolio: Error loading projects:', error);
@@ -75,19 +123,49 @@ const Portfolio = () => {
     const handleStorageChange = () => {
       console.log('Portfolio: Storage changed, reloading projects...');
       const allProjects = dynamicProjectsService.getAllProjects();
-      const translatedProjects = allProjects.map(project => {
-        const translation = project.translations?.[language as keyof typeof project.translations];
-        if (translation) {
-          return { ...project, ...translation } as DynamicProject;
-        }
-        return project;
-      });
+      console.log('Portfolio: Storage change - All projects:', allProjects.map(p => ({ title: p.title, image_url: p.image_url })));
+              const translatedProjects = allProjects.map(project => {
+          const translation = project.translations?.[language as keyof typeof project.translations];
+          if (translation) {
+            // Preserve the original image_url when applying translations
+            const translatedProject = { ...project, ...translation } as DynamicProject;
+            // Ensure image_url is preserved from the original project
+            if (project.image_url && !translatedProject.image_url) {
+              translatedProject.image_url = project.image_url;
+              console.log(`Portfolio: Storage change - Fixed missing image_url for project "${project.title}"`);
+            }
+            console.log(`Portfolio: Storage change - Project "${project.title}" - Original image_url: ${project.image_url}, Translated image_url: ${translatedProject.image_url}`);
+            return translatedProject;
+          }
+          return project;
+        });
       setProjects(translatedProjects);
     };
 
     const handleCustomStorageChange = (event: CustomEvent) => {
       console.log('Portfolio: Custom storage event received:', event.detail);
-      handleStorageChange();
+      
+      // Handle different types of updates
+      if (event.detail.action === 'updated' || event.detail.action === 'created' || event.detail.action === 'image-removed' || event.detail.action === 'force-refresh') {
+        console.log('Portfolio: Project updated/created/image-removed/force-refresh, forcing refresh...');
+        console.log('Portfolio: Action:', event.detail.action);
+        console.log('Portfolio: Image URL:', event.detail.imageUrl);
+        console.log('Portfolio: Project ID:', event.detail.projectId);
+        
+        // For image removal, force immediate refresh
+        if (event.detail.action === 'image-removed') {
+          console.log('Portfolio: Image removal detected, forcing immediate refresh...');
+          setRefreshKey(prev => prev + 1);
+          reloadProjects();
+        } else {
+          setTimeout(() => {
+            setRefreshKey(prev => prev + 1);
+            reloadProjects();
+          }, 500); // Small delay to ensure data is saved
+        }
+      } else {
+        handleStorageChange();
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -101,18 +179,43 @@ const Portfolio = () => {
 
 
 
-  // Force re-render when language changes by adding a key
-    const portfolioKey = `portfolio-${language}`;
+  // Force re-render when language changes or projects update
+  const [refreshKey, setRefreshKey] = useState(0);
+  const portfolioKey = `portfolio-${language}-${refreshKey}`;
+
+  // Utility function to handle image URLs
+  const getOptimizedImageUrl = (url: string) => {
+    if (!url) return '';
+    
+    // For base64 images, return as-is
+    if (url.startsWith('data:')) {
+      return url;
+    }
+    
+    // For external URLs, add cache-busting parameter
+    if (url.includes('supabase.co') || url.includes('unsplash.com') || url.includes('images.unsplash.com')) {
+      return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    }
+    
+    return url;
+  };
 
   const reloadProjects = () => {
     const allProjects = dynamicProjectsService.getAllProjects();
+    
     const translatedProjects = allProjects.map(project => {
       const translation = project.translations?.[language as keyof typeof project.translations];
       if (translation) {
-        return { ...project, ...translation } as DynamicProject;
+        const translatedProject = { ...project, ...translation } as DynamicProject;
+        // Ensure image_url is preserved from the original project
+        if (project.image_url && !translatedProject.image_url) {
+          translatedProject.image_url = project.image_url;
+        }
+        return translatedProject;
       }
       return project;
     });
+    
     setProjects(translatedProjects);
   };
 
@@ -136,44 +239,13 @@ const Portfolio = () => {
   };
 
   const handleHireMe = () => {
-    const subject = encodeURIComponent('Hire Request - Portfolio Project');
-    const body = encodeURIComponent(`Hi Maheep,
-
-I saw your portfolio and would like to discuss a collaboration opportunity with you.
-
-My requirements:
-- [Describe your project needs]
-- [Timeline]
-- [Budget range]
-
-Please let me know when you're available for a call.
-
-Best regards,
-[Your name]`);
-    
+    const subject = encodeURIComponent("Project Inquiry - Portfolio");
+    const body = encodeURIComponent(`Hi Maheep,\n\nI'm interested in discussing a potential project with you. I found your portfolio and would like to learn more about your services.\n\nBest regards,\n[Your Name]`);
     window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
-  };
-
-  const handleDebugReset = () => {
-    dynamicProjectsService.clearAllData();
-    reloadProjects();
-    toast({
-      title: "Debug Reset",
-      description: "Project data has been reset and reinitialized.",
-    });
   };
 
   const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
   const featuredProjects = projects.filter(project => project.featured);
-
-  console.log('Portfolio Debug:', {
-    projectsLength: projects.length,
-    featuredProjectsLength: featuredProjects.length,
-    filteredProjectsLength: filteredProjects.length,
-    isLoading,
-    projects: projects,
-    featuredProjects: featuredProjects
-  });
 
   // Animation variants
   const containerVariants = {
@@ -199,6 +271,26 @@ Best regards,
 
   const ProjectCard = ({ project, isFeatured = false }: { project: DynamicProject; isFeatured?: boolean }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+
+    // Reset image error state when project changes
+    useEffect(() => {
+      setImageError(false);
+      setImageLoading(true);
+      
+      // If there's no image URL, don't show loading state
+      if (!project.image_url) {
+        setImageLoading(false);
+        return;
+      }
+      
+      // For base64 images, set loading to false immediately since they load instantly
+      if (project.image_url.startsWith('data:')) {
+        setImageLoading(false);
+        setImageError(false);
+      }
+    }, [project.id, project.image_url]);
 
     return (
       <motion.div
@@ -209,25 +301,37 @@ Best regards,
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl">
           <div className="relative overflow-hidden">
-                    <img 
-          src={project.image_url} 
-          alt={project.title}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-          onError={(e) => {
-            console.log('Portfolio: Image failed to load for project:', project.title, project.image_url);
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-          }}
-          onLoad={() => {
-            console.log('Portfolio: Image loaded successfully for project:', project.title, project.image_url);
-          }}
-        />
-            <div className="hidden absolute inset-0 bg-muted flex items-center justify-center">
-              <div className="text-center text-muted-foreground">
-                <ImageIcon size={48} className="mx-auto mb-2" />
-                <p className="text-sm">No cover image</p>
+            {project.image_url && !imageError ? (
+              <img 
+                src={getOptimizedImageUrl(project.image_url)} 
+                alt={project.title}
+                className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                onError={(e) => {
+                  setImageError(true);
+                  setImageLoading(false);
+                }}
+                onLoad={() => {
+                  setImageError(false);
+                  setImageLoading(false);
+                }}
+              />
+            ) : null}
+            {imageLoading && project.image_url && !imageError ? (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm">Loading...</p>
+                </div>
               </div>
-            </div>
+            ) : null}
+            {(!project.image_url || imageError) && !imageLoading && (
+              <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <ImageIcon size={48} className="mx-auto mb-2" />
+                  <p className="text-sm">No cover image</p>
+                </div>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             {/* Admin Actions */}
@@ -341,125 +445,6 @@ Best regards,
                   {t('portfolio.addNewProject')}
                 </Button>
               </Link>
-              <Button 
-                variant="outline" 
-                onClick={handleDebugReset}
-                className="ml-4"
-              >
-                Debug Reset
-              </Button>
-                              <Button
-                  variant="outline"
-                  onClick={() => {
-                    console.log('Current language:', language);
-                    console.log('Current projects:', projects);
-                    console.log('All projects from service:', dynamicProjectsService.getAllProjects());
-                    console.log('All projects from projectsService:', projectsService.getAllProjects());
-                    toast({
-                      title: "Debug Info",
-                      description: `Language: ${language}, Projects: ${projects.length}`,
-                    });
-                  }}
-                  className="ml-2"
-                >
-                  Debug Info
-                </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  reloadProjects();
-                  toast({
-                    title: "Reload Projects",
-                    description: "Projects reloaded manually",
-                  });
-                }}
-                className="ml-2"
-              >
-                Reload
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  console.log('Portfolio: Current projects with IDs:', projects.map(p => ({ id: p.id, title: p.title })));
-                  toast({
-                    title: "Project IDs",
-                    description: `Found ${projects.length} projects`,
-                  });
-                }}
-                className="ml-2"
-              >
-                Check IDs
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  const currentUrl = window.location.href;
-                  console.log('Portfolio: Current URL:', currentUrl);
-                  console.log('Portfolio: Available routes:', projects.map(p => `/portfolio/${p.id}`));
-                  toast({
-                    title: "Routing Debug",
-                    description: `Current: ${currentUrl}`,
-                  });
-                }}
-                className="ml-2"
-              >
-                Debug Routes
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  console.log('Portfolio: All projects data:', projects);
-                  projects.forEach((project, index) => {
-                    console.log(`Project ${index + 1}:`, {
-                      id: project.id,
-                      title: project.title,
-                      image_url: project.image_url,
-                      hasImage: !!project.image_url,
-                      imageLength: project.image_url?.length || 0
-                    });
-                  });
-                  toast({
-                    title: "Image Debug",
-                    description: `Checked ${projects.length} projects`,
-                  });
-                }}
-                className="ml-2"
-              >
-                Check Images
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  // Reset all projects to have their original sample image URLs
-                  const allProjects = dynamicProjectsService.getAllProjects();
-                  const updatedProjects = allProjects.map(project => {
-                    if (project.id === '1') {
-                      return { ...project, image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop" };
-                    } else if (project.id === '2') {
-                      return { ...project, image_url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=600&fit=crop" };
-                    } else if (project.id === '3') {
-                      return { ...project, image_url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop" };
-                    }
-                    return project;
-                  });
-                  
-                  // Update each project
-                  updatedProjects.forEach(project => {
-                    dynamicProjectsService.updateProject(project.id, project);
-                  });
-                  
-                  // Reload projects
-                  reloadProjects();
-                  
-                  toast({
-                    title: "Reset Images",
-                    description: "All project cover images have been reset to sample URLs",
-                  });
-                }}
-                className="ml-2"
-              >
-                Reset Images
-              </Button>
             </motion.div>
           )}
         </motion.div>
@@ -509,12 +494,28 @@ Best regards,
               )}
             </motion.div>
             
-            {/* Debug info */}
-            {projects.length === 0 && (
-              <div className="text-center mt-8 p-4 bg-muted rounded-lg">
-                <p className="text-muted-foreground">No projects found. Click the Debug Reset button to initialize sample projects.</p>
-              </div>
-            )}
+
+            
+
+          </motion.div>
+        )}
+
+        {/* Upload Cover Images Message */}
+        {projects.length > 0 && projects.every(p => !p.image_url) && (
+          <motion.div 
+            className="w-full mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <ImageIcon size={20} />
+              <p className="text-sm font-medium">Upload Cover Images</p>
+            </div>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+              Click "Edit" on any project to upload your own cover images. The current projects are using placeholder images.
+            </p>
           </motion.div>
         )}
 
@@ -572,7 +573,9 @@ Best regards,
         {/* Show message if no projects at all */}
         {!isLoading && projects.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No projects found. Please use the Debug Reset button to initialize sample projects.</p>
+            <p className="text-muted-foreground text-lg">
+              No projects found. Please add some projects to your portfolio.
+            </p>
           </div>
         )}
 

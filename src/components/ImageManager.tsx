@@ -78,6 +78,14 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     }
   };
 
+  // Enhanced preview function
+  const getImagePreview = (image: ProjectImage) => {
+    if (image.file) {
+      return URL.createObjectURL(image.file);
+    }
+    return image.image_url;
+  };
+
   const removeImage = (index: number) => {
     try {
       console.log('ImageManager: Removing image at index:', index);
@@ -200,43 +208,61 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
 
   // Function to compress image
   const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions (max 800px width/height)
-        const maxSize = 800;
-        let { width, height } = img;
-        
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
+        try {
+          // Calculate new dimensions (max 800px width/height)
+          const maxSize = 800;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
           }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with reduced quality
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          // Check if compressed image is too large for localStorage
+          const sizeInBytes = Math.ceil(compressedDataUrl.length * 0.75); // Approximate size
+          const maxSizeBytes = 4 * 1024 * 1024; // 4MB limit per image
+          
+          if (sizeInBytes > maxSizeBytes) {
+            reject(new Error(`Image too large after compression (${Math.round(sizeInBytes / 1024 / 1024)}MB). Please use a smaller image.`));
+            return;
           }
+          
+          resolve(compressedDataUrl);
+        } catch (error) {
+          reject(error);
         }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Convert to base64 with reduced quality
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        resolve(compressedDataUrl);
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
       };
       
       img.src = URL.createObjectURL(file);
     });
   };
 
-  const handleFileUpload = (files: FileList | File[]) => {
+  const handleFileUpload = async (files: FileList | File[]) => {
     try {
       setIsUploading(true);
       const fileArray = Array.from(files);
@@ -254,11 +280,20 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
         return;
       }
 
-      // Process all images first, then add them all at once
-      const newImages: ProjectImage[] = [];
-      let processedCount = 0;
-      
-      imageFiles.forEach(async (file, index) => {
+      // Check if adding these images would exceed a reasonable limit
+      const maxImagesPerProject = 20; // Limit to 20 images per project
+      if (safeImages.length + imageFiles.length > maxImagesPerProject) {
+        toast({
+          title: "Too many images",
+          description: `You can only upload up to ${maxImagesPerProject} images per project. You currently have ${safeImages.length} images.`,
+          variant: "destructive"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Process all images concurrently and wait for all to complete
+      const imagePromises = imageFiles.map(async (file, index) => {
         try {
           // Compress the image before processing
           const compressedImageUrl = await compressImage(file);
@@ -273,28 +308,34 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
             file: file
           };
           
-          newImages.push(image);
-          processedCount++;
-          
-          // When all images are processed, add them to the list
-          if (processedCount === imageFiles.length) {
-            console.log('ImageManager: Adding', newImages.length, 'new images');
-            onImagesChange([...safeImages, ...newImages]);
-            
-            toast({
-              title: "Images uploaded",
-              description: `${newImages.length} image(s) have been added to your project.`
-            });
-            setIsUploading(false);
-          }
+          return image;
         } catch (error) {
           console.error('ImageManager: Error processing image:', error);
-          processedCount++;
-          if (processedCount === imageFiles.length) {
-            setIsUploading(false);
-          }
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          toast({
+            title: "Image processing error",
+            description: `Failed to process ${file.name}: ${errorMessage}`,
+            variant: "destructive"
+          });
+          return null;
         }
       });
+
+      // Wait for all images to be processed
+      const processedImages = await Promise.all(imagePromises);
+      const validImages = processedImages.filter(img => img !== null) as ProjectImage[];
+      
+      if (validImages.length > 0) {
+        console.log('ImageManager: Adding', validImages.length, 'new images');
+        onImagesChange([...safeImages, ...validImages]);
+        
+        toast({
+          title: "Images uploaded",
+          description: `${validImages.length} image(s) have been added to your project.`
+        });
+      }
+      
+      setIsUploading(false);
     } catch (error) {
       console.error('ImageManager: Error in handleFileUpload:', error);
       toast({
@@ -507,12 +548,22 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
                     <div className="flex-shrink-0">
                       <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted">
                         <img
-                          src={image.image_url}
+                          src={getImagePreview(image)}
                           alt={image.alt_text || image.caption || 'Project image'}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
+                            // Try to refresh the image URL if it's a Supabase URL
+                            if (image.image_url.includes('supabase.co')) {
+                              console.log('ImageManager: Attempting to refresh Supabase image URL...');
+                              const refreshedUrl = `${image.image_url}?t=${Date.now()}`;
+                              target.src = refreshedUrl;
+                              target.style.display = 'block';
+                            }
+                          }}
+                          onLoad={() => {
+                            console.log('ImageManager: Image loaded successfully:', image.image_url);
                           }}
                         />
                         {image.file && (

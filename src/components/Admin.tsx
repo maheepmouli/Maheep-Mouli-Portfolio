@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, FileText, Image, Users, Plus, Edit, LogOut, Upload } from 'lucide-react';
+import { Settings, FileText, Image, Users, Plus, Edit, LogOut, Upload, HardDrive } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import ProfileImageEditor from './ProfileImageEditor';
+import StorageManager from './StorageManager';
+import { dynamicProjectsService } from '@/services/dynamicProjectsService';
+import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
   const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [showStorageManager, setShowStorageManager] = useState(false);
   const [currentProfileImage, setCurrentProfileImage] = useState('/maheep.jpg');
 
   const handleProfileImageChange = (imageUrl: string, file?: File) => {
@@ -61,7 +66,16 @@ const Admin = () => {
       actions: [
         { label: "Edit Profile Image", href: "#", icon: <Edit className="h-4 w-4" />, onClick: () => setShowProfileEditor(true) }
       ]
-    }
+    },
+    {
+      title: "Storage Management",
+      description: "Configure storage providers and monitor usage",
+      icon: <HardDrive className="h-8 w-8" />,
+      actions: [
+        { label: "Manage Storage", href: "#", icon: <HardDrive className="h-4 w-4" />, onClick: () => setShowStorageManager(true) }
+      ]
+    },
+
   ];
 
   if (showProfileEditor) {
@@ -94,6 +108,34 @@ const Admin = () => {
     );
   }
 
+
+
+  if (showStorageManager) {
+    return (
+      <div className="min-h-screen bg-background py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h1 className="text-4xl font-bold">Storage Management</h1>
+                <p className="text-muted-foreground mt-2">
+                  Configure storage providers and monitor usage
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => setShowStorageManager(false)}>
+                Back to Admin
+              </Button>
+            </div>
+
+            {/* Storage Manager */}
+            <StorageManager />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background py-20">
       <div className="container mx-auto px-4">
@@ -111,6 +153,78 @@ const Admin = () => {
               Sign Out
             </Button>
           </div>
+
+          {/* Storage Management Section */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Storage Management</CardTitle>
+              <CardDescription>
+                Manage your local storage and clear data when needed
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Current Storage Usage</p>
+                  <p className="text-sm text-muted-foreground">
+                    Check how much storage you're using
+                  </p>
+                </div>
+                <Button onClick={() => {
+                  const storageInfo = dynamicProjectsService.getStorageInfo();
+                  toast({
+                    title: "Storage Usage",
+                    description: `Used: ${Math.round(storageInfo.used / 1024)}KB / Available: ${Math.round(storageInfo.available / 1024)}KB`,
+                  });
+                }} variant="outline">
+                  Check Usage
+                </Button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Clear All Data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Remove all projects and images (⚠️ This cannot be undone)
+                  </p>
+                </div>
+                <Button onClick={() => {
+                  localStorage.removeItem('dynamic_portfolio_projects');
+                  toast({
+                    title: "Data Cleared",
+                    description: "All projects and data have been cleared.",
+                  });
+                }} variant="destructive">
+                  Clear All
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Clear Images Only</p>
+                  <p className="text-sm text-muted-foreground">
+                    Remove all project images to free up space
+                  </p>
+                </div>
+                <Button onClick={() => {
+                  const projects = dynamicProjectsService.getAllProjects();
+                  const projectsWithoutImages = projects.map(project => ({
+                    ...project,
+                    image_url: ''
+                  }));
+                  projectsWithoutImages.forEach(project => {
+                    dynamicProjectsService.updateProject(project.id, project);
+                  });
+                  toast({
+                    title: "Images Cleared",
+                    description: "All project images have been removed.",
+                  });
+                }} variant="outline">
+                  Clear Images
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Admin Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

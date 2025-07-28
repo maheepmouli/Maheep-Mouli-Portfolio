@@ -31,8 +31,11 @@ export interface ProjectImage {
   created_at: string;
 }
 
+import { storageService } from './storageService';
+
 const STORAGE_KEY = 'portfolio_projects';
 const IMAGES_STORAGE_KEY = 'portfolio_project_images';
+const DRIVE_BACKUP_KEY = 'portfolio_drive_backup';
 
 // Initialize with sample data if no projects exist
 const initializeSampleData = (): Project[] => [
@@ -147,7 +150,7 @@ export const projectsService = {
   },
 
   // Create a new project
-  createProject: (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Project => {
+  createProject: async (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> => {
     const projects = projectsService.getAllProjects();
     const newProject: Project = {
       ...projectData,
@@ -157,12 +160,44 @@ export const projectsService = {
     };
     
     projects.push(newProject);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    return newProject;
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      return newProject;
+    } catch (error) {
+      console.error('LocalStorage quota exceeded, trying cleanup...');
+      
+      // Try to clean up by removing large image_url data
+      try {
+        const cleanedProjects = projects.map(project => ({
+          ...project,
+          image_url: project.image_url.startsWith('data:') ? '' : project.image_url
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedProjects));
+        console.log('Successfully saved after cleanup');
+        return newProject;
+      } catch (cleanupError) {
+        console.error('Cleanup failed, trying storage service...');
+        
+        // Try Supabase as fallback
+        try {
+          const result = await storageService.uploadWithFallback(projects, `projects_backup_${newProject.id}`);
+          if (result) {
+            localStorage.setItem(DRIVE_BACKUP_KEY, result);
+            console.log('Successfully saved using Supabase');
+            return newProject;
+          }
+        } catch (supabaseError) {
+          console.error('Supabase failed:', supabaseError);
+        }
+        
+        throw new Error('Storage quota exceeded and all backup methods failed');
+      }
+    }
   },
 
   // Update an existing project
-  updateProject: (id: string, projectData: Partial<Project>): Project | null => {
+  updateProject: async (id: string, projectData: Partial<Project>): Promise<Project | null> => {
     const projects = projectsService.getAllProjects();
     const index = projects.findIndex(project => project.id === id);
     
@@ -174,8 +209,39 @@ export const projectsService = {
       updated_at: new Date().toISOString()
     };
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    return projects[index];
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      return projects[index];
+    } catch (error) {
+      console.error('LocalStorage quota exceeded, trying cleanup...');
+      
+      // Try to clean up by removing large image_url data
+      try {
+        const cleanedProjects = projects.map(project => ({
+          ...project,
+          image_url: project.image_url.startsWith('data:') ? '' : project.image_url
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedProjects));
+        console.log('Successfully saved after cleanup');
+        return projects[index];
+      } catch (cleanupError) {
+        console.error('Cleanup failed, trying storage service...');
+        
+        // Try Supabase as fallback
+        try {
+          const result = await storageService.uploadWithFallback(projects, `projects_backup_${id}`);
+          if (result) {
+            localStorage.setItem(DRIVE_BACKUP_KEY, result);
+            console.log('Successfully saved using Supabase');
+            return projects[index];
+          }
+        } catch (supabaseError) {
+          console.error('Supabase failed:', supabaseError);
+        }
+        
+        throw new Error('Storage quota exceeded and all backup methods failed');
+      }
+    }
   },
 
   // Delete a project

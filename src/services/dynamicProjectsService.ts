@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { googleDriveService } from './googleDriveService';
+import { storageService } from './storageService';
 
 export interface DynamicProject {
   id: string;
@@ -50,7 +50,7 @@ const initializeSampleData = (): DynamicProject[] => [
     subtitle: "Real-time Congestion Prediction Dashboard",
     description: "AI-powered urban mobility analysis system using Graph ML to predict traffic patterns and optimize city flow in real-time.",
     content: "<h2>Project Overview</h2><p>Flow-SIGHT is an advanced urban mobility analysis system that leverages Graph Machine Learning to predict traffic patterns and optimize city flow in real-time.</p><h3>Key Features</h3><ul><li>Real-time traffic pattern prediction</li><li>Graph ML algorithms for urban data analysis</li><li>Interactive dashboard with live data visualization</li><li>Optimization recommendations for city planners</li></ul><h3>Technologies Used</h3><p>Python, TensorFlow, Graph ML, React, Urban Data Analytics</p>",
-    image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&crop=center",
     status: "Live Demo",
     featured: true,
     project_url: "https://flow-sight.demo",
@@ -90,7 +90,7 @@ const initializeSampleData = (): DynamicProject[] => [
     subtitle: "ML-driven Wood Optimization & Fabrication Pipeline",
     description: "Computer vision system for automated wood classification and CNC optimization, reducing material waste by 35%.",
     content: "<h2>Project Overview</h2><p>WOOD-ID is a computer vision system for automated wood classification and CNC optimization, significantly reducing material waste.</p><h3>Key Features</h3><ul><li>Automated wood species classification</li><li>CNC optimization algorithms</li><li>Material waste reduction by 35%</li><li>Real-time quality control</li></ul><h3>Technologies Used</h3><p>Computer Vision, CNC, Rhino, Python, Machine Learning</p>",
-    image_url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=600&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&crop=center",
     status: "Case Study",
     featured: true,
     project_url: "https://wood-id.demo",
@@ -130,7 +130,7 @@ const initializeSampleData = (): DynamicProject[] => [
     subtitle: "14,000 m² Mixed-Use Development",
     description: "Complete BIM coordination and technical documentation for large-scale healthcare and hospitality project using advanced Revit workflows.",
     content: "<h2>Project Overview</h2><p>Complete BIM coordination and technical documentation for large-scale healthcare and hospitality project using advanced Revit workflows.</p><h3>Key Features</h3><ul><li>14,000 m² mixed-use development</li><li>Complete BIM coordination</li><li>Technical documentation</li><li>Healthcare and hospitality facilities</li></ul><h3>Technologies Used</h3><p>Revit, AutoCAD, BIM, Construction Documentation</p>",
-    image_url: "https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?w=800&h=600&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=600&fit=crop&crop=center",
     status: "Built",
     featured: true,
     project_url: "https://atelier24.demo",
@@ -248,11 +248,7 @@ const initializeSampleData = (): DynamicProject[] => [
 
 // Database-like functions
 export const dynamicProjectsService = {
-  // Clear all data (for debugging)
-  clearAllData: () => {
-    localStorage.removeItem(STORAGE_KEY);
-    console.log('Cleared all project data');
-  },
+
 
   // Get all projects
   getAllProjects: (): DynamicProject[] => {
@@ -401,19 +397,17 @@ export const dynamicProjectsService = {
         } catch (finalError) {
           console.error('Cannot save even minimal data:', finalError);
           
-          // Try Google Drive as last resort
-          if (googleDriveService.isAvailable()) {
-            try {
-              console.log('Attempting to save to Google Drive...');
-              const driveFileId = await googleDriveService.uploadProjectData(id, projects);
-              if (driveFileId) {
-                localStorage.setItem(DRIVE_BACKUP_KEY, driveFileId);
-                console.log('Successfully saved to Google Drive:', driveFileId);
-                return projects[projectIndex];
-              }
-            } catch (driveError) {
-              console.error('Google Drive upload failed:', driveError);
+          // Try Supabase as fallback
+          try {
+            console.log('Attempting to save using Supabase...');
+            const result = await storageService.uploadWithFallback(projects, `projects_backup_${id}`);
+            if (result) {
+              localStorage.setItem('supabase_backup_key', result);
+              console.log('Successfully saved using Supabase:', result);
+              return projects[projectIndex];
             }
+          } catch (supabaseError) {
+            console.error('Supabase upload failed:', supabaseError);
           }
           
           throw new Error('Storage quota exceeded and all backup methods failed');

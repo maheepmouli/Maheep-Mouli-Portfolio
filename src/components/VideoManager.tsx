@@ -62,12 +62,24 @@ const VideoManager = ({ videos, onVideosChange }: VideoManagerProps) => {
 
   const getGoogleDriveEmbedUrl = (url: string) => {
     // Convert Google Drive sharing URL to embed URL
-    const driveIdMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    if (driveIdMatch) {
-      return `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+    // Format: https://drive.google.com/file/d/{fileId}/view?usp=sharing
+    const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/);
+    if (fileIdMatch) {
+      return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
     }
     return url;
   };
+
+  const detectVideoType = (url: string): 'youtube' | 'drive' => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'youtube';
+    } else if (url.includes('drive.google.com')) {
+      return 'drive';
+    }
+    return 'youtube'; // default
+  };
+
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -114,24 +126,28 @@ const VideoManager = ({ videos, onVideosChange }: VideoManagerProps) => {
 
           <div>
             <Label htmlFor="video-url">
-              {newVideo.type === 'youtube' ? 'YouTube URL *' : 'Google Drive URL *'}
+              Video URL *
             </Label>
             <Input
               id="video-url"
               value={newVideo.url}
-              onChange={(e) => setNewVideo(prev => ({ ...prev, url: e.target.value }))}
-              placeholder={
-                newVideo.type === 'youtube' 
-                  ? "https://www.youtube.com/watch?v=..." 
-                  : "https://drive.google.com/file/d/..."
-              }
+              onChange={(e) => {
+                const url = e.target.value;
+                setNewVideo(prev => ({ 
+                  ...prev, 
+                  url,
+                  type: detectVideoType(url) // Auto-detect type based on URL
+                }));
+              }}
+              placeholder="https://www.youtube.com/watch?v=... or https://drive.google.com/file/d/..."
               onKeyPress={handleKeyPress}
             />
             <p className="text-sm text-muted-foreground mt-1">
-              {newVideo.type === 'youtube' 
-                ? "Paste any YouTube video URL (watch, share, or embed link)"
-                : "Paste Google Drive sharing URL (make sure it's set to 'Anyone with the link can view')"
-              }
+              Paste YouTube or Google Drive video URL. Type will be auto-detected.
+              <br />
+              <strong>YouTube:</strong> https://youtube.com/watch?v=... or https://youtu.be/...
+              <br />
+              <strong>Google Drive:</strong> https://drive.google.com/file/d/FILE_ID/view?usp=sharing
             </p>
           </div>
 
@@ -166,8 +182,17 @@ const VideoManager = ({ videos, onVideosChange }: VideoManagerProps) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="flex items-center gap-1">
-                        {video.type === 'youtube' ? <Youtube size={14} /> : <HardDrive size={14} />}
-                        {video.type === 'youtube' ? 'YouTube' : 'Google Drive'}
+                        {video.type === 'youtube' ? (
+                          <>
+                            <Youtube size={14} />
+                            YouTube
+                          </>
+                        ) : (
+                          <>
+                            <HardDrive size={14} />
+                            Google Drive
+                          </>
+                        )}
                       </Badge>
                       <h4 className="font-medium">{video.title}</h4>
                     </div>
@@ -203,7 +228,9 @@ const VideoManager = ({ videos, onVideosChange }: VideoManagerProps) => {
                     src={
                       video.type === 'youtube' 
                         ? getYouTubeEmbedUrl(video.url)
-                        : getGoogleDriveEmbedUrl(video.url)
+                        : video.type === 'drive'
+                        ? getGoogleDriveEmbedUrl(video.url)
+                        : video.url
                     }
                     title={video.title}
                     className="w-full h-full"

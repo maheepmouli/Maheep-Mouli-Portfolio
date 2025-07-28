@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .credentials {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Configure Supabase Storage</h1>
+        <p>This will configure your portfolio to use Supabase for storage (2GB free).</p>
+        
+        <div class="credentials">
+            <strong>Project URL:</strong> https://jetefprstmoewdfhhwqq.supabase.co<br>
+            <strong>API Key:</strong> eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        </div>
+        
+        <button onclick="configureSupabase()">Configure Supabase</button>
+        
+        <div id="result"></div>
+        
+        <div id="next-steps" style="display: none; margin-top: 20px;">
+            <h3>✅ Configuration Complete!</h3>
+            <p>Your portfolio is now configured to use Supabase storage.</p>
+            <ol>
+                <li>Go to your portfolio admin panel</li>
+                <li>Click "Storage Management"</li>
+                <li>You should see "Supabase" as the active provider</li>
+                <li>Try creating a new project with images</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function configureSupabase() {
+            const supabaseUrl = 'https://jetefprstmoewdfhhwqq.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpldGVmcHJzdG1vZXdkZmhod3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTcyMTUsImV4cCI6MjA2OTAzMzIxNX0.LB4B8Qx_oE1h1U3_Zu6FGyMGozbi0Hc7jia7Qa5TQW4';
+            
+            try {
+                // Save to localStorage
+                localStorage.setItem('supabase_url', supabaseUrl);
+                localStorage.setItem('supabase_key', supabaseKey);
+                
+                // Verify storage
+                const savedUrl = localStorage.getItem('supabase_url');
+                const savedKey = localStorage.getItem('supabase_key');
+                
+                if (savedUrl && savedKey) {
+                    document.getElementById('result').innerHTML = 
+                        '<div class="success">✅ Supabase credentials saved successfully!</div>';
+                    document.getElementById('next-steps').style.display = 'block';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<div class="error">❌ Failed to save credentials</div>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<div class="error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html> 

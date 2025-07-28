@@ -1,67 +1,42 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Navigation from '@/components/Navigation';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, MapPin, Clock, Users, Mail, ArrowLeft, Edit, Trash2, Play, Youtube, HardDrive } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, ExternalLink, Github, MapPin, Clock, Users, Edit, Trash2, Video, Youtube, HardDrive } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { motion } from 'framer-motion';
 import { useDynamicTranslatedProjects, DynamicProject } from '@/services/dynamicProjectsService';
+import Navigation from '@/components/Navigation';
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const { getTranslatedProjectById, deleteProject } = useDynamicTranslatedProjects();
+
   const [project, setProject] = useState<DynamicProject | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
-      const fetchedProject = getTranslatedProjectById(id);
-      if (fetchedProject) {
-        setProject(fetchedProject);
-      } else {
-        toast({
-          title: "Project Not Found",
-          description: "The project you are looking for does not exist.",
-          variant: "destructive",
-        });
-        navigate('/portfolio');
-      }
+      const projectData = getTranslatedProjectById(id);
+      setProject(projectData);
+      setIsLoading(false);
     }
-  }, [id, navigate, toast, getTranslatedProjectById]);
+  }, [id, getTranslatedProjectById]);
 
-  const handleHireMe = () => {
-    const subject = encodeURIComponent(`Hire Request - ${project?.title || 'Portfolio Project'}`);
-    const body = encodeURIComponent(`Hi Maheep,
-
-I saw your ${project?.title || 'portfolio'} project and would like to discuss a collaboration opportunity with you.
-
-Project: ${project?.title || 'N/A'}
-My requirements:
-- [Describe your project needs]
-- [Timeline]
-- [Budget range]
-
-Please let me know when you're available for a call.
-
-Best regards,
-[Your name]`);
-    
-    window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
-  };
-
-  const handleDeleteProject = () => {
-    if (project && confirm(`Are you sure you want to delete "${project.title}"? This action cannot be undone.`)) {
-      const success = deleteProject(project.id);
+  const handleDeleteProject = (projectId: string, projectTitle: string) => {
+    if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {
+      const success = deleteProject(projectId);
       if (success) {
         toast({
           title: "Project Deleted",
-          description: `"${project.title}" has been removed from your portfolio.`,
+          description: `"${projectTitle}" has been removed from your portfolio.`,
         });
         navigate('/portfolio');
       } else {
@@ -74,7 +49,73 @@ Best regards,
     }
   };
 
-  if (!project) {
+  // Helper function to get YouTube video ID
+  const getYouTubeVideoId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  // Helper function to get Google Drive video ID
+  const getGoogleDriveVideoId = (url: string): string | null => {
+    const regExp = /\/d\/([a-zA-Z0-9-_]+)/;
+    const match = url.match(regExp);
+    return match ? match[1] : null;
+  };
+
+  // Helper function to render video embed
+  const renderVideoEmbed = (videoUrl: string) => {
+    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+      const videoId = getYouTubeVideoId(videoUrl);
+      if (videoId) {
+        return (
+          <div className="relative w-full h-0 pb-[56.25%]">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title="YouTube video player"
+              className="absolute top-0 left-0 w-full h-full rounded-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+    } else if (videoUrl.includes('drive.google.com')) {
+      const videoId = getGoogleDriveVideoId(videoUrl);
+      if (videoId) {
+        return (
+          <div className="relative w-full h-0 pb-[56.25%]">
+            <iframe
+              src={`https://drive.google.com/file/d/${videoId}/preview`}
+              title="Google Drive video player"
+              className="absolute top-0 left-0 w-full h-full rounded-lg"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+    }
+    
+    // Fallback for other video URLs
+    return (
+      <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <Video size={48} className="mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Video not supported</p>
+          <a 
+            href={videoUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline text-sm"
+          >
+            Open Video
+          </a>
+        </div>
+      </div>
+    );
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -87,49 +128,65 @@ Best regards,
     );
   }
 
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-6 py-24">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
+            <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate('/portfolio')}>
+              Back to Portfolio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <motion.div 
-        className="container mx-auto px-6 py-24"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+      <div className="container mx-auto px-6 py-24">
         {/* Back Button */}
         <motion.div 
           className="mb-8"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ duration: 0.6 }}
         >
           <Button 
             variant="ghost" 
             onClick={() => navigate('/portfolio')}
-            className="flex items-center gap-2 hover:bg-accent"
+            className="mb-4"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} className="mr-2" />
             Back to Portfolio
           </Button>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Project Image */}
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="relative group">
-              <img 
-                src={project.image_url} 
-                alt={project.title}
-                className="w-full h-96 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-            </div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Project Image */}
+            {project.image_url && (
+                              <motion.div 
+                  className="relative group cursor-pointer"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                <img 
+                  src={project.image_url} 
+                  alt={project.title}
+                  className="w-full h-96 object-cover rounded-lg shadow-lg"
+                />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              </motion.div>
+            )}
 
             {/* Additional Images Gallery */}
             {project.images && project.images.length > 0 && (
@@ -159,182 +216,204 @@ Best regards,
                 </div>
               </motion.div>
             )}
-          </motion.div>
 
-          {/* Project Details */}
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div>
-              <motion.h1 
-                className="text-4xl md:text-5xl font-bold mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                {project.title}
-              </motion.h1>
-              <motion.p 
-                className="text-xl text-muted-foreground mb-6"
+            {/* Videos Section */}
+            {project.videos && project.videos.length > 0 && (
+              <motion.div 
+                className="space-y-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                {project.subtitle}
-              </motion.p>
-              <motion.p 
-                className="text-lg leading-relaxed mb-8"
+                <h3 className="text-xl font-semibold">Project Videos</h3>
+                <div className="space-y-6">
+                  {project.videos.map((video, index) => (
+                    <motion.div 
+                      key={index}
+                      className="space-y-2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + index * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {video.includes('youtube.com') ? (
+                          <Youtube size={20} className="text-red-500" />
+                        ) : video.includes('drive.google.com') ? (
+                          <HardDrive size={20} className="text-blue-500" />
+                        ) : (
+                          <Video size={20} className="text-muted-foreground" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {video.includes('youtube.com') ? 'YouTube Video' : 
+                           video.includes('drive.google.com') ? 'Google Drive Video' : 'Video'} {index + 1}
+                        </span>
+                      </div>
+                      {renderVideoEmbed(video)}
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Project Content */}
+            {project.content && (
+              <motion.div 
+                className="prose prose-lg max-w-none"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.8 }}
               >
-                {project.description}
-              </motion.p>
-            </div>
+                <h3 className="text-xl font-semibold mb-4">Project Details</h3>
+                <div 
+                  className="text-muted-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: project.content }}
+                />
+              </motion.div>
+            )}
+          </div>
 
-            {/* Project Stats */}
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Project Details */}
             <motion.div 
-              className="grid grid-cols-2 gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
             >
               <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin size={16} className="text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Location</span>
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">{project.title}</h2>
+                    {project.subtitle && (
+                      <p className="text-muted-foreground">{project.subtitle}</p>
+                    )}
                   </div>
-                  <p className="font-medium">{project.location}</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock size={16} className="text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Duration</span>
+
+                  {project.description && (
+                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                  )}
+
+                  {/* Project Stats */}
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    {project.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.location}</span>
+                      </div>
+                    )}
+                    {project.duration && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.duration}</span>
+                      </div>
+                    )}
+                    {project.team_size && (
+                      <div className="flex items-center gap-2">
+                        <Users size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.team_size}</span>
+                      </div>
+                    )}
                   </div>
-                  <p className="font-medium">{project.duration}</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users size={16} className="text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Team Size</span>
+
+                  {/* Status Badge */}
+                  <div className="pt-4 border-t">
+                    <Badge variant="secondary">{project.status}</Badge>
                   </div>
-                  <p className="font-medium">{project.team_size}</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                  </div>
-                  <Badge variant={project.status === 'Built' ? 'default' : project.status === 'Live Demo' ? 'secondary' : 'outline'}>
-                    {project.status}
-                  </Badge>
                 </CardContent>
               </Card>
             </motion.div>
 
             {/* Technologies */}
-            <motion.div 
-              className="space-y-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-            >
-              <h3 className="text-lg font-semibold">Technologies Used</h3>
-              <div className="flex flex-wrap gap-2">
-                {project.technologies.map((tech, index) => (
-                  <Badge key={index} variant="secondary">
-                    {tech}
-                  </Badge>
-                ))}
-              </div>
-            </motion.div>
+            {project.technologies && project.technologies.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold mb-4">Technologies</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {project.technologies.map((tech) => (
+                        <Badge key={tech} variant="outline">
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Tags */}
+            {project.tags && project.tags.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold mb-4">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {project.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Action Buttons */}
             <motion.div 
-              className="flex flex-wrap gap-4 pt-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0 }}
+              className="space-y-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
             >
               {project.project_url && (
-                <Button asChild>
-                  <a href={project.project_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink size={16} className="mr-2" />
-                    View Live Demo
-                  </a>
+                <Button className="w-full" onClick={() => window.open(project.project_url, '_blank')}>
+                  <ExternalLink size={16} className="mr-2" />
+                  View Live Demo
                 </Button>
               )}
               
               {project.github_url && (
-                <Button variant="outline" asChild>
-                  <a href={project.github_url} target="_blank" rel="noopener noreferrer">
-                    <Github size={16} className="mr-2" />
-                    View Code
-                  </a>
+                <Button variant="outline" className="w-full" onClick={() => window.open(project.github_url, '_blank')}>
+                  <Github size={16} className="mr-2" />
+                  View Code
                 </Button>
               )}
-              
-              <Button variant="outline" onClick={handleHireMe}>
-                <Mail size={16} className="mr-2" />
-                Hire Me
-              </Button>
-            </motion.div>
 
-            {/* Admin Actions */}
-            {user && (
-              <motion.div 
-                className="flex gap-2 pt-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.1 }}
-              >
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`/portfolio/edit/${project.id}`}>
-                    <Edit size={14} className="mr-2" />
+              {/* Admin Actions */}
+              {user && (
+                <div className="pt-4 border-t space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate(`/portfolio/edit/${project.id}`)}
+                  >
+                    <Edit size={16} className="mr-2" />
                     Edit Project
-                  </a>
-                </Button>
-                <Button variant="destructive" size="sm" onClick={handleDeleteProject}>
-                  <Trash2 size={14} className="mr-2" />
-                  Delete Project
-                </Button>
-              </motion.div>
-            )}
-          </motion.div>
+                  </Button>
+                  
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    onClick={() => handleDeleteProject(project.id, project.title)}
+                  >
+                    <Trash2 size={16} className="mr-2" />
+                    Delete Project
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          </div>
         </div>
-
-        {/* Project Content */}
-        <motion.div 
-          className="mt-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div 
-                className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: project.content }}
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 };

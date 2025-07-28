@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, X, Save, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Plus, X, Save, Image as ImageIcon, Upload, Video, Youtube, HardDrive } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -23,6 +23,9 @@ const ProjectCreate = () => {
   const { t, language } = useLanguage();
   const { createProject } = useDynamicTranslatedProjects();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
@@ -30,6 +33,7 @@ const ProjectCreate = () => {
     content: '',
     image_url: '', // Main image for thumbnail
     images: [] as string[], // Additional images array
+    videos: [] as string[], // Video URLs array
     status: 'draft' as const,
     featured: false,
     project_url: '',
@@ -38,13 +42,14 @@ const ProjectCreate = () => {
     duration: '',
     team_size: '',
     technologies: [] as string[],
-    tags: [] as string[],
-    videos: [] as any[]
+    tags: [] as string[]
   });
 
   const [newTechnology, setNewTechnology] = useState('');
   const [newTag, setNewTag] = useState('');
-  const [newImage, setNewImage] = useState(''); // New state for image input
+  const [newImage, setNewImage] = useState('');
+  const [newVideo, setNewVideo] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   // Redirect if not authenticated
   if (!user) {
@@ -92,29 +97,110 @@ const ProjectCreate = () => {
     handleInputChange('images', formData.images.filter(img => img !== image));
   };
 
+  const addVideo = () => {
+    if (newVideo.trim() && !formData.videos.includes(newVideo.trim())) {
+      handleInputChange('videos', [...formData.videos, newVideo.trim()]);
+      setNewVideo('');
+    }
+  };
+
+  const removeVideo = (video: string) => {
+    handleInputChange('videos', formData.videos.filter(v => v !== video));
+  };
+
+  // Handle local file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Convert file to base64 for storage
+        const base64 = await convertFileToBase64(file);
+        
+        // Add to images array
+        handleInputChange('images', [...formData.images, base64]);
+      }
+      
+      toast({
+        title: "Images Uploaded",
+        description: `${files.length} image(s) uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description) {
+    if (!formData.title.trim()) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: "Project title is required.",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      const newProject = createProject(formData);
-      toast({
-        title: "Project Created",
-        description: `"${newProject.title}" has been added to your portfolio.`,
-      });
-      navigate('/portfolio');
+      const newProject: Omit<DynamicProject, 'id' | 'created_at' | 'updated_at'> = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        description: formData.description,
+        content: formData.content,
+        image_url: formData.image_url,
+        images: formData.images,
+        videos: formData.videos,
+        status: formData.status,
+        featured: formData.featured,
+        project_url: formData.project_url,
+        github_url: formData.github_url,
+        location: formData.location,
+        duration: formData.duration,
+        team_size: formData.team_size,
+        technologies: formData.technologies,
+        tags: formData.tags
+      };
+
+      const success = createProject(newProject);
+      
+      if (success) {
+        toast({
+          title: "Project Created",
+          description: "Your project has been created successfully!",
+        });
+        navigate('/portfolio');
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create project. Please try again.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create project. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     }
@@ -133,16 +219,16 @@ const ProjectCreate = () => {
         {/* Header */}
         <motion.div 
           className="mb-8"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <Button 
             variant="ghost" 
             onClick={() => navigate('/portfolio')}
-            className="flex items-center gap-2 hover:bg-accent mb-4"
+            className="mb-4"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} className="mr-2" />
             Back to Portfolio
           </Button>
           <h1 className="text-4xl font-bold">Create New Project</h1>
@@ -180,19 +266,18 @@ const ProjectCreate = () => {
                       id="subtitle"
                       value={formData.subtitle}
                       onChange={(e) => handleInputChange('subtitle', e.target.value)}
-                      placeholder="Enter project subtitle"
+                      placeholder="Brief project description"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
                       onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Enter project description"
-                      rows={4}
-                      required
+                      placeholder="Project description"
+                      rows={3}
                     />
                   </div>
 
@@ -202,24 +287,69 @@ const ProjectCreate = () => {
                       id="content"
                       value={formData.content}
                       onChange={(e) => handleInputChange('content', e.target.value)}
-                      placeholder="Enter detailed project content (HTML supported)"
-                      rows={8}
+                      placeholder="Detailed project content"
+                      rows={5}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="image_url">Project Image URL</Label>
+                    <Label htmlFor="image_url">Main Project Image URL</Label>
                     <Input
                       id="image_url"
                       value={formData.image_url}
                       onChange={(e) => handleInputChange('image_url', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
+                      placeholder="https://example.com/main-image.jpg"
                     />
+                  </div>
+
+                  {/* Local Image Upload */}
+                  <div>
+                    <Label>Upload Local Images</Label>
+                    <div 
+                      className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add('border-primary/50', 'bg-primary/5');
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-primary/50', 'bg-primary/5');
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-primary/50', 'bg-primary/5');
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                          handleFileUpload({ target: { files } } as any);
+                        }
+                      }}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Upload size={48} className="mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Drag & drop images here or click to browse
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? 'Uploading...' : 'Choose Images'}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Multiple Images Section */}
                   <div>
-                    <Label>Additional Images</Label>
+                    <Label>Additional Image URLs</Label>
                     <div className="flex gap-2 mb-2">
                       <Input
                         value={newImage}
@@ -238,12 +368,56 @@ const ProjectCreate = () => {
                         {formData.images.map((image, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
                             <ImageIcon size={16} className="text-muted-foreground" />
-                            <span className="text-sm flex-1 truncate">{image}</span>
+                            <span className="text-sm flex-1 truncate">
+                              {image.startsWith('data:') ? `Local Image ${index + 1}` : image}
+                            </span>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => removeImage(image)}
+                            >
+                              <X size={14} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Video URLs Section */}
+                  <div>
+                    <Label>Video URLs (YouTube/Google Drive)</Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        value={newVideo}
+                        onChange={(e) => setNewVideo(e.target.value)}
+                        placeholder="https://youtube.com/watch?v=... or https://drive.google.com/..."
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVideo())}
+                      />
+                      <Button type="button" onClick={addVideo} size="sm">
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    
+                    {formData.videos.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Added Videos:</Label>
+                        {formData.videos.map((video, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                            {video.includes('youtube.com') ? (
+                              <Youtube size={16} className="text-red-500" />
+                            ) : video.includes('drive.google.com') ? (
+                              <HardDrive size={16} className="text-blue-500" />
+                            ) : (
+                              <Video size={16} className="text-muted-foreground" />
+                            )}
+                            <span className="text-sm flex-1 truncate">{video}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeVideo(video)}
                             >
                               <X size={14} />
                             </Button>
@@ -295,7 +469,7 @@ const ProjectCreate = () => {
                       id="location"
                       value={formData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
-                      placeholder="e.g., Barcelona, Spain"
+                      placeholder="Project location"
                     />
                   </div>
 
@@ -305,7 +479,7 @@ const ProjectCreate = () => {
                       id="duration"
                       value={formData.duration}
                       onChange={(e) => handleInputChange('duration', e.target.value)}
-                      placeholder="e.g., 6 months"
+                      placeholder="e.g., 3 months"
                     />
                   </div>
 
@@ -315,7 +489,7 @@ const ProjectCreate = () => {
                       id="team_size"
                       value={formData.team_size}
                       onChange={(e) => handleInputChange('team_size', e.target.value)}
-                      placeholder="e.g., 4 people"
+                      placeholder="e.g., 5 people"
                     />
                   </div>
                 </CardContent>
@@ -329,14 +503,13 @@ const ProjectCreate = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              {/* Project Links */}
               <Card>
                 <CardHeader>
                   <CardTitle>Project Links</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="project_url">Live Demo URL</Label>
+                    <Label htmlFor="project_url">Project URL</Label>
                     <Input
                       id="project_url"
                       value={formData.project_url}
@@ -346,7 +519,7 @@ const ProjectCreate = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="github_url">GitHub Repository</Label>
+                    <Label htmlFor="github_url">GitHub URL</Label>
                     <Input
                       id="github_url"
                       value={formData.github_url}
@@ -357,7 +530,6 @@ const ProjectCreate = () => {
                 </CardContent>
               </Card>
 
-              {/* Technologies */}
               <Card>
                 <CardHeader>
                   <CardTitle>Technologies</CardTitle>
@@ -375,24 +547,18 @@ const ProjectCreate = () => {
                     </Button>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {formData.technologies.map((tech, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {tech}
-                        <button
-                          type="button"
-                          onClick={() => removeTechnology(tech)}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X size={12} />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                  {formData.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.technologies.map((tech) => (
+                        <Badge key={tech} variant="secondary" className="cursor-pointer" onClick={() => removeTechnology(tech)}>
+                          {tech} <X size={12} className="ml-1" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Tags */}
               <Card>
                 <CardHeader>
                   <CardTitle>Tags</CardTitle>
@@ -410,20 +576,15 @@ const ProjectCreate = () => {
                     </Button>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline" className="flex items-center gap-1">
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(tag)}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X size={12} />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                  {formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="cursor-pointer" onClick={() => removeTag(tag)}>
+                          {tag} <X size={12} className="ml-1" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -431,12 +592,12 @@ const ProjectCreate = () => {
 
           {/* Submit Button */}
           <motion.div 
-            className="flex justify-end mt-8"
+            className="mt-8 flex justify-end"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <Button type="submit" size="lg" className="btn-hero">
+            <Button type="submit" className="btn-hero">
               <Save size={18} className="mr-2" />
               Create Project
             </Button>

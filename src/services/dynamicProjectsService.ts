@@ -8,6 +8,7 @@ export interface DynamicProject {
   content: string;
   image_url: string;
   images?: string[]; // Optional array for multiple images
+  videos?: string[]; // Optional array for video URLs
   status: 'draft' | 'published' | 'Live Demo' | 'Case Study' | 'Built' | 'Research' | 'Completed' | 'Development' | 'Demo en Vivo' | 'Demo en Viu' | 'Estudio de Caso' | 'Estudi de Cas' | 'Construido' | 'Construït' | 'Investigación' | 'Recerca';
   featured: boolean;
   project_url?: string;
@@ -17,7 +18,6 @@ export interface DynamicProject {
   team_size?: string;
   technologies: string[];
   tags: string[];
-  videos?: any[];
   created_at: string;
   updated_at: string;
   // Multilingual support
@@ -58,7 +58,7 @@ const initializeSampleData = (): DynamicProject[] => [
     team_size: "4 people",
     technologies: ["Python", "TensorFlow", "Graph ML", "React", "Urban Data"],
     tags: ["AI Tools", "Urban Analytics"],
-    videos: [],
+    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     translations: {
@@ -98,7 +98,7 @@ const initializeSampleData = (): DynamicProject[] => [
     team_size: "3 people",
     technologies: ["Computer Vision", "CNC", "Rhino", "Python", "ML"],
     tags: ["AI Tools", "Fabrication"],
-    videos: [],
+    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     translations: {
@@ -138,7 +138,7 @@ const initializeSampleData = (): DynamicProject[] => [
     team_size: "8 people",
     technologies: ["Revit", "AutoCAD", "BIM", "Construction Docs"],
     tags: ["BIM", "Architecture"],
-    videos: [],
+    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     translations: {
@@ -178,7 +178,7 @@ const initializeSampleData = (): DynamicProject[] => [
     team_size: "2 people",
     technologies: ["Grasshopper", "3D Printing", "Material Science", "Rhino"],
     tags: ["Fabrication"],
-    videos: [],
+    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     translations: {
@@ -218,7 +218,7 @@ const initializeSampleData = (): DynamicProject[] => [
     team_size: "5 people",
     technologies: ["Site Supervision", "Construction", "Sustainable Building"],
     tags: ["Architecture", "Construction"],
-    videos: [],
+    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     translations: {

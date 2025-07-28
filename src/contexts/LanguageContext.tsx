@@ -83,14 +83,20 @@ const translations = {
     // Contact Section
     'contact.title': 'Get In Touch',
     'contact.subtitle': 'Ready to collaborate on your next project?',
+    'contact.getInTouch': 'Get in Touch',
+    'contact.sendMessage': 'Send a Message',
+    'contact.availability': 'Availability',
     'contact.name': 'Name',
     'contact.email': 'Email',
     'contact.message': 'Message',
-    'contact.sendMessage': 'Send Message',
     'contact.location': 'Barcelona, Spain',
     'contact.emailAddress': 'maheep.mouli.shashi@gmail.com',
     'contact.linkedin': 'LinkedIn',
     'contact.github': 'GitHub',
+    'contact.openToProjects': 'Open to new projects',
+    'contact.remoteWork': 'Remote work worldwide',
+    'contact.responseTime': 'Response within 24 hours',
+    'contact.relocationText': 'Open to relocation and remote work opportunities globally',
 
     // Blog Section
     'blog.title': 'Blog',
@@ -221,6 +227,10 @@ const translations = {
     'common.back': 'Atrás',
     'common.next': 'Siguiente',
     'common.previous': 'Anterior',
+    'contact.openToProjects': 'Abierto a nuevos proyectos',
+    'contact.remoteWork': 'Trabajo remoto mundial',
+    'contact.responseTime': 'Respuesta en 24 horas',
+    'contact.relocationText': 'Abierto a reubicación y oportunidades de trabajo remoto globalmente',
   },
   ca: {
     // Navigation
@@ -326,6 +336,10 @@ const translations = {
     'common.back': 'Enrere',
     'common.next': 'Següent',
     'common.previous': 'Anterior',
+    'contact.openToProjects': 'Obert a nous projectes',
+    'contact.remoteWork': 'Treball remot mundial',
+    'contact.responseTime': 'Resposta en 24 hores',
+    'contact.relocationText': 'Obert a reubicació i oportunitats de treball remot globalment',
   }
 };
 

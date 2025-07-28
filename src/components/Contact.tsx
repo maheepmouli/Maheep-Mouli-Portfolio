@@ -134,8 +134,8 @@ This message was sent from your portfolio website contact form.`);
   const contactInfo = [
     {
       icon: <Mail className="w-5 h-5" />,
-      label: "Email",
-      value: "maheep.mouli.shashi@gmail.com",
+      label: t('contact.email'),
+      value: t('contact.emailAddress'),
       link: "mailto:maheep.mouli.shashi@gmail.com"
     },
     {
@@ -147,12 +147,12 @@ This message was sent from your portfolio website contact form.`);
     {
       icon: <MapPin className="w-5 h-5" />,
       label: "Location",
-      value: "Barcelona, Spain",
+      value: t('contact.location'),
       link: null
     },
     {
       icon: <LinkedinIcon className="w-5 h-5" />,
-      label: "LinkedIn",
+      label: t('contact.linkedin'),
       value: "maheep-mouli-shashi",
       link: "https://linkedin.com/in/maheep-mouli-shashi-280832180"
     }
@@ -210,21 +210,21 @@ This message was sent from your portfolio website contact form.`);
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-primary" />
-                        <span>Open to new projects</span>
+                        <span>{t('contact.openToProjects')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin size={16} className="text-primary" />
-                        <span>Remote work worldwide</span>
+                        <span>{t('contact.remoteWork')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MessageCircle size={16} className="text-primary" />
-                        <span>Response within 24 hours</span>
+                        <span>{t('contact.responseTime')}</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 <p className="text-highlight font-medium text-sm">
-                  Open to relocation and remote work opportunities globally
+                  {t('contact.relocationText')}
                 </p>
               </Card>
 
@@ -258,7 +258,7 @@ This message was sent from your portfolio website contact form.`);
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="name">{t('contact.name')} *</Label>
                     <Input
                       id="name"
                       name="name"
@@ -270,7 +270,7 @@ This message was sent from your portfolio website contact form.`);
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">{t('contact.email')} *</Label>
                     <Input
                       id="email"
                       name="email"
@@ -295,7 +295,7 @@ This message was sent from your portfolio website contact form.`);
                   />
                 </div>
                 <div>
-                  <Label htmlFor="message">Message *</Label>
+                  <Label htmlFor="message">{t('contact.message')} *</Label>
                   <Textarea
                     id="message"
                     name="message"
@@ -313,7 +313,7 @@ This message was sent from your portfolio website contact form.`);
                   disabled={isSubmitting}
                 >
                   <Send size={18} className="mr-2" />
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {isSubmitting ? 'Sending...' : t('contact.sendMessage')}
                 </Button>
               </form>
               <p className="text-xs text-muted-foreground mt-4 text-center">

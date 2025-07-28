@@ -9,23 +9,25 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { projectsService, Project } from '@/services/projectsService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslatedProjects, TranslatedProject } from '@/services/translatedProjectsService';
 
 const Portfolio = () => {
   const [activeFilter, setActiveFilter] = useState('All');
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<TranslatedProject[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { getTranslatedProjects } = useTranslatedProjects();
   
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
   useEffect(() => {
     const loadProjects = () => {
-      const allProjects = projectsService.getAllProjects();
+      const allProjects = getTranslatedProjects();
       setProjects(allProjects);
     };
     loadProjects();
-  }, []);
+  }, [getTranslatedProjects]);
 
   const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
   const featuredProjects = projects.filter(project => project.featured);
@@ -90,7 +92,7 @@ Best regards,
     }
   };
 
-  const ProjectCard = ({ project, isFeatured = false }: { project: Project; isFeatured?: boolean }) => {
+  const ProjectCard = ({ project, isFeatured = false }: { project: TranslatedProject; isFeatured?: boolean }) => {
     const [isHovered, setIsHovered] = useState(false);
     
     return (

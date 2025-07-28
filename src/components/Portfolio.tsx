@@ -21,23 +21,39 @@ const Portfolio = () => {
   const [projects, setProjects] = useState<DynamicProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const loadProjects = useCallback(() => {
     setIsLoading(true);
     try {
       console.log('Loading projects...');
-      const allProjects = getTranslatedProjects();
-      console.log('Loaded dynamic projects:', allProjects);
+      
+      // Get projects directly from the service instead of the hook
+      const allProjects = dynamicProjectsService.getAllProjects();
+      console.log('Loaded projects directly:', allProjects);
       console.log('Projects length:', allProjects.length);
       
+      // Apply translations manually
+      const translatedProjects = allProjects.map(project => {
+        const translation = project.translations?.[language as keyof typeof project.translations];
+        if (translation) {
+          return { ...project, ...translation } as DynamicProject;
+        }
+        return project;
+      });
+      
+      console.log('Translated projects:', translatedProjects);
+      
       // If no projects found, force initialize with sample data
-      if (allProjects.length === 0) {
+      if (translatedProjects.length === 0) {
         console.log('No projects found, forcing initialization...');
         dynamicProjectsService.clearAllData();
         const sampleProjects = dynamicProjectsService.getAllProjects();
         setProjects(sampleProjects);
+        setIsInitialized(true);
       } else {
-        setProjects(allProjects);
+        setProjects(translatedProjects);
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -45,14 +61,22 @@ const Portfolio = () => {
       dynamicProjectsService.clearAllData();
       const sampleProjects = dynamicProjectsService.getAllProjects();
       setProjects(sampleProjects);
+      setIsInitialized(true);
     } finally {
       setIsLoading(false);
     }
-  }, [getTranslatedProjects]);
+  }, [language]); // Only depend on language, not the hook
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  // Reload projects when language changes
+  useEffect(() => {
+    if (isInitialized) {
+      loadProjects();
+    }
+  }, [language, loadProjects, isInitialized]);
 
   const handleDeleteProject = (projectId: string, projectTitle: string) => {
     if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {

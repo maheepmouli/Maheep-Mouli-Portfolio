@@ -67,11 +67,51 @@ const SupabaseConfig = () => {
         return;
       }
       
-      // If we can access the table, it exists
+      // Test if we can insert a test record (this will check for missing columns)
+      const testProject = {
+        title: 'Test Project',
+        description: 'Test description',
+        duration: '1 month',
+        team_size: '1 person',
+        location: 'Remote',
+        project_url: 'https://example.com',
+        github_url: 'https://github.com/example',
+        subtitle: 'Test subtitle',
+        content: 'Test content',
+        image_url: 'https://example.com/image.jpg',
+        status: 'draft',
+        featured: false,
+        technologies: ['React', 'TypeScript'],
+        tags: ['test', 'demo']
+      };
+      
+      const { data: insertData, error: insertError } = await supabase
+        .from('projects')
+        .insert([testProject])
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('SupabaseConfig: Insert test error:', insertError);
+        setTableStatus('failed');
+        toast({
+          title: "❌ Table Structure Issue",
+          description: `Missing columns detected: ${insertError.message}. Please run the fix-missing-columns.sql script.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Clean up test record
+      if (insertData?.id) {
+        await supabase.from('projects').delete().eq('id', insertData.id);
+      }
+      
+      // If we can access and insert, the table is ready
       setTableStatus('created');
       toast({
         title: "✅ Table Ready!",
-        description: "Projects table is accessible and ready to use.",
+        description: "Projects table is accessible and has all required columns.",
       });
     } catch (error) {
       console.error('SupabaseConfig: Exception testing table:', error);

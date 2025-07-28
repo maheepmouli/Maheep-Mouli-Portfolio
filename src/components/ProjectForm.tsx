@@ -178,10 +178,12 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('ProjectForm: Form submitted');
-    setLoading(true);
+      const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      console.log('ProjectForm: Form submitted');
+      console.log('ProjectForm: Current form data:', formData);
+      console.log('ProjectForm: User authenticated:', !!user);
+      setLoading(true);
 
     try {
       console.log('ProjectForm: Starting form submission');
@@ -282,11 +284,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Project data to create:', projectData);
         
         // Create new project in Supabase
+        console.log('ProjectForm: Attempting to create project in Supabase...');
         const newProject = await supabaseProjectsService.createProject(projectData);
         console.log('ProjectForm: Created project result:', newProject);
         
         if (!newProject) {
-          throw new Error("Failed to create project in Supabase");
+          console.error('ProjectForm: Supabase returned null/undefined for new project');
+          throw new Error("Failed to create project in Supabase - no project returned");
         }
         
         // Save project images for new project with error handling
@@ -314,9 +318,9 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           description: "Your new project has been successfully created and is now live.",
         });
         
-        // Redirect to the new project immediately
+        // Redirect to portfolio page to see the new project
         setTimeout(() => {
-          window.location.href = `/portfolio/${newProject.id}`;
+          window.location.href = '/portfolio';
         }, 1000);
       }
     } catch (error) {

@@ -430,22 +430,20 @@ const Portfolio = () => {
             {t('portfolio.subtitle')}
           </p>
           
-          {user && (
-            <motion.div 
-              className="flex justify-center mt-8"
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true }}
-            >
-              <Link to="/portfolio/create">
-                <Button className="btn-hero">
-                  <Plus size={18} className="mr-2" />
-                  {t('portfolio.addNewProject')}
-                </Button>
-              </Link>
-            </motion.div>
-          )}
+          <motion.div 
+            className="flex justify-center mt-8"
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <Link to={user ? "/portfolio/create" : "/login"}>
+              <Button className="btn-hero">
+                <Plus size={18} className="mr-2" />
+                {t('portfolio.addNewProject')}
+              </Button>
+            </Link>
+          </motion.div>
           
           {/* Hidden refresh button for visitors (only in development) */}
           {process.env.NODE_ENV === 'development' && (

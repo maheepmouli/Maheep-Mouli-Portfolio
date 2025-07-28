@@ -83,7 +83,7 @@ const AnimatedRoutes = () => {
           <Route path="/admin" element={<Admin />} />
           
           {/* Project Routes */}
-          <Route path="/portfolio/:slug" element={<ProjectDetail />} />
+          <Route path="/portfolio/:id" element={<ProjectDetail />} />
           <Route path="/portfolio/create" element={<PortfolioCreate />} />
           <Route path="/portfolio/edit/:id" element={<PortfolioEdit />} />
           

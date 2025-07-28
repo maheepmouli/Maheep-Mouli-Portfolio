@@ -28,7 +28,8 @@ const ProjectCreate = () => {
     subtitle: '',
     description: '',
     content: '',
-    image_url: '',
+    image_url: '', // Main image for thumbnail
+    images: [] as string[], // Additional images array
     status: 'draft' as const,
     featured: false,
     project_url: '',
@@ -43,6 +44,7 @@ const ProjectCreate = () => {
 
   const [newTechnology, setNewTechnology] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [newImage, setNewImage] = useState(''); // New state for image input
 
   // Redirect if not authenticated
   if (!user) {
@@ -77,6 +79,17 @@ const ProjectCreate = () => {
 
   const removeTag = (tag: string) => {
     handleInputChange('tags', formData.tags.filter(t => t !== tag));
+  };
+
+  const addImage = () => {
+    if (newImage.trim() && !formData.images.includes(newImage.trim())) {
+      handleInputChange('images', [...formData.images, newImage.trim()]);
+      setNewImage('');
+    }
+  };
+
+  const removeImage = (image: string) => {
+    handleInputChange('images', formData.images.filter(img => img !== image));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -202,6 +215,42 @@ const ProjectCreate = () => {
                       onChange={(e) => handleInputChange('image_url', e.target.value)}
                       placeholder="https://example.com/image.jpg"
                     />
+                  </div>
+
+                  {/* Multiple Images Section */}
+                  <div>
+                    <Label>Additional Images</Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        value={newImage}
+                        onChange={(e) => setNewImage(e.target.value)}
+                        placeholder="https://example.com/additional-image.jpg"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())}
+                      />
+                      <Button type="button" onClick={addImage} size="sm">
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    
+                    {formData.images.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Added Images:</Label>
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                            <ImageIcon size={16} className="text-muted-foreground" />
+                            <span className="text-sm flex-1 truncate">{image}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeImage(image)}
+                            >
+                              <X size={14} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -7,6 +7,7 @@ export interface DynamicProject {
   description: string;
   content: string;
   image_url: string;
+  images?: string[]; // Optional array for multiple images
   status: 'draft' | 'published' | 'Live Demo' | 'Case Study' | 'Built' | 'Research' | 'Completed' | 'Development' | 'Demo en Vivo' | 'Demo en Viu' | 'Estudio de Caso' | 'Estudi de Cas' | 'Construido' | 'Construït' | 'Investigación' | 'Recerca';
   featured: boolean;
   project_url?: string;

@@ -67,6 +67,7 @@ export const MigrationTool = () => {
           } else {
             errorCount++;
             console.error('Migration: Failed to migrate project:', project.title);
+            console.error('Migration: Project data that failed:', supabaseProject);
           }
         } catch (error) {
           errorCount++;

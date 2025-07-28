@@ -6,6 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Database, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseProjectsService } from '@/services/supabaseProjectsService';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 const SupabaseConfig = () => {
   const { toast } = useToast();
@@ -41,16 +48,33 @@ const SupabaseConfig = () => {
     setTableStatus('idle');
     
     try {
-      // This would normally be done via Supabase dashboard, but we can test if the table exists
-      const projects = await supabaseProjectsService.getAllProjects();
+      console.log('SupabaseConfig: Testing table access...');
       
-      // If we can fetch projects, the table likely exists
+      // Test if we can access the table
+      const { data, error } = await supabase
+        .from('projects')
+        .select('count')
+        .limit(1);
+      
+      if (error) {
+        console.error('SupabaseConfig: Table access error:', error);
+        setTableStatus('failed');
+        toast({
+          title: "❌ Table Not Found",
+          description: `Table error: ${error.message}. Please run the SQL script in your Supabase dashboard.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // If we can access the table, it exists
       setTableStatus('created');
       toast({
         title: "✅ Table Ready!",
         description: "Projects table is accessible and ready to use.",
       });
     } catch (error) {
+      console.error('SupabaseConfig: Exception testing table:', error);
       setTableStatus('failed');
       toast({
         title: "❌ Table Not Found",

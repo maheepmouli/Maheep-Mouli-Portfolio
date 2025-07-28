@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, FileText, Image, Users, Plus, Edit, LogOut, Upload, HardDrive } from 'lucide-react';
+import { Settings, FileText, Image, Users, Plus, Edit, LogOut, Upload, HardDrive, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import ProfileImageEditor from './ProfileImageEditor';
@@ -15,6 +15,8 @@ const Admin = () => {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [showStorageManager, setShowStorageManager] = useState(false);
   const [currentProfileImage, setCurrentProfileImage] = useState('/maheep.jpg');
+
+
 
   const handleProfileImageChange = (imageUrl: string, file?: File) => {
     setCurrentProfileImage(imageUrl);
@@ -75,6 +77,15 @@ const Admin = () => {
         { label: "Manage Storage", href: "#", icon: <HardDrive className="h-4 w-4" />, onClick: () => setShowStorageManager(true) }
       ]
     },
+    {
+      title: "Supabase Configuration",
+      description: "Configure and test your Supabase database",
+      icon: <Database className="h-8 w-8" />,
+      actions: [
+        { label: "Configure Supabase", href: "/supabase-config", icon: <Database className="h-4 w-4" /> }
+      ]
+    },
+
 
   ];
 

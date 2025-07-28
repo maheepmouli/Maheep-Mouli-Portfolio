@@ -3,6 +3,7 @@ import Navigation from '@/components/Navigation';
 import Admin from '@/components/Admin';
 import { useToast } from '@/hooks/use-toast';
 
+
 const AdminPage = () => {
   const { toast } = useToast();
   
@@ -24,6 +25,8 @@ const AdminPage = () => {
       description: "All cached data has been cleared and the page will reload.",
     });
   };
+
+
 
   return (
     <div className="min-h-screen bg-background">

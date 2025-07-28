@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
 import HeroDemo from "./pages/HeroDemo";
+import SupabaseConfig from "./components/SupabaseConfig";
 
 // Blog pages
 import BlogIndex from "./pages/blog/index";
@@ -82,6 +83,7 @@ const AnimatedRoutes = () => {
           
           {/* Admin */}
           <Route path="/admin" element={<Admin />} />
+          <Route path="/supabase-config" element={<SupabaseConfig />} />
           
           {/* Project Routes */}
           <Route path="/portfolio/:id" element={<ProjectDetail />} />

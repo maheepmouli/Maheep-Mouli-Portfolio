@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   signOut: () => void;
+  clearAuth: () => void;
   isLoading: boolean;
 }
 
@@ -21,7 +22,7 @@ const ADMIN_PASSWORD = 'maheepS@10';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load user from localStorage on mount with session timeout
   useEffect(() => {
@@ -53,6 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('portfolio_user');
       localStorage.removeItem('portfolio_last_login');
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -100,11 +103,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, signOut, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const clearAuth = () => {
+    try {
+      console.log('Auth: Clearing authentication data');
+      setUser(null);
+      localStorage.removeItem('portfolio_user');
+      localStorage.removeItem('portfolio_last_login');
+    } catch (error) {
+      console.error('Auth: Error clearing auth data:', error);
+      setUser(null);
+    }
+  };
+
+      return (
+      <AuthContext.Provider value={{ user, login, signOut, clearAuth, isLoading }}>
+        {children}
+      </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => {

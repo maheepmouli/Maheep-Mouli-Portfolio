@@ -19,6 +19,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
 import HeroDemo from "./pages/HeroDemo";
 import SupabaseConfig from "./components/SupabaseConfig";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Blog pages
 import BlogIndex from "./pages/blog/index";
@@ -81,20 +82,44 @@ const AnimatedRoutes = () => {
           {/* Authentication */}
           <Route path="/login" element={<Login />} />
           
-          {/* Admin */}
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/supabase-config" element={<SupabaseConfig />} />
+          {/* Admin - Protected Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          } />
+          <Route path="/supabase-config" element={
+            <ProtectedRoute>
+              <SupabaseConfig />
+            </ProtectedRoute>
+          } />
           
           {/* Project Routes */}
           <Route path="/portfolio/:id" element={<ProjectDetail />} />
-          <Route path="/portfolio/create" element={<PortfolioCreate />} />
-          <Route path="/portfolio/edit/:id" element={<PortfolioEdit />} />
+          <Route path="/portfolio/create" element={
+            <ProtectedRoute>
+              <PortfolioCreate />
+            </ProtectedRoute>
+          } />
+          <Route path="/portfolio/edit/:id" element={
+            <ProtectedRoute>
+              <PortfolioEdit />
+            </ProtectedRoute>
+          } />
           
           {/* Blog Routes */}
           <Route path="/blog" element={<BlogIndex />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/blog/create" element={<BlogCreate />} />
-          <Route path="/blog/edit/:slug" element={<BlogEdit />} />
+          <Route path="/blog/create" element={
+            <ProtectedRoute>
+              <BlogCreate />
+            </ProtectedRoute>
+          } />
+          <Route path="/blog/edit/:slug" element={
+            <ProtectedRoute>
+              <BlogEdit />
+            </ProtectedRoute>
+          } />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

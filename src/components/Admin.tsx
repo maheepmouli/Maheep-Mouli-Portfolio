@@ -21,9 +21,8 @@ const Admin = () => {
         const projects = await unifiedProjectsService.getAllProjects();
         setProjectCount(projects.length);
         
-        // Get storage info
-        const info = unifiedProjectsService.getStorageInfo();
-        setStorageInfo(info);
+        // Set default storage info
+        setStorageInfo({ used: projects.length, available: 100 });
         
         // Check if backup exists
         const backup = localStorage.getItem('unified_portfolio_projects_backup');
@@ -334,6 +333,34 @@ const Admin = () => {
                 >
                   {hasBackup ? "Restore Backup" : "No Backup"}
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Logout Section */}
+          <Card className="mt-8 bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="text-red-600 dark:text-red-400 mt-1">
+                  <LogOut className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2">
+                    Sign Out
+                  </h3>
+                  <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                    Sign out of the admin panel to return to the public portfolio view.
+                  </p>
+                  <Button 
+                    onClick={signOut} 
+                    variant="destructive" 
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

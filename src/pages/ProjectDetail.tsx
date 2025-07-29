@@ -323,34 +323,7 @@ const ProjectDetail = () => {
               );
             })()}
 
-            {/* Project Images Gallery */}
-            {project.project_images && project.project_images.length > 0 && (
-              <motion.div 
-                className="space-y-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <h3 className="text-xl font-semibold">Project Gallery</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {(project.project_images || []).map((image, index) => (
-                    <motion.div 
-                      key={index}
-                      className="relative group cursor-pointer"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`${project.title} - Image ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+
 
             {/* Project Images */}
             {projectImages && projectImages.length > 0 && (

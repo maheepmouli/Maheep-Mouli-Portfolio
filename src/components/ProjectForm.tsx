@@ -182,7 +182,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         ...formData,
         slug: generateSlug(formData.title),
         technologies: formData.technologies,
-        project_images: projectImages.map(img => img.image_url),
+        images: projectImages.map(img => img.image_url), // Changed from project_images to images
         videos: formData.videos || [],
         location: formData.location || formData.subtitle || ''
       };

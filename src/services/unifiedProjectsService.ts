@@ -21,6 +21,7 @@ export interface UnifiedProject {
   content: string;
   image_url: string;
   project_images?: string[];
+  images?: string[]; // For database operations
   technologies: string[];
   github_url?: string;
   live_url?: string;
@@ -197,7 +198,8 @@ export const unifiedProjectsService = {
         const unifiedProjects = data.map(project => ({
           ...project,
           id: project.id.toString(),
-          user_id: project.user_id?.toString() || null
+          user_id: project.user_id?.toString() || null,
+          project_images: project.images || project.project_images || [] // Map images to project_images for compatibility
         }));
         
         // Sync with localStorage

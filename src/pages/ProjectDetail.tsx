@@ -43,10 +43,11 @@ const ProjectDetail = () => {
           if (projectData) {
             setProject(projectData);
             
-            // Use the project's project_images data if available
-            if (projectData.project_images && projectData.project_images.length > 0) {
-              console.log('ProjectDetail: Found project images:', projectData.project_images);
-              setProjectImages(projectData.project_images.map((imageUrl, index) => ({
+            // Use the project's images or project_images data if available
+            const projectImages = projectData.images || projectData.project_images || [];
+            if (projectImages.length > 0) {
+              console.log('ProjectDetail: Found project images:', projectImages);
+              setProjectImages(projectImages.map((imageUrl, index) => ({
                 id: `project-image-${index}`,
                 image_url: imageUrl,
                 caption: `Project image ${index + 1}`,

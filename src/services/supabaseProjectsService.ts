@@ -8,7 +8,7 @@ export interface SupabaseProject {
   description: string;
   content: string;
   image_url: string;
-  project_images?: string[];
+  images?: string[];
   videos?: VideoItem[];
   status: string;
   featured: boolean;

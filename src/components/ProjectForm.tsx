@@ -145,7 +145,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     e.preventDefault();
     console.log('ProjectForm: Form submitted');
     console.log('ProjectForm: Current form data:', formData);
+    console.log('ProjectForm: Project images:', projectImages);
     console.log('ProjectForm: User authenticated:', !!user);
+    console.log('ProjectForm: Is editing:', isEditing);
+    console.log('ProjectForm: Project ID:', projectId);
     
     // Validate required fields
     if (!formData.title || !formData.description) {
@@ -186,6 +189,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Project data to update:', projectData);
         
         // Update existing project
+        console.log('ProjectForm: Calling updateProject with ID:', projectId);
+        console.log('ProjectForm: Update data:', projectData);
         const updatedProject = await unifiedProjectsService.updateProject(projectId, projectData);
         console.log('ProjectForm: Updated project result:', updatedProject);
         

@@ -1,12 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Only create Supabase client if environment variables are available
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
+import supabase from '@/lib/supabaseClient';
 
 export interface SupabaseProject {
   id: string;
@@ -38,8 +30,8 @@ export const supabaseProjectsService = {
       }
 
       console.log('Supabase: Attempting to fetch projects...');
-      console.log('Supabase: URL:', supabaseUrl);
-      console.log('Supabase: Key configured:', !!supabaseKey);
+      console.log('Supabase: URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('Supabase: Key configured:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
 
       const { data, error } = await supabase
         .from('projects')

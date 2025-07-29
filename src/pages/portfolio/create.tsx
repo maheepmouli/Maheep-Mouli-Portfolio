@@ -13,7 +13,7 @@ import { ArrowLeft, Plus, X, Save, Image as ImageIcon, Upload, Video, Youtube, H
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDynamicTranslatedProjects, DynamicProject } from '@/services/dynamicProjectsService';
+import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
 import Navigation from '@/components/Navigation';
 
 const ProjectCreate = () => {
@@ -21,7 +21,6 @@ const ProjectCreate = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { createProject } = useDynamicTranslatedProjects();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -163,7 +162,7 @@ const ProjectCreate = () => {
     }
 
     try {
-      const newProject: Omit<DynamicProject, 'id' | 'created_at' | 'updated_at'> = {
+      const newProject: Omit<UnifiedProject, 'id' | 'created_at' | 'updated_at'> = {
         title: formData.title,
         subtitle: formData.subtitle,
         description: formData.description,
@@ -182,9 +181,9 @@ const ProjectCreate = () => {
         tags: formData.tags
       };
 
-      const success = createProject(newProject);
+      const createdProject = await unifiedProjectsService.createProject(newProject);
       
-      if (success) {
+      if (createdProject) {
         toast({
           title: "Project Created",
           description: "Your project has been created successfully!",
@@ -198,6 +197,7 @@ const ProjectCreate = () => {
         });
       }
     } catch (error) {
+      console.error('Error creating project:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",

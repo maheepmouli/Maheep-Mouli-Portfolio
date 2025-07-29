@@ -5,16 +5,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Save, Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
+import { Save, Upload, X, Plus, Image as ImageIcon, FileImage } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import RichTextEditor from './RichTextEditor';
 import ImageManager from './ImageManager';
 import VideoManager, { VideoItem } from './VideoManager';
-import { projectsService, Project, ProjectImage } from '@/services/projectsService';
-import { dynamicProjectsService } from '@/services/dynamicProjectsService';
-import { supabaseProjectsService } from '@/services/supabaseProjectsService';
-import { imageUploadService } from '@/services/imageUploadService';
+import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
+import { imageUploadService, uploadImageToSupabase as uploadImageToSupabaseService } from '@/services/imageUploadService';
 
 interface ProjectFormProps {
   projectId?: string;
@@ -28,6 +26,7 @@ interface ProjectData {
   description: string;
   content: string;
   image_url: string;
+  project_images?: string[];
   tags: string[];
   status: 'draft' | 'published' | 'Live Demo' | 'Case Study' | 'Built' | 'Research' | 'Completed' | 'Development';
   featured: boolean;
@@ -50,6 +49,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     description: '',
     content: '',
     image_url: '',
+    project_images: [],
     tags: [],
     status: 'draft',
     featured: false,
@@ -64,12 +64,13 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   
   const [newTag, setNewTag] = useState('');
   const [newTechnology, setNewTechnology] = useState('');
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [projectImages, setProjectImages] = useState<ProjectImage[]>([]);
+  const [projectImages, setProjectImages] = useState<any[]>([]);
 
   useEffect(() => {
     if (projectId) {
@@ -81,67 +82,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
   const fetchProject = async () => {
     try {
       console.log('ProjectForm: Fetching project with ID:', projectId);
-      const project = projectsService.getProjectById(projectId!);
+      const project = await unifiedProjectsService.getProjectById(projectId!);
       console.log('ProjectForm: Retrieved project:', project);
       
       if (!project) {
-        console.log('ProjectForm: Project not found in projectsService, checking dynamicProjectsService...');
-        const dynamicProject = dynamicProjectsService.getProjectById(projectId!);
-        console.log('ProjectForm: Retrieved from dynamicProjectsService:', dynamicProject);
-        
-        if (dynamicProject) {
-          // Convert dynamic project to regular project format
-          const regularProject = {
-            id: dynamicProject.id,
-            title: dynamicProject.title,
-            subtitle: dynamicProject.subtitle,
-            description: dynamicProject.description,
-            content: dynamicProject.content,
-            image_url: dynamicProject.image_url,
-            status: dynamicProject.status,
-            featured: dynamicProject.featured,
-            project_url: dynamicProject.project_url,
-            github_url: dynamicProject.github_url,
-            location: dynamicProject.location,
-            duration: dynamicProject.duration,
-            team_size: dynamicProject.team_size,
-            technologies: dynamicProject.technologies,
-            tags: dynamicProject.tags,
-            videos: dynamicProject.videos || [],
-            created_at: dynamicProject.created_at,
-            updated_at: dynamicProject.updated_at
-          };
-          
-          setFormData({
-            title: regularProject.title || '',
-            subtitle: regularProject.subtitle || '',
-            description: regularProject.description || '',
-            content: regularProject.content || '',
-            image_url: regularProject.image_url || '',
-            tags: regularProject.tags || [],
-            status: (regularProject.status as any) || 'draft',
-            featured: regularProject.featured || false,
-            project_url: regularProject.project_url || '',
-            github_url: regularProject.github_url || '',
-            location: regularProject.location || '',
-            duration: regularProject.duration || '',
-            team_size: regularProject.team_size || '',
-            technologies: regularProject.technologies || [],
-            videos: (regularProject.videos || []) as any
-          });
-          
-          // Fetch project images
-          try {
-            const images = projectsService.getProjectImages(projectId!);
-            console.log('ProjectForm: Loaded project images:', images);
-            setProjectImages(images || []);
-          } catch (error) {
-            console.error('ProjectForm: Error loading project images:', error);
-            setProjectImages([]);
-          }
-          return;
-        }
-        
         toast({
           title: "Error",
           description: "Project not found.",
@@ -157,7 +101,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         content: project.content || '',
         image_url: project.image_url || '',
         tags: project.tags || [],
-        status: project.status || 'draft',
+        status: (project.status as any) || 'draft',
         featured: project.featured || false,
         project_url: project.project_url || '',
         github_url: project.github_url || '',
@@ -165,12 +109,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         duration: project.duration || '',
         team_size: project.team_size || '',
         technologies: project.technologies || [],
-        videos: project.videos || []
+        videos: [] // TODO: Add videos support
       });
-
-      // Fetch project images
-      const images = projectsService.getProjectImages(projectId!);
-      setProjectImages(images);
     } catch (error) {
       console.error('ProjectForm: Error fetching project:', error);
       toast({
@@ -181,104 +121,56 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     }
   };
 
-      const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      console.log('ProjectForm: Form submitted');
-      console.log('ProjectForm: Current form data:', formData);
-      console.log('ProjectForm: User authenticated:', !!user);
-      
-      // Validate required fields
-      if (!formData.title || !formData.description) {
-        toast({
-          title: "❌ Missing Required Fields",
-          description: "Please fill in title and description.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('ProjectForm: Form submitted');
+    console.log('ProjectForm: Current form data:', formData);
+    console.log('ProjectForm: User authenticated:', !!user);
+    
+    // Validate required fields
+    if (!formData.title || !formData.description) {
+      toast({
+        title: "❌ Missing Required Fields",
+        description: "Please fill in title and description.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
 
     try {
       console.log('ProjectForm: Starting form submission');
       console.log('ProjectForm: Current form data:', formData);
-      console.log('ProjectForm: Current project images:', projectImages);
+      
+      // Generate slug from title
+      const generateSlug = (title: string): string => {
+        return title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+
       const projectData = {
         ...formData,
-        technologies: formData.technologies
+        slug: generateSlug(formData.title),
+        technologies: formData.technologies,
+        project_images: projectImages.map(img => img.image_url)
       };
+      
+      console.log('ProjectForm: Project data being saved:', projectData);
+      console.log('ProjectForm: Project images being saved:', projectImages.map(img => img.image_url));
 
       if (isEditing && projectId) {
         console.log('ProjectForm: Updating project with ID:', projectId);
         console.log('ProjectForm: Project data to update:', projectData);
         
         // Update existing project
-        const updatedProject = await projectsService.updateProject(projectId, projectData);
+        const updatedProject = await unifiedProjectsService.updateProject(projectId, projectData);
         console.log('ProjectForm: Updated project result:', updatedProject);
         
         if (updatedProject) {
           console.log('ProjectForm: Successfully updated project:', updatedProject);
-          
-          // Save project images with error handling
-          console.log('ProjectForm: Saving project images:', projectImages);
-          try {
-            projectImages.forEach((image, index) => {
-              if (!image.id && image.image_url) {
-                // This is a new image, add it to the service
-                projectsService.addProjectImage(projectId, {
-                  image_url: image.image_url,
-                  caption: image.caption || '',
-                  alt_text: image.alt_text || '',
-                  width: image.width || '100%',
-                  height: image.height || 'auto',
-                  sort_order: index
-                });
-              }
-            });
-          } catch (error) {
-            console.error('ProjectForm: Error saving images:', error);
-            // Don't fail the entire save if images fail
-          }
-          
-          // Also update in dynamicProjectsService for portfolio sync
-          const dynamicProject = {
-            ...updatedProject,
-            image_url: updatedProject.image_url, // Explicitly preserve image_url
-            translations: {
-              en: updatedProject,
-              es: updatedProject,
-              ca: updatedProject
-            }
-          };
-          console.log('ProjectForm: Syncing to dynamicProjectsService:', dynamicProject);
-          console.log('ProjectForm: Image URL being synced:', dynamicProject.image_url);
-          console.log('ProjectForm: Image URL type:', dynamicProject.image_url?.startsWith('data:') ? 'Base64' : 'URL');
-          console.log('ProjectForm: Image URL length:', dynamicProject.image_url?.length || 0);
-          const syncResult = await dynamicProjectsService.updateProject(projectId, dynamicProject);
-          console.log('ProjectForm: Sync result:', syncResult);
-          
-          // Verify the project exists in both services
-          const verifyDynamic = dynamicProjectsService.getProjectById(projectId);
-          const verifyRegular = projectsService.getProjectById(projectId);
-          console.log('ProjectForm: Verification - Dynamic service:', verifyDynamic ? 'Found' : 'Not found');
-          console.log('ProjectForm: Verification - Regular service:', verifyRegular ? 'Found' : 'Not found');
-          
-          // Check localStorage directly
-          const dynamicStorage = localStorage.getItem('dynamic_portfolio_projects');
-          const regularStorage = localStorage.getItem('portfolio_projects');
-          console.log('ProjectForm: localStorage - Dynamic:', dynamicStorage ? 'Has data' : 'Empty');
-          console.log('ProjectForm: localStorage - Regular:', regularStorage ? 'Has data' : 'Empty');
-          
-          // Trigger custom event to notify Portfolio component
-          window.dispatchEvent(new CustomEvent('portfolio-updated', {
-            detail: { projectId: projectId, action: 'updated', imageUrl: updatedProject.image_url }
-          }));
-          
-          // Also trigger a storage event to ensure all components update
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'dynamic_portfolio_projects',
-            newValue: localStorage.getItem('dynamic_portfolio_projects')
-          }));
           
           // Show success message and redirect immediately
           toast({
@@ -297,74 +189,30 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         console.log('ProjectForm: Creating new project');
         console.log('ProjectForm: Project data to create:', projectData);
         
-        // Create new project in Supabase
-        console.log('ProjectForm: Attempting to create project in Supabase...');
+        // Create new project
+        console.log('ProjectForm: Attempting to create project...');
         console.log('ProjectForm: Project data being sent:', projectData);
         
         let newProject;
         try {
-          newProject = await supabaseProjectsService.createProject(projectData);
+          newProject = await unifiedProjectsService.createProject(projectData);
           console.log('ProjectForm: Created project result:', newProject);
           
           if (!newProject) {
-            console.error('ProjectForm: Supabase returned null/undefined for new project');
-            throw new Error("Failed to create project in Supabase - no project returned");
+            console.error('ProjectForm: Service returned null/undefined for new project');
+            throw new Error("Failed to create project - no project returned");
           }
           
           console.log('ProjectForm: Project created successfully with ID:', newProject.id);
         
-        // Upload image if provided
-        if (imageFile) {
-          console.log('ProjectForm: Uploading cover image...');
-          try {
-            const imageUrl = await uploadImageToSupabase(imageFile);
-            
-            // Update project with image URL
-            const updatedProject = await supabaseProjectsService.updateProject(newProject.id, {
-              image_url: imageUrl
-            });
-            
-            if (updatedProject) {
-              console.log('ProjectForm: Project updated with image URL:', imageUrl);
-            }
-          } catch (imageError) {
-            console.error('ProjectForm: Image upload failed:', imageError);
-            toast({
-              title: "⚠️ Image Upload Failed",
-              description: "Project created but image upload failed. You can update the image later.",
-              variant: "destructive"
-            });
-          }
-        }
-        
-        } catch (supabaseError) {
-          console.error('ProjectForm: Supabase error details:', supabaseError);
-          throw new Error(`Supabase error: ${supabaseError}`);
-        }
-        
-        // Save project images for new project with error handling
-        console.log('ProjectForm: Saving project images for new project:', projectImages);
-        try {
-          projectImages.forEach((image, index) => {
-            if (image.image_url) {
-              projectsService.addProjectImage(newProject.id, {
-                image_url: image.image_url,
-                caption: image.caption || '',
-                alt_text: image.alt_text || '',
-                width: image.width || '100%',
-                height: image.height || 'auto',
-                sort_order: index
-              });
-            }
-          });
-        } catch (error) {
-          console.error('ProjectForm: Error saving images for new project:', error);
-          // Don't fail the entire save if images fail
+        } catch (serviceError) {
+          console.error('ProjectForm: Service error details:', serviceError);
+          throw new Error(`Service error: ${serviceError}`);
         }
         
         toast({
-          title: "🎉 Project Created in Supabase!",
-          description: "Your new project has been successfully created and is now live.",
+          title: "🎉 Project Created Successfully!",
+          description: "Your new project has been created and is now live.",
         });
         
         // Redirect to portfolio page to see the new project
@@ -375,20 +223,11 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     } catch (error) {
       console.error('ProjectForm: Error during form submission:', error);
       
-      // Check if it's a storage quota error
-      if (error instanceof Error && error.message.includes('quota')) {
-        toast({
-          title: "❌ Storage Full",
-          description: "Your browser storage is full. Please clear some data or use smaller images.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "❌ Error",
-          description: "Failed to save project. Please try again.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "❌ Error",
+        description: "Failed to save project. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       console.log('ProjectForm: Form submission completed');
       setLoading(false);
@@ -443,17 +282,67 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('ProjectForm: Image file selected:', file.name, 'Size:', file.size, 'Type:', file.type);
       setImageFile(file);
+      setIsUploading(true);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Upload image immediately
+        const imageUrl = await uploadImageToSupabaseService(file);
+        console.log('ProjectForm: Image uploaded successfully:', imageUrl);
+        
+        // Update form data with the uploaded image URL
+        setFormData(prev => ({ ...prev, image_url: imageUrl }));
+        console.log('ProjectForm: Updated formData.image_url to:', imageUrl);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+          console.log('ProjectForm: Image preview created');
+        };
+        reader.readAsDataURL(file);
+        
+        toast({
+          title: "✅ Image Uploaded",
+          description: "Cover image has been uploaded successfully.",
+        });
+        
+        // If editing, update the project immediately
+        if (projectId) {
+          console.log('ProjectForm: Updating project with new image URL:', imageUrl);
+          await unifiedProjectsService.updateProject(projectId, { image_url: imageUrl });
+          console.log('ProjectForm: Project updated with new image');
+        }
+        
+      } catch (error) {
+        console.error('ProjectForm: Image upload failed:', error);
+        
+        // Check for specific bucket error
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Storage bucket not found')) {
+          toast({
+            title: "❌ Storage Not Configured",
+            description: "Please create the 'portfolio-assets' bucket in your Supabase dashboard. Check STORAGE_SETUP.md for instructions.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "❌ Upload Failed",
+            description: "Failed to upload image. Please try again.",
+            variant: "destructive"
+          });
+        }
+        
+        // Clear the file if upload failed
+        setImageFile(null);
+        setImagePreview('');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -461,26 +350,52 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     try {
       console.log('ProjectForm: Uploading image to Supabase...');
       
-      // Import imageUploadService dynamically
-      const { imageUploadService } = await import('@/services/imageUploadService');
+      // Use the imported service function
+      const imageUrl = await uploadImageToSupabaseService(file);
       
-      const result = await imageUploadService.uploadImage(file, 'project-images');
-      
-      if (result.error) {
-        console.error('ProjectForm: Image upload error:', result.error);
-        throw new Error(result.error);
-      }
-      
-      console.log('ProjectForm: Image uploaded successfully:', result.url);
-      return result.url;
+      console.log('ProjectForm: Image uploaded successfully:', imageUrl);
+      return imageUrl;
     } catch (error) {
       console.error('ProjectForm: Image upload failed:', error);
       throw error;
     }
   };
 
+  const handleImageUploadClick = () => {
+    const input = document.getElementById('image_upload') as HTMLInputElement;
+    input?.click();
+  };
+
+  const handleRemoveImage = async () => {
+    // Clear the image URL
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    setImageFile(null);
+    setImagePreview('');
+    
+    // Update the project immediately if editing
+    if (projectId) {
+      try {
+        await unifiedProjectsService.updateProject(projectId, { image_url: '' });
+        toast({
+          title: "✅ Image Removed Successfully!",
+          description: "Cover image has been removed. The portfolio should update immediately.",
+        });
+      } catch (error) {
+        console.error('Error removing image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to remove image. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={(e) => {
+      console.log('ProjectForm: Form onSubmit triggered!');
+      handleSubmit(e);
+    }} className="space-y-8">
       {/* Basic Information */}
       <Card>
         <CardHeader>
@@ -524,7 +439,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
             <Label htmlFor="image_url">Cover Image</Label>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="image_url" className="text-sm text-muted-foreground">Image URL</Label>
+                <Label htmlFor="image_url" className="text-sm text-muted-foreground">Image URL (Optional)</Label>
                 <Input
                   id="image_url"
                   value={formData.image_url}
@@ -533,7 +448,7 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                 />
               </div>
               <div>
-                <Label htmlFor="image_upload" className="text-sm text-muted-foreground">Or Upload from Device</Label>
+                <Label htmlFor="image_upload" className="text-sm text-muted-foreground">Upload from Device *</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     id="image_upload"
@@ -541,29 +456,28 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     accept="image/*"
                     onChange={handleImageUpload}
                     className="cursor-pointer"
+                    style={{ display: 'none' }}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const input = document.getElementById('image_upload') as HTMLInputElement;
-                      input?.click();
-                    }}
+                    onClick={handleImageUploadClick}
+                    className="flex-1"
                   >
-                    <Upload size={16} />
+                    <FileImage size={16} className="mr-2" />
+                    Choose Image
                   </Button>
                 </div>
               </div>
             </div>
             
             {/* Image Preview */}
-            {formData.image_url ? (
+            {(formData.image_url || imagePreview) ? (
               <div className="border rounded-lg p-4 bg-muted/20">
                 <Label className="text-sm font-medium mb-2">Preview</Label>
                 <div className="relative group">
                   <img
-                    src={formData.image_url}
+                    src={imagePreview || formData.image_url}
                     alt="Cover preview"
                     className="w-full h-48 object-cover rounded-lg"
                     onError={(e) => {
@@ -578,82 +492,30 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     </div>
                   </div>
                 </div>
-                                  <div className="flex gap-2 mt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                                        onClick={() => {
-                    // Clear the image URL
-                    setFormData(prev => ({ ...prev, image_url: '' }));
-                    
-                    // Immediately update both services to ensure sync
-                    if (projectId) {
-                      // Update in regular service
-                      const currentProject = projectsService.getProjectById(projectId);
-                      if (currentProject) {
-                        const updatedProject = {
-                          ...currentProject,
-                          image_url: ''
-                        };
-                        projectsService.updateProject(projectId, updatedProject);
-                      }
-                      
-                      // Update in dynamic service
-                      const dynamicProject = dynamicProjectsService.getProjectById(projectId);
-                      if (dynamicProject) {
-                        const updatedDynamicProject = {
-                          ...dynamicProject,
-                          image_url: '',
-                          translations: {
-                            en: { ...dynamicProject, image_url: '' },
-                            es: { ...dynamicProject, image_url: '' },
-                            ca: { ...dynamicProject, image_url: '' }
-                          }
-                        };
-                        dynamicProjectsService.updateProject(projectId, updatedDynamicProject);
-                      }
-                    }
-                    
-                    // Trigger immediate sync to portfolio
-                    window.dispatchEvent(new CustomEvent('portfolio-updated', {
-                      detail: { projectId: projectId, action: 'image-removed', imageUrl: '' }
-                    }));
-                    
-                    // Also trigger storage event
-                    window.dispatchEvent(new StorageEvent('storage', {
-                      key: 'dynamic_portfolio_projects',
-                      newValue: localStorage.getItem('dynamic_portfolio_projects')
-                    }));
-                    
-                    toast({
-                      title: "✅ Image Removed Successfully!",
-                      description: "Cover image has been removed from both services. The portfolio should update immediately.",
-                    });
-                  }}
-                    >
-                      <X size={16} className="mr-2" />
-                      Remove Image
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Force refresh the portfolio view
-                        window.dispatchEvent(new CustomEvent('portfolio-updated', {
-                          detail: { projectId: projectId, action: 'force-refresh', imageUrl: formData.image_url }
-                        }));
-                        toast({
-                          title: "Portfolio Refreshed",
-                          description: "Portfolio view has been refreshed to show current changes.",
-                        });
-                      }}
-                    >
-                      🔄 Refresh Portfolio
-                    </Button>
-
-                  </div>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    disabled={isUploading}
+                  >
+                    <X size={16} className="mr-2" />
+                    Remove Image
+                  </Button>
+                  {isUploading && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      Uploading...
+                    </div>
+                  )}
+                  {formData.image_url && !isUploading && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <ImageIcon size={16} />
+                      Uploaded Successfully
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="border rounded-lg p-4 bg-muted/20">
@@ -665,10 +527,12 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
                     <p className="text-xs text-muted-foreground mt-1">Upload an image above to set as cover</p>
                   </div>
                 </div>
-                <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-300">
-                  ✅ <strong>Image Removed:</strong> The cover image has been successfully removed from this project. The portfolio view should update immediately.
-                </div>
-
+                {isUploading && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    Uploading image...
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -756,6 +620,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
+              id="new-technology"
+              name="new-technology"
               value={newTechnology}
               onChange={(e) => setNewTechnology(e.target.value)}
               onKeyPress={handleTechnologyKeyPress}
@@ -792,6 +658,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
+              id="new-tag"
+              name="new-tag"
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -826,22 +694,22 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           <CardTitle>Project Images</CardTitle>
         </CardHeader>
         <CardContent>
-                        <ImageManager
-                images={projectImages}
-                onImagesChange={(images) => {
-                  try {
-                    console.log('ProjectForm: Images changed:', images);
-                    setProjectImages(images as any);
-                  } catch (error) {
-                    console.error('ProjectForm: Error updating project images:', error);
-                    toast({
-                      title: "Error updating images",
-                      description: "Failed to update image list. Please try again.",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-              />
+          <ImageManager
+            images={projectImages}
+            onImagesChange={(images) => {
+              try {
+                console.log('ProjectForm: Images changed:', images);
+                setProjectImages(images as any);
+              } catch (error) {
+                console.error('ProjectForm: Error updating project images:', error);
+                toast({
+                  title: "Error updating images",
+                  description: "Failed to update image list. Please try again.",
+                  variant: "destructive"
+                });
+              }
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -905,11 +773,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         )}
         <Button 
           type="submit" 
-          disabled={loading}
-          onClick={() => console.log('ProjectForm: Submit button clicked')}
+          disabled={loading || isUploading}
         >
           <Save size={16} className="mr-2" />
-          {loading ? 'Saving...' : (isEditing ? 'Update Project' : 'Create Project')}
+          {loading ? 'Saving...' : isUploading ? 'Uploading...' : (isEditing ? 'Update Project' : 'Create Project')}
         </Button>
       </div>
     </form>

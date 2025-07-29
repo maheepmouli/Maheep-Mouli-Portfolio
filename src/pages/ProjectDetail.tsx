@@ -8,8 +8,7 @@ import { ArrowLeft, ExternalLink, Github, MapPin, Clock, Users, Edit, Trash2, Vi
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDynamicTranslatedProjects, DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
-import { projectsService } from '@/services/projectsService';
+import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
 import Navigation from '@/components/Navigation';
 
 const ProjectDetail = () => {
@@ -18,9 +17,8 @@ const ProjectDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { getTranslatedProjectById, deleteProject } = useDynamicTranslatedProjects();
 
-  const [project, setProject] = useState<DynamicProject | null>(null);
+  const [project, setProject] = useState<UnifiedProject | null>(null);
   const [projectImages, setProjectImages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,78 +30,34 @@ const ProjectDetail = () => {
       
       const loadProject = async () => {
         try {
-          // First try: Get from dynamicProjectsService
-          let projectData = getTranslatedProjectById(id);
-          console.log('ProjectDetail: Retrieved from dynamicProjectsService:', projectData);
-          
-          // Debug: Check all projects in both services
-          const allDynamicProjects = dynamicProjectsService.getAllProjects();
-          const allRegularProjects = projectsService.getAllProjects();
-          console.log('ProjectDetail: All dynamic projects:', allDynamicProjects.map(p => ({ id: p.id, title: p.title })));
-          console.log('ProjectDetail: All regular projects:', allRegularProjects.map(p => ({ id: p.id, title: p.title })));
-          
-          // Second try: If not found, try projectsService
-          if (!projectData) {
-            console.log('ProjectDetail: Project not found in dynamicProjectsService, checking projectsService...');
-            const regularProject = projectsService.getProjectById(id);
-            console.log('ProjectDetail: Retrieved from projectsService:', regularProject);
-            
-            if (regularProject) {
-              console.log('ProjectDetail: Found project in projectsService, converting...');
-              // Convert to DynamicProject format
-              projectData = {
-                ...regularProject,
-                translations: {
-                  en: regularProject,
-                  es: regularProject,
-                  ca: regularProject
-                }
-              } as DynamicProject;
-              
-              // Also sync to dynamicProjectsService for future consistency
-              const syncResult = dynamicProjectsService.updateProject(id, projectData);
-              console.log('ProjectDetail: Synced to dynamicProjectsService:', syncResult);
-            }
-          }
-          
-          // Third try: If still not found, wait a bit and retry (for newly created projects)
-          if (!projectData) {
-            console.log('ProjectDetail: Project still not found, waiting and retrying...');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            projectData = getTranslatedProjectById(id);
-            if (!projectData) {
-              const regularProject = projectsService.getProjectById(id);
-              if (regularProject) {
-                projectData = {
-                  ...regularProject,
-                  translations: {
-                    en: regularProject,
-                    es: regularProject,
-                    ca: regularProject
-                  }
-                } as DynamicProject;
-              }
-            }
-          }
-          
-          console.log('ProjectDetail: Final project data:', projectData);
+          // Use unifiedProjectsService to get project
+          const projectData = await unifiedProjectsService.getProjectById(id);
+          console.log('ProjectDetail: Retrieved from unifiedProjectsService:', projectData);
+          console.log('ProjectDetail: Project image_url:', projectData?.image_url);
+          console.log('ProjectDetail: Project image_url type:', typeof projectData?.image_url);
+          console.log('ProjectDetail: Project image_url length:', projectData?.image_url?.length);
           
           if (projectData) {
             setProject(projectData);
             
-            // Load project images with error handling
-            try {
-              const images = projectsService.getProjectImages(id);
-              console.log('ProjectDetail: Loaded project images:', images);
-              console.log('ProjectDetail: Number of images found:', images?.length || 0);
-              setProjectImages(images || []);
-            } catch (error) {
-              console.error('ProjectDetail: Error loading project images:', error);
+            // Use the project's project_images data if available
+            if (projectData.project_images && projectData.project_images.length > 0) {
+              console.log('ProjectDetail: Found project images:', projectData.project_images);
+              setProjectImages(projectData.project_images.map((imageUrl, index) => ({
+                id: `project-image-${index}`,
+                image_url: imageUrl,
+                caption: `Project image ${index + 1}`,
+                alt_text: `Project image ${index + 1}`,
+                sort_order: index,
+                width: '100%',
+                height: 'auto'
+              })));
+            } else {
+              console.log('ProjectDetail: No project images found');
               setProjectImages([]);
             }
           } else {
-            console.error('ProjectDetail: Project not found in any service after retry');
+            console.error('ProjectDetail: Project not found in unified service');
             toast({
               title: "Project Not Found",
               description: "The requested project could not be found. Please try refreshing the page.",
@@ -127,18 +81,27 @@ const ProjectDetail = () => {
       // Force reload when id changes
       loadProject();
     }
-  }, [id, getTranslatedProjectById, navigate, toast]);
+  }, [id, navigate, toast]);
 
-  const handleDeleteProject = (projectId: string, projectTitle: string) => {
+  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
     if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {
-      const success = deleteProject(projectId);
-      if (success) {
-        toast({
-          title: "Project Deleted",
-          description: `"${projectTitle}" has been removed from your portfolio.`,
-        });
-        navigate('/portfolio');
-      } else {
+      try {
+        const success = await unifiedProjectsService.deleteProject(projectId);
+        if (success) {
+          toast({
+            title: "Project Deleted",
+            description: `"${projectTitle}" has been removed from your portfolio.`,
+          });
+          navigate('/portfolio');
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to delete project. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('ProjectDetail: Error deleting project:', error);
         toast({
           title: "Error",
           description: "Failed to delete project. Please try again.",
@@ -335,25 +298,33 @@ const ProjectDetail = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Project Image */}
-            {project.image_url && (
-                              <motion.div 
+            {(() => {
+              console.log('ProjectDetail: Rendering image with URL:', project.image_url);
+              return project.image_url && (
+                <motion.div 
                   className="relative group cursor-pointer"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                   whileHover={{ scale: 1.02 }}
                 >
-                <img 
-                  src={project.image_url} 
-                  alt={project.title}
-                  className="w-full h-96 object-cover rounded-lg shadow-lg"
-                />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-              </motion.div>
-            )}
+                  <img 
+                    src={project.image_url} 
+                    alt={project.title}
+                    className="w-full h-96 object-cover rounded-lg shadow-lg"
+                    onLoad={() => console.log('ProjectDetail: Image loaded successfully')}
+                    onError={(e) => {
+                      console.error('ProjectDetail: Image failed to load:', e);
+                      console.error('ProjectDetail: Failed image URL:', project.image_url);
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+                </motion.div>
+              );
+            })()}
 
-            {/* Additional Images Gallery */}
-            {project.images && project.images.length > 0 && (
+            {/* Project Images Gallery */}
+            {project.project_images && project.project_images.length > 0 && (
               <motion.div 
                 className="space-y-4"
                 initial={{ opacity: 0, y: 20 }}
@@ -362,7 +333,7 @@ const ProjectDetail = () => {
               >
                 <h3 className="text-xl font-semibold">Project Gallery</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {project.images.map((image, index) => (
+                  {(project.project_images || []).map((image, index) => (
                     <motion.div 
                       key={index}
                       className="relative group cursor-pointer"
@@ -375,73 +346,6 @@ const ProjectDetail = () => {
                         className="w-full h-32 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300"
                       />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Videos Section */}
-            {project.videos && project.videos.length > 0 && (
-              <motion.div 
-                className="space-y-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <h3 className="text-xl font-semibold">Project Videos</h3>
-                <div className="space-y-6">
-                  {project.videos.map((video, index) => (
-                    <motion.div 
-                      key={index}
-                      className="space-y-3"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 + index * 0.1 }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {typeof video === 'string' ? (
-                          <>
-                            {video.includes('youtube.com') ? (
-                              <Youtube size={20} className="text-red-500" />
-                            ) : video.includes('drive.google.com') ? (
-                              <HardDrive size={20} className="text-blue-500" />
-                            ) : (
-                              <Video size={20} className="text-muted-foreground" />
-                            )}
-                            <span className="text-sm font-medium">
-                              {video.includes('youtube.com') ? 'YouTube Video' : 
-                               video.includes('drive.google.com') ? 'Google Drive Video' : 'Video'} {index + 1}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {(video as any).url?.includes('youtube.com') ? (
-                              <Youtube size={20} className="text-red-500" />
-                            ) : (video as any).url?.includes('drive.google.com') ? (
-                              <HardDrive size={20} className="text-blue-500" />
-                            ) : (
-                              <Video size={20} className="text-muted-foreground" />
-                            )}
-                            <span className="text-sm font-medium">
-                              {(video as any).url?.includes('youtube.com') ? 'YouTube Video' : 
-                               (video as any).url?.includes('drive.google.com') ? 'Google Drive Video' : 'Video'} {index + 1}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      
-                      {/* Video Embed */}
-                      {renderVideoEmbed(typeof video === 'string' ? video : (video as any).url)}
-                      
-                      {/* Video Description */}
-                      {(video as any).description && (
-                        <div className="mt-3 p-3 bg-muted/20 rounded-lg">
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {(video as any).description}
-                          </p>
-                        </div>
-                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -547,30 +451,20 @@ const ProjectDetail = () => {
 
                   {/* Project Stats */}
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    {project.location && (
+                    {project.subtitle && (
                       <div className="flex items-center gap-2">
                         <MapPin size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.location}</span>
-                      </div>
-                    )}
-                    {project.duration && (
-                      <div className="flex items-center gap-2">
-                        <Clock size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.duration}</span>
-                      </div>
-                    )}
-                    {project.team_size && (
-                      <div className="flex items-center gap-2">
-                        <Users size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.team_size}</span>
+                        <span className="text-sm">{project.subtitle}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Status Badge */}
-                  <div className="pt-4 border-t">
-                    <Badge variant="secondary">{project.status}</Badge>
-                  </div>
+                  {/* Featured Badge */}
+                  {project.featured && (
+                    <div className="pt-4 border-t">
+                      <Badge variant="default">Featured Project</Badge>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -597,27 +491,7 @@ const ProjectDetail = () => {
               </motion.div>
             )}
 
-            {/* Tags */}
-            {project.tags && project.tags.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4">Tags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+
 
             {/* Action Buttons */}
             <motion.div 
@@ -626,8 +500,8 @@ const ProjectDetail = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
             >
-              {project.project_url && (
-                <Button className="w-full" onClick={() => window.open(project.project_url, '_blank')}>
+              {project.live_url && (
+                <Button className="w-full" onClick={() => window.open(project.live_url, '_blank')}>
                   <ExternalLink size={16} className="mr-2" />
                   View Live Demo
                 </Button>

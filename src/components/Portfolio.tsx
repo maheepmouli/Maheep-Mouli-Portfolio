@@ -8,9 +8,7 @@ import { Eye, Edit, Trash2, BookOpen, Plus, Image as ImageIcon } from 'lucide-re
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { DynamicProject, dynamicProjectsService } from '@/services/dynamicProjectsService';
-import { projectsService } from '@/services/projectsService';
-import { supabaseProjectsService } from '@/services/supabaseProjectsService';
+import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
 
 const Portfolio = () => {
   const { user } = useAuth();
@@ -19,7 +17,7 @@ const Portfolio = () => {
   
   const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
 
-  const [projects, setProjects] = useState<DynamicProject[]>([]);
+  const [projects, setProjects] = useState<UnifiedProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
 
@@ -32,38 +30,15 @@ const Portfolio = () => {
       try {
         console.log('Portfolio: Loading projects for language:', language);
         
-        // Get projects from Supabase only
-        const supabaseProjects = await supabaseProjectsService.getAllProjects();
-        console.log('Portfolio: Supabase projects:', supabaseProjects);
+        // Get projects from unified service
+        const unifiedProjects = await unifiedProjectsService.getAllProjects();
+        console.log('Portfolio: Unified projects:', unifiedProjects);
         
-        if (supabaseProjects.length > 0) {
-          // Convert Supabase projects to DynamicProject format
-          const dynamicProjects = supabaseProjects.map(project => ({
-            ...project,
-            translations: {
-              en: project,
-              es: project,
-              ca: project
-            }
-          })) as DynamicProject[];
-          
-          // Apply translations
-          const translatedProjects = dynamicProjects.map(project => {
-            const translation = project.translations?.[language as keyof typeof project.translations];
-            if (translation) {
-              const translatedProject = { ...project, ...translation } as DynamicProject;
-              if (project.image_url && !translatedProject.image_url) {
-                translatedProject.image_url = project.image_url;
-              }
-              return translatedProject;
-            }
-            return project;
-          });
-          
-          console.log('Portfolio: Translated Supabase projects:', translatedProjects);
-          setProjects(translatedProjects);
+        if (unifiedProjects.length > 0) {
+          console.log('Portfolio: Found projects:', unifiedProjects.length);
+          setProjects(unifiedProjects);
         } else {
-          console.log('Portfolio: No projects found in Supabase');
+          console.log('Portfolio: No projects found');
           setProjects([]);
         }
       } catch (error) {
@@ -76,53 +51,29 @@ const Portfolio = () => {
     
     // Force reload when language changes
     loadProjects();
-  }, [language]); // Run on mount and when language changes
+  }, [language]);
 
   // Listen for storage changes to reload projects when they're updated
   useEffect(() => {
     const handleStorageChange = () => {
       console.log('Portfolio: Storage changed, reloading projects...');
-      const allProjects = dynamicProjectsService.getAllProjects();
-      console.log('Portfolio: Storage change - All projects:', allProjects.map(p => ({ title: p.title, image_url: p.image_url })));
-              const translatedProjects = allProjects.map(project => {
-          const translation = project.translations?.[language as keyof typeof project.translations];
-          if (translation) {
-            // Preserve the original image_url when applying translations
-            const translatedProject = { ...project, ...translation } as DynamicProject;
-            // Ensure image_url is preserved from the original project
-            if (project.image_url && !translatedProject.image_url) {
-              translatedProject.image_url = project.image_url;
-              console.log(`Portfolio: Storage change - Fixed missing image_url for project "${project.title}"`);
-            }
-            console.log(`Portfolio: Storage change - Project "${project.title}" - Original image_url: ${project.image_url}, Translated image_url: ${translatedProject.image_url}`);
-            return translatedProject;
-          }
-          return project;
-        });
-      setProjects(translatedProjects);
+      loadProjects();
     };
 
     const handleCustomStorageChange = (event: CustomEvent) => {
       console.log('Portfolio: Custom storage event received:', event.detail);
       
       // Handle different types of updates
-      if (event.detail.action === 'updated' || event.detail.action === 'created' || event.detail.action === 'image-removed' || event.detail.action === 'force-refresh') {
-        console.log('Portfolio: Project updated/created/image-removed/force-refresh, forcing refresh...');
+      if (event.detail.action === 'updated' || event.detail.action === 'created' || event.detail.action === 'deleted' || event.detail.action === 'image-removed' || event.detail.action === 'force-refresh') {
+        console.log('Portfolio: Project updated/created/deleted/image-removed/force-refresh, forcing refresh...');
         console.log('Portfolio: Action:', event.detail.action);
         console.log('Portfolio: Image URL:', event.detail.imageUrl);
         console.log('Portfolio: Project ID:', event.detail.projectId);
         
-        // For image removal, force immediate refresh
-        if (event.detail.action === 'image-removed') {
-          console.log('Portfolio: Image removal detected, forcing immediate refresh...');
-          setRefreshKey(prev => prev + 1);
-          reloadProjects();
-        } else {
-          setTimeout(() => {
-            setRefreshKey(prev => prev + 1);
-            reloadProjects();
-          }, 500); // Small delay to ensure data is saved
-        }
+        // Force immediate refresh
+        setTimeout(() => {
+          loadProjects();
+        }, 100); // Small delay to ensure data is saved
       } else {
         handleStorageChange();
       }
@@ -136,8 +87,6 @@ const Portfolio = () => {
       window.removeEventListener('portfolio-updated', handleCustomStorageChange as EventListener);
     };
   }, [language]);
-
-
 
   // Force re-render when language changes or projects update
   const [refreshKey, setRefreshKey] = useState(0);
@@ -163,42 +112,23 @@ const Portfolio = () => {
     return `${url}${separator}v=${timestamp}&t=${timestamp}&r=${randomId}&cb=${contentVersion}`;
   };
 
-  const reloadProjects = async () => {
+  const loadProjects = async () => {
     try {
-      // Get fresh data from Supabase
-      const supabaseProjects = await supabaseProjectsService.getAllProjects();
+      setIsLoading(true);
+      // Get fresh data from unified service
+      const unifiedProjects = await unifiedProjectsService.getAllProjects();
       
-      if (supabaseProjects.length > 0) {
-        // Convert Supabase projects to DynamicProject format
-        const dynamicProjects = supabaseProjects.map(project => ({
-          ...project,
-          translations: {
-            en: project,
-            es: project,
-            ca: project
-          }
-        })) as DynamicProject[];
-        
-        // Apply translations
-        const translatedProjects = dynamicProjects.map(project => {
-          const translation = project.translations?.[language as keyof typeof project.translations];
-          if (translation) {
-            const translatedProject = { ...project, ...translation } as DynamicProject;
-            if (project.image_url && !translatedProject.image_url) {
-              translatedProject.image_url = project.image_url;
-            }
-            return translatedProject;
-          }
-          return project;
-        });
-        
-        setProjects(translatedProjects);
+      if (unifiedProjects.length > 0) {
+        console.log('Portfolio: Loaded projects:', unifiedProjects.length);
+        setProjects(unifiedProjects);
       } else {
         setProjects([]);
       }
     } catch (error) {
-      console.error('Error reloading projects:', error);
+      console.error('Error loading projects:', error);
       setProjects([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -208,26 +138,34 @@ const Portfolio = () => {
     setRefreshKey(prev => prev + 1);
     
     // Clear any cached data
-    localStorage.removeItem('dynamic_portfolio_projects');
-    localStorage.removeItem('portfolio_projects');
+    localStorage.removeItem('unified_portfolio_projects');
     
     // Reload projects
-    reloadProjects();
+    loadProjects();
     
     // Force browser to reload fresh content
     window.location.reload();
   };
 
-  const handleDeleteProject = (projectId: string, projectTitle: string) => {
+  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
     if (confirm(`Are you sure you want to delete "${projectTitle}"? This action cannot be undone.`)) {
-      const success = dynamicProjectsService.deleteProject(projectId);
-      if (success) {
-        toast({
-          title: "Project Deleted",
-          description: `"${projectTitle}" has been removed from your portfolio.`,
-        });
-        reloadProjects(); // Reload projects after deletion
-      } else {
+      try {
+        const success = await unifiedProjectsService.deleteProject(projectId);
+        if (success) {
+          toast({
+            title: "Project Deleted",
+            description: `"${projectTitle}" has been removed from your portfolio.`,
+          });
+          loadProjects(); // Reload projects after deletion
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to delete project. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting project:', error);
         toast({
           title: "Error",
           description: "Failed to delete project. Please try again.",
@@ -243,7 +181,7 @@ const Portfolio = () => {
     window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
 
-  const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.tags.includes(activeFilter));
+      const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.technologies.includes(activeFilter));
   const featuredProjects = projects.filter(project => project.featured);
 
   // Animation variants
@@ -268,7 +206,7 @@ const Portfolio = () => {
     }
   };
 
-  const ProjectCard = ({ project, isFeatured = false }: { project: DynamicProject; isFeatured?: boolean }) => {
+  const ProjectCard = ({ project, isFeatured = false }: { project: UnifiedProject; isFeatured?: boolean }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
@@ -374,22 +312,17 @@ const Portfolio = () => {
             </p>
             
             <div className="flex flex-wrap gap-2 mb-4">
-              {project.tags.map((tag, index) => (
+              {project.technologies.map((tech, index) => (
                 <motion.div
                   key={index}
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
                   <Badge variant="outline" className="text-xs">
-                    {tag}
+                    {tech}
                   </Badge>
                 </motion.div>
               ))}
-              {project.technologies.length > 2 && (
-                <Badge variant="outline" className="text-xs">
-                  +{project.technologies.length - 2}
-                </Badge>
-              )}
             </div>
             
             <motion.div 
@@ -510,10 +443,6 @@ const Portfolio = () => {
                 ))
               )}
             </motion.div>
-            
-
-            
-
           </motion.div>
         )}
 

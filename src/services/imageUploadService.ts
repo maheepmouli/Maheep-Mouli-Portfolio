@@ -1,16 +1,92 @@
-import { createClient } from '@supabase/supabase-js';
+import supabase from '@/lib/supabaseClient';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const BUCKET_NAME = 'portfolio-assets';
 
-// Only create Supabase client if environment variables are available
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
+export const uploadImageToSupabase = async (file: File, folder: string = 'project-images'): Promise<string> => {
+  try {
+    console.log('imageUploadService: Starting upload to Supabase...');
+    
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    // Generate a unique filename
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${timestamp}-${randomString}.${fileExtension}`;
+    const filePath = `${folder}/${fileName}`;
+
+    console.log('imageUploadService: Uploading file:', filePath);
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('imageUploadService: Upload error:', error);
+      
+      if (error.message.includes('Bucket not found')) {
+        throw new Error('Storage bucket not found. Please create the portfolio-assets bucket in Supabase.');
+      }
+      
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    if (!data?.path) {
+      throw new Error('Upload succeeded but no path returned');
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(data.path);
+
+    const publicUrl = urlData.publicUrl;
+    console.log('imageUploadService: Upload successful, public URL:', publicUrl);
+
+    return publicUrl;
+  } catch (error) {
+    console.error('imageUploadService: Error uploading image:', error);
+    throw error;
+  }
+};
+
+export const deleteImageFromSupabase = async (imageUrl: string): Promise<void> => {
+  try {
+    if (!supabase || !imageUrl) {
+      return;
+    }
+
+    // Extract the file path from the URL
+    const urlParts = imageUrl.split('/');
+    const filePath = urlParts.slice(-2).join('/'); // Get the last two parts (folder/filename)
+
+    console.log('imageUploadService: Deleting file:', filePath);
+
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([filePath]);
+
+    if (error) {
+      console.error('imageUploadService: Delete error:', error);
+      throw new Error(`Delete failed: ${error.message}`);
+    }
+
+    console.log('imageUploadService: File deleted successfully');
+  } catch (error) {
+    console.error('imageUploadService: Error deleting image:', error);
+    throw error;
+  }
+};
 
 export interface UploadResult {
-  url: string;
-  path: string;
+  success: boolean;
+  url?: string;
+  path?: string;
   error?: string;
 }
 
@@ -21,7 +97,7 @@ export const imageUploadService = {
       // Check if Supabase is configured
       if (!supabase) {
         console.warn('Supabase not configured, falling back to base64');
-        return { url: '', path: '', error: 'Supabase not configured' };
+        return { success: false, error: 'Supabase not configured' };
       }
 
       // Generate unique filename
@@ -39,7 +115,17 @@ export const imageUploadService = {
 
       if (error) {
         console.error('Upload error:', error);
-        return { url: '', path: '', error: error.message };
+        
+        // Handle bucket not found error
+        if (error.message.includes('Bucket not found')) {
+          console.error('Storage bucket "portfolio-assets" not found. Please create it in your Supabase dashboard.');
+          return { 
+            success: false, 
+            error: 'Storage bucket not found. Please create the "portfolio-assets" bucket in your Supabase dashboard.' 
+          };
+        }
+        
+        return { success: false, error: error.message };
       }
 
       // Get public URL
@@ -48,12 +134,13 @@ export const imageUploadService = {
         .getPublicUrl(fileName);
 
       return {
+        success: true,
         url: urlData.publicUrl,
         path: fileName
       };
     } catch (error) {
       console.error('Image upload failed:', error);
-      return { url: '', path: '', error: 'Upload failed' };
+      return { success: false, error: 'Upload failed' };
     }
   },
 
@@ -95,7 +182,7 @@ export const imageUploadService = {
       return await this.uploadImage(file);
     } catch (error) {
       console.error('Base64 upload failed:', error);
-      return { url: '', path: '', error: 'Base64 upload failed' };
+      return { success: false, error: 'Base64 upload failed' };
     }
   },
 

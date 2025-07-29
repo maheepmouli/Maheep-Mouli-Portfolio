@@ -6,13 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Database, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseProjectsService } from '@/services/supabaseProjectsService';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
+import supabase from '@/lib/supabaseClient';
 
 const SupabaseConfig = () => {
   const { toast } = useToast();

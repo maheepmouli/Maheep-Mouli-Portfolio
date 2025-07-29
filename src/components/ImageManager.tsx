@@ -17,6 +17,7 @@ import {
   Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { uploadImageToSupabase } from '@/services/imageUploadService';
 
 interface ProjectImage {
   id?: string;
@@ -295,26 +296,28 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
       // Process all images concurrently and wait for all to complete
       const imagePromises = imageFiles.map(async (file, index) => {
         try {
-          // Compress the image before processing
-          const compressedImageUrl = await compressImage(file);
+          console.log('ImageManager: Uploading image to Supabase:', file.name);
+          
+          // Upload image to Supabase
+          const imageUrl = await uploadImageToSupabase(file, 'project-images');
           
           const image: ProjectImage = {
-            image_url: compressedImageUrl,
+            image_url: imageUrl,
             caption: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
             alt_text: file.name,
             sort_order: safeImages.length + index,
             width: '100%',
-            height: 'auto',
-            file: file
+            height: 'auto'
           };
           
+          console.log('ImageManager: Image uploaded successfully:', imageUrl);
           return image;
         } catch (error) {
-          console.error('ImageManager: Error processing image:', error);
+          console.error('ImageManager: Error uploading image:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           toast({
-            title: "Image processing error",
-            description: `Failed to process ${file.name}: ${errorMessage}`,
+            title: "Image upload error",
+            description: `Failed to upload ${file.name}: ${errorMessage}`,
             variant: "destructive"
           });
           return null;
@@ -330,8 +333,8 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
         onImagesChange([...safeImages, ...validImages]);
         
         toast({
-          title: "Images uploaded",
-          description: `${validImages.length} image(s) have been added to your project.`
+          title: "✅ Images Uploaded Successfully!",
+          description: `${validImages.length} image(s) have been uploaded to Supabase and added to your project.`
         });
       }
       
@@ -339,8 +342,8 @@ const ImageManager = ({ images, onImagesChange }: ImageManagerProps) => {
     } catch (error) {
       console.error('ImageManager: Error in handleFileUpload:', error);
       toast({
-        title: "Upload error",
-        description: "Failed to upload images. Please try again.",
+        title: "❌ Upload Error",
+        description: "Failed to upload images to Supabase. Please check your storage configuration and try again.",
         variant: "destructive"
       });
       setIsUploading(false);

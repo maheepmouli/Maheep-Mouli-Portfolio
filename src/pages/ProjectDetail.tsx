@@ -473,6 +473,18 @@ const ProjectDetail = () => {
                         <span className="text-sm">{project.subtitle}</span>
                       </div>
                     )}
+                    {project.duration && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.duration}</span>
+                      </div>
+                    )}
+                    {project.team_size && (
+                      <div className="flex items-center gap-2">
+                        <Users size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.team_size}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Featured Badge */}
@@ -527,6 +539,13 @@ const ProjectDetail = () => {
                 <Button variant="outline" className="w-full" onClick={() => window.open(project.github_url, '_blank')}>
                   <Github size={16} className="mr-2" />
                   View Code
+                </Button>
+              )}
+              
+              {project.project_url && (
+                <Button variant="outline" className="w-full" onClick={() => window.open(project.project_url, '_blank')}>
+                  <ExternalLink size={16} className="mr-2" />
+                  Project URL
                 </Button>
               )}
 

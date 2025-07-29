@@ -184,7 +184,11 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         technologies: formData.technologies,
         images: projectImages.map(img => img.image_url), // Changed from project_images to images
         videos: formData.videos || [],
-        location: formData.location || formData.subtitle || ''
+        location: formData.location || formData.subtitle || '',
+        duration: formData.duration || '',
+        team_size: formData.team_size || '',
+        project_url: formData.project_url || '',
+        github_url: formData.github_url || ''
       };
       
       console.log('ProjectForm: Videos being saved:', formData.videos);

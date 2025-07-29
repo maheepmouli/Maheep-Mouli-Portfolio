@@ -25,9 +25,12 @@ export interface UnifiedProject {
   technologies: string[];
   github_url?: string;
   live_url?: string;
+  project_url?: string;
   featured: boolean;
   videos?: VideoItem[];
   location?: string;
+  duration?: string;
+  team_size?: string;
   created_at: string;
   updated_at: string;
 }

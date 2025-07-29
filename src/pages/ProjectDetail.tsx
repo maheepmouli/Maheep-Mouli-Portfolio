@@ -36,6 +36,9 @@ const ProjectDetail = () => {
           console.log('ProjectDetail: Project image_url:', projectData?.image_url);
           console.log('ProjectDetail: Project image_url type:', typeof projectData?.image_url);
           console.log('ProjectDetail: Project image_url length:', projectData?.image_url?.length);
+          console.log('ProjectDetail: Project videos:', projectData?.videos);
+          console.log('ProjectDetail: Project videos length:', projectData?.videos?.length);
+          console.log('ProjectDetail: Project videos type:', typeof projectData?.videos);
           
           if (projectData) {
             setProject(projectData);

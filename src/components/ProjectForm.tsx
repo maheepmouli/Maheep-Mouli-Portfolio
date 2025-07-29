@@ -94,6 +94,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         return;
       }
       
+      console.log('ProjectForm: Loading project data:', project);
+      console.log('ProjectForm: Project videos from database:', project.videos);
+      console.log('ProjectForm: Project location from database:', project.location);
+      
       setFormData({
         title: project.title || '',
         subtitle: project.subtitle || '',
@@ -182,6 +186,9 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         videos: formData.videos || [],
         location: formData.location || formData.subtitle || ''
       };
+      
+      console.log('ProjectForm: Videos being saved:', formData.videos);
+      console.log('ProjectForm: Location being saved:', formData.location);
       
       console.log('ProjectForm: Project data being saved:', projectData);
       console.log('ProjectForm: Project images being saved:', projectImages.map(img => img.image_url));

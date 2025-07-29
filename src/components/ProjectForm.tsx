@@ -100,17 +100,37 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         description: project.description || '',
         content: project.content || '',
         image_url: project.image_url || '',
-        tags: project.tags || [],
-        status: (project.status as any) || 'draft',
+        project_images: project.project_images || [],
+        tags: project.technologies || [], // Use technologies instead of tags
+        status: 'draft', // Default status since it's not in UnifiedProject
         featured: project.featured || false,
-        project_url: project.project_url || '',
+        project_url: project.live_url || '', // Use live_url instead of project_url
         github_url: project.github_url || '',
-        location: project.location || '',
-        duration: project.duration || '',
-        team_size: project.team_size || '',
+        location: project.subtitle || '', // Use subtitle instead of location
+        duration: '', // Not available in UnifiedProject
+        team_size: '', // Not available in UnifiedProject
         technologies: project.technologies || [],
         videos: [] // TODO: Add videos support
       });
+
+      // Load existing project images
+      if (project.project_images && project.project_images.length > 0) {
+        console.log('ProjectForm: Loading existing project images:', project.project_images);
+        const existingImages = project.project_images.map((imageUrl, index) => ({
+          id: `existing-image-${index}`,
+          image_url: imageUrl,
+          caption: `Project image ${index + 1}`,
+          alt_text: `Project image ${index + 1}`,
+          sort_order: index,
+          width: '100%',
+          height: 'auto'
+        }));
+        setProjectImages(existingImages);
+        console.log('ProjectForm: Set project images:', existingImages);
+      } else {
+        console.log('ProjectForm: No existing project images found');
+        setProjectImages([]);
+      }
     } catch (error) {
       console.error('ProjectForm: Error fetching project:', error);
       toast({

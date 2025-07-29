@@ -1,4 +1,5 @@
 import supabase from '@/lib/supabaseClient';
+import { VideoItem } from '@/components/VideoManager';
 
 export interface SupabaseProject {
   id: string;
@@ -7,6 +8,8 @@ export interface SupabaseProject {
   description: string;
   content: string;
   image_url: string;
+  project_images?: string[];
+  videos?: VideoItem[];
   status: string;
   featured: boolean;
   project_url?: string;
@@ -16,6 +19,8 @@ export interface SupabaseProject {
   team_size?: string;
   technologies: string[];
   tags: string[];
+  slug: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
 }

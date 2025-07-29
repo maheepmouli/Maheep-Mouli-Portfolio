@@ -382,6 +382,39 @@ const ProjectDetail = () => {
               </motion.div>
             )}
 
+            {/* Project Videos */}
+            {project.videos && project.videos.length > 0 && (
+              <motion.div 
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                <h3 className="text-xl font-semibold mb-4">Project Videos</h3>
+                <div className="space-y-6">
+                  {project.videos.map((video, index) => (
+                    <motion.div 
+                      key={video.id || index}
+                      className="space-y-2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.9 + index * 0.1 }}
+                    >
+                      <div className="relative">
+                        <h4 className="font-medium mb-2">{video.title}</h4>
+                        {video.description && (
+                          <p className="text-sm text-muted-foreground mb-3">{video.description}</p>
+                        )}
+                        <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                          {renderVideoEmbed(video.url)}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Project Content */}
             {project.content && (
               <motion.div 

@@ -1,4 +1,5 @@
 import supabase from '@/lib/supabaseClient';
+import { VideoItem } from '@/components/VideoManager';
 
 // Storage keys
 const STORAGE_KEY = 'portfolio_projects';
@@ -24,6 +25,7 @@ export interface UnifiedProject {
   github_url?: string;
   live_url?: string;
   featured: boolean;
+  videos?: VideoItem[];
   created_at: string;
   updated_at: string;
 }

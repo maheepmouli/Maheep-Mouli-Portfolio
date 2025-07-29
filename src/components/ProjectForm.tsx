@@ -106,11 +106,11 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         featured: project.featured || false,
         project_url: project.live_url || '', // Use live_url instead of project_url
         github_url: project.github_url || '',
-        location: project.subtitle || '', // Use subtitle instead of location
+        location: project.location || project.subtitle || '', // Use location if available, fallback to subtitle
         duration: '', // Not available in UnifiedProject
         team_size: '', // Not available in UnifiedProject
         technologies: project.technologies || [],
-        videos: [] // TODO: Add videos support
+        videos: project.videos || [] // Load existing videos
       });
 
       // Load existing project images
@@ -178,7 +178,9 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         ...formData,
         slug: generateSlug(formData.title),
         technologies: formData.technologies,
-        project_images: projectImages.map(img => img.image_url)
+        project_images: projectImages.map(img => img.image_url),
+        videos: formData.videos || [],
+        location: formData.location || formData.subtitle || ''
       };
       
       console.log('ProjectForm: Project data being saved:', projectData);

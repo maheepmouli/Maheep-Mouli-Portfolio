@@ -457,7 +457,13 @@ const ProjectDetail = () => {
 
                   {/* Project Stats */}
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    {project.subtitle && (
+                    {project.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} className="text-muted-foreground" />
+                        <span className="text-sm">{project.location}</span>
+                      </div>
+                    )}
+                    {project.subtitle && !project.location && (
                       <div className="flex items-center gap-2">
                         <MapPin size={16} className="text-muted-foreground" />
                         <span className="text-sm">{project.subtitle}</span>

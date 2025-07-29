@@ -26,6 +26,7 @@ export interface UnifiedProject {
   live_url?: string;
   featured: boolean;
   videos?: VideoItem[];
+  location?: string;
   created_at: string;
   updated_at: string;
 }

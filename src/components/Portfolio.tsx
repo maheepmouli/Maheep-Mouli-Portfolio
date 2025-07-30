@@ -36,16 +36,124 @@ const Portfolio = () => {
         const unifiedProjects = await unifiedProjectsService.getAllProjects();
         console.log('Portfolio: Unified projects:', unifiedProjects);
         
-        if (unifiedProjects.length > 0) {
+        if (unifiedProjects && unifiedProjects.length > 0) {
           console.log('Portfolio: Found projects:', unifiedProjects.length);
           setProjects(unifiedProjects);
         } else {
-          console.log('Portfolio: No projects found');
-          setProjects([]);
+          console.log('Portfolio: No projects found, using fallback data');
+          // Fallback to sample data if no projects found
+          const fallbackProjects = [
+            {
+              id: '1',
+              title: 'HYPAR PORTABLES',
+              slug: 'hypar-portables',
+              subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
+              description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
+              content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.',
+              image_url: '',
+              project_images: [],
+              technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
+              github_url: '',
+              live_url: '',
+              featured: true,
+              status: 'published',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            },
+            {
+              id: '2',
+              title: 'R&E - BioFoam Thermal Performance',
+              slug: 'biofoam-thermal-performance',
+              subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
+              description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
+              content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.',
+              image_url: '',
+              project_images: [],
+              technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
+              github_url: '',
+              live_url: '',
+              featured: true,
+              status: 'published',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            },
+            {
+              id: '3',
+              title: 'Blasters Park: Multi-Functional Stadium Complex',
+              slug: 'blasters-park-stadium',
+              subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
+              description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
+              content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.',
+              image_url: '',
+              project_images: [],
+              technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
+              github_url: '',
+              live_url: '',
+              featured: true,
+              status: 'published',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ];
+          setProjects(fallbackProjects);
         }
       } catch (error) {
         console.error('Portfolio: Error loading projects:', error);
-        setProjects([]);
+        // Use fallback data on error
+        const fallbackProjects = [
+          {
+            id: '1',
+            title: 'HYPAR PORTABLES',
+            slug: 'hypar-portables',
+            subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
+            description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
+            content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.',
+            image_url: '',
+            project_images: [],
+            technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
+            github_url: '',
+            live_url: '',
+            featured: true,
+            status: 'published',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            title: 'R&E - BioFoam Thermal Performance',
+            slug: 'biofoam-thermal-performance',
+            subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
+            description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
+            content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.',
+            image_url: '',
+            project_images: [],
+            technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
+            github_url: '',
+            live_url: '',
+            featured: true,
+            status: 'published',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: '3',
+            title: 'Blasters Park: Multi-Functional Stadium Complex',
+            slug: 'blasters-park-stadium',
+            subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
+            description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
+            content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.',
+            image_url: '',
+            project_images: [],
+            technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
+            github_url: '',
+            live_url: '',
+            featured: true,
+            status: 'published',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ];
+        setProjects(fallbackProjects);
       } finally {
         setIsLoading(false);
       }

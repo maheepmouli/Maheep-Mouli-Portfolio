@@ -1,5 +1,6 @@
 import supabase from '@/lib/supabaseClient';
 import { VideoItem } from '@/components/VideoManager';
+import { initializeDataRecovery } from '@/utils/dataRecovery';
 
 // Storage keys
 const STORAGE_KEY = 'portfolio_projects';
@@ -41,20 +42,56 @@ const generateId = (): string => Date.now().toString();
 const generateSlug = (title: string): string => 
   title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+// Enhanced sample data with your actual projects
 const initializeSampleData = (): UnifiedProject[] => [
   {
     id: '1',
-    title: 'Flow-SIGHT',
-    slug: 'flow-sight',
-    subtitle: 'Real-time Congestion Prediction Dashboard',
-    description: 'AI-powered urban mobility analysis system using Graph Neural Networks to predict traffic patterns and optimize city flow in real-time.',
-    content: 'FLOW-SIGHT\nPredictive Urban Mobility Intelligence\n\nAn advanced AI-powered urban mobility analysis system that leverages Graph Neural Networks to predict traffic patterns and optimize city flow in real-time. The system provides real-time congestion prediction, dynamic route optimization, and comprehensive urban mobility insights.\n\nKey Features:\n• Real-time traffic pattern analysis\n• Predictive congestion modeling\n• Dynamic route optimization\n• Interactive dashboard visualization\n• Multi-modal transportation integration\n\nTechnologies: Python, TensorFlow, React, Node.js, PostgreSQL\n\nThis project demonstrates the power of AI in creating resilient, data-informed mobility ecosystems.',
+    title: 'HYPAR PORTABLES',
+    slug: 'hypar-portables',
+    subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
+    description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
+    content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.\n\nKey Features:\n• Robotic fabrication techniques\n• Sustainable cork material usage\n• Modular design system\n• Adaptive urban applications\n• Lightweight construction\n\nTechnologies: Rhino, Grasshopper, Python, Robotics, Cork Materials',
     image_url: '',
     project_images: [],
-    technologies: ['Python', 'TensorFlow', 'React', 'Node.js', 'PostgreSQL'],
-    github_url: 'https://github.com/maheepmouli/flow-sight',
-    live_url: 'https://flow-sight.demo.com',
+    technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
+    github_url: '',
+    live_url: '',
     featured: true,
+    status: 'published',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    title: 'R&E - BioFoam Thermal Performance',
+    slug: 'biofoam-thermal-performance',
+    subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
+    description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
+    content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.\n\nKey Features:\n• Bio-based material research\n• Thermal performance analysis\n• Porosity optimization\n• Sustainable building materials\n• Experimental methodology\n\nTechnologies: Material Science, Thermal Analysis, Bio-materials, Research Methods',
+    image_url: '',
+    project_images: [],
+    technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
+    github_url: '',
+    live_url: '',
+    featured: true,
+    status: 'published',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    title: 'Blasters Park: Multi-Functional Stadium Complex',
+    slug: 'blasters-park-stadium',
+    subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
+    description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
+    content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.\n\nKey Features:\n• 52-acre urban development\n• Multi-functional stadium design\n• Integrated recreational facilities\n• Urban planning integration\n• Comprehensive thesis work\n\nTechnologies: AutoCAD, SketchUp, Urban Planning, Architectural Design',
+    image_url: '',
+    project_images: [],
+    technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
+    github_url: '',
+    live_url: '',
+    featured: true,
+    status: 'published',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
@@ -87,7 +124,9 @@ const getProjectsFromLocalStorage = (): UnifiedProject[] => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const projects = JSON.parse(stored);
+      console.log('UnifiedService: Found projects in localStorage:', projects.length);
+      return projects;
     }
   } catch (error) {
     console.error('UnifiedService: Error reading from localStorage:', error);
@@ -98,74 +137,47 @@ const getProjectsFromLocalStorage = (): UnifiedProject[] => {
 const saveProjectsToLocalStorage = (projects: UnifiedProject[]) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    console.log('UnifiedService: Projects saved to localStorage');
   } catch (error) {
     console.error('UnifiedService: Error saving to localStorage:', error);
   }
 };
 
+// Enhanced sync function with better error handling
 export const syncLocalStorageToSupabase = async (): Promise<void> => {
   try {
-    console.log('UnifiedService: Syncing localStorage projects to Supabase...');
+    console.log('UnifiedService: Starting sync to Supabase...');
     
     if (!supabase) {
-      console.log('UnifiedService: Supabase not available for sync');
+      console.log('UnifiedService: Supabase not available, skipping sync');
       return;
     }
 
-    // Get projects from localStorage
     const localProjects = getProjectsFromLocalStorage();
-    
     if (localProjects.length === 0) {
       console.log('UnifiedService: No local projects to sync');
       return;
     }
 
-    console.log('UnifiedService: Found', localProjects.length, 'projects in localStorage to sync');
-
-    // Convert localStorage projects to Supabase format
-    const supabaseProjects = localProjects.map(project => ({
-      title: project.title,
-      slug: project.slug || generateSlug(project.title),
-      subtitle: project.subtitle || '',
-      description: project.description || '',
-      content: project.content || '',
-      image_url: project.image_url || '',
-      project_images: project.project_images || [],
-      technologies: project.technologies || [],
-      github_url: project.github_url || '',
-      live_url: project.live_url || '',
-      featured: project.featured || false,
-      user_id: null, // Set to null since we don't have real authentication
-      created_at: project.created_at || new Date().toISOString(),
-      updated_at: project.updated_at || new Date().toISOString()
-    }));
-
-    // Insert projects into Supabase
-    const { data, error } = await supabase
-      .from('projects')
-      .insert(supabaseProjects)
-      .select();
-
-    if (error) {
-      console.error('UnifiedService: Error syncing to Supabase:', error);
-      return;
-    }
-
-    console.log('UnifiedService: Successfully synced', data?.length || 0, 'projects to Supabase');
+    console.log('UnifiedService: Syncing', localProjects.length, 'projects to Supabase...');
     
-    // Update localStorage with Supabase IDs
-    if (data && data.length > 0) {
-      const updatedProjects = data.map((supabaseProject, index) => ({
-        ...localProjects[index],
-        id: supabaseProject.id.toString(),
-        created_at: supabaseProject.created_at,
-        updated_at: supabaseProject.updated_at
-      }));
-      
-      saveProjectsToLocalStorage(updatedProjects);
-      createBackup(updatedProjects);
-      console.log('UnifiedService: Updated localStorage with Supabase IDs');
+    for (const project of localProjects) {
+      try {
+        const { error } = await supabase
+          .from('projects')
+          .upsert([project], { onConflict: 'id' });
+
+        if (error) {
+          console.error('UnifiedService: Error syncing project', project.title, ':', error);
+        } else {
+          console.log('UnifiedService: Successfully synced project:', project.title);
+        }
+      } catch (error) {
+        console.error('UnifiedService: Error syncing project', project.title, ':', error);
+      }
     }
+    
+    console.log('UnifiedService: Sync completed');
   } catch (error) {
     console.error('UnifiedService: Error in syncLocalStorageToSupabase:', error);
   }
@@ -177,56 +189,65 @@ export const unifiedProjectsService = {
     try {
       console.log('UnifiedService: Attempting to fetch from Supabase...');
       
+      // Initialize data recovery to ensure all content is preserved
+      const recoveredProjects = initializeDataRecovery();
+      console.log('UnifiedService: Data recovery completed, found projects:', recoveredProjects.length);
+      
       if (!supabase) {
-        console.log('UnifiedService: Supabase client not available, falling back to localStorage...');
-        return getProjectsFromLocalStorage();
+        console.log('UnifiedService: Supabase client not available, using recovered data...');
+        return recoveredProjects;
       }
 
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('UnifiedService: Supabase query error:', error);
-        console.log('UnifiedService: Falling back to localStorage...');
-        return getProjectsFromLocalStorage();
-      }
-
-      console.log('UnifiedService: Supabase query successful');
-      console.log('UnifiedService: Data received:', data);
-      console.log('UnifiedService: Data length:', data?.length || 0);
-
-      if (data && data.length > 0) {
-        console.log('UnifiedService: Found projects in Supabase:', data.length);
-        const unifiedProjects = data.map(project => ({
-          ...project,
-          id: project.id.toString(),
-          user_id: project.user_id?.toString() || null,
-          project_images: project.images || project.project_images || [] // Map images to project_images for compatibility
-        }));
-        
-        // Sync with localStorage
-        saveProjectsToLocalStorage(unifiedProjects);
-        createBackup(unifiedProjects);
-        return unifiedProjects;
-      } else {
-        console.log('UnifiedService: No projects found in Supabase, checking localStorage...');
-        const localProjects = getProjectsFromLocalStorage();
-        
-        if (localProjects.length > 0) {
-          console.log('UnifiedService: Found projects in localStorage, syncing to Supabase...');
-          await syncLocalStorageToSupabase();
-          return localProjects;
-        } else {
-          console.log('UnifiedService: No projects found anywhere, initializing with sample data...');
-          return initializeSampleData();
+        if (error) {
+          console.error('UnifiedService: Supabase query error:', error);
+          console.log('UnifiedService: Using recovered data...');
+          return recoveredProjects;
         }
+
+        console.log('UnifiedService: Supabase query successful');
+        console.log('UnifiedService: Data received:', data);
+        console.log('UnifiedService: Data length:', data?.length || 0);
+
+        if (data && data.length > 0) {
+          console.log('UnifiedService: Found projects in Supabase:', data.length);
+          const unifiedProjects = data.map(project => ({
+            ...project,
+            id: project.id.toString(),
+            user_id: project.user_id?.toString() || null,
+            project_images: project.images || project.project_images || []
+          }));
+          
+          // Merge with recovered projects to ensure no data is lost
+          const mergedProjects = [...unifiedProjects];
+          recoveredProjects.forEach(recoveredProject => {
+            if (!mergedProjects.find(p => p.id === recoveredProject.id)) {
+              mergedProjects.push(recoveredProject);
+            }
+          });
+          
+          // Sync with localStorage
+          saveProjectsToLocalStorage(mergedProjects);
+          createBackup(mergedProjects);
+          return mergedProjects;
+        } else {
+          console.log('UnifiedService: No projects found in Supabase, using recovered data...');
+          return recoveredProjects;
+        }
+      } catch (supabaseError) {
+        console.error('UnifiedService: Supabase connection error:', supabaseError);
+        console.log('UnifiedService: Using recovered data...');
+        return recoveredProjects;
       }
     } catch (error) {
       console.error('UnifiedService: Error fetching projects:', error);
-      console.log('UnifiedService: Falling back to localStorage...');
-      return getProjectsFromLocalStorage();
+      console.log('UnifiedService: Using recovered data...');
+      return initializeDataRecovery();
     }
   },
 

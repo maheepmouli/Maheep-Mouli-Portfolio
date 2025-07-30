@@ -79,11 +79,18 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     }
   }, [projectId]);
 
+  // Monitor formData changes
+  useEffect(() => {
+    console.log('🔍 ProjectForm: formData.featured ACTUALLY changed to:', formData.featured);
+    console.log('🔍 ProjectForm: formData.featured type:', typeof formData.featured);
+    console.log('🔍 ProjectForm: formData.featured boolean value:', Boolean(formData.featured));
+  }, [formData.featured]);
+
   const fetchProject = async () => {
     try {
-      console.log('ProjectForm: Fetching project with ID:', projectId);
+      console.log('🔍 ProjectForm: Fetching project with ID:', projectId);
       const project = await unifiedProjectsService.getProjectById(projectId!);
-      console.log('ProjectForm: Retrieved project:', project);
+      console.log('🔍 ProjectForm: Retrieved project:', project);
       
       if (!project) {
         toast({
@@ -94,28 +101,33 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         return;
       }
       
-      console.log('ProjectForm: Loading project data:', project);
-      console.log('ProjectForm: Project videos from database:', project.videos);
-      console.log('ProjectForm: Project location from database:', project.location);
+      console.log('🔍 ProjectForm: Loading project data:', project);
+      console.log('🔍 ProjectForm: Project videos from database:', project.videos);
+      console.log('🔍 ProjectForm: Project location from database:', project.location);
+      console.log('🔍 ProjectForm: Project featured status from database:', project.featured);
+      console.log('🔍 ProjectForm: Project featured type:', typeof project.featured);
+      console.log('🔍 ProjectForm: Project featured value:', project.featured);
       
-             setFormData({
-         title: project.title || '',
-         subtitle: project.subtitle || '',
-         description: project.description || '',
-         content: project.content || '',
-         image_url: project.image_url || '',
-         project_images: project.project_images || [],
-         tags: project.technologies || [], // Use technologies instead of tags
-         status: (project as any).status || 'draft', // Load actual status from database
-         featured: project.featured || false,
-         project_url: project.live_url || '', // Use live_url instead of project_url
-         github_url: project.github_url || '',
-         location: project.location || project.subtitle || '', // Use location if available, fallback to subtitle
-         duration: '', // Not available in UnifiedProject
-         team_size: '', // Not available in UnifiedProject
-         technologies: project.technologies || [],
-         videos: project.videos || [] // Load existing videos
-       });
+      setFormData({
+        title: project.title || '',
+        subtitle: project.subtitle || '',
+        description: project.description || '',
+        content: project.content || '',
+        image_url: project.image_url || '',
+        project_images: project.project_images || [],
+        tags: project.technologies || [], // Use technologies instead of tags
+        status: (project as any).status || 'draft', // Load actual status from database
+        featured: project.featured || false,
+        project_url: project.live_url || '', // Use live_url instead of project_url
+        github_url: project.github_url || '',
+        location: project.location || project.subtitle || '', // Use location if available, fallback to subtitle
+        duration: '', // Not available in UnifiedProject
+        team_size: '', // Not available in UnifiedProject
+        technologies: project.technologies || [],
+        videos: project.videos || [] // Load existing videos
+      });
+      
+      console.log('ProjectForm: Set formData.featured to:', project.featured || false);
 
       // Load existing project images
       if (project.project_images && project.project_images.length > 0) {
@@ -199,10 +211,10 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       
       console.log('ProjectForm: Videos being saved:', formData.videos);
       console.log('ProjectForm: Location being saved:', formData.location);
-             console.log('ProjectForm: Featured being saved:', formData.featured);
-       console.log('ProjectForm: Status being saved:', formData.status);
-       console.log('ProjectForm: Featured type:', typeof formData.featured);
-       console.log('ProjectForm: Status type:', typeof formData.status);
+      console.log('ProjectForm: Featured being saved:', formData.featured);
+      console.log('ProjectForm: Status being saved:', formData.status);
+      console.log('ProjectForm: Featured type:', typeof formData.featured);
+      console.log('ProjectForm: Status type:', typeof formData.status);
       
       console.log('ProjectForm: Project data being saved:', projectData);
       console.log('ProjectForm: Project images being saved:', projectImages.map(img => img.image_url));
@@ -210,26 +222,50 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       if (isEditing && projectId) {
         console.log('ProjectForm: Updating project with ID:', projectId);
         console.log('ProjectForm: Project data to update:', projectData);
+        console.log('ProjectForm: Featured field in update data:', projectData.featured);
         
         // Update existing project
         console.log('ProjectForm: Calling updateProject with ID:', projectId);
         console.log('ProjectForm: Update data:', projectData);
         const updatedProject = await unifiedProjectsService.updateProject(projectId, projectData);
         console.log('ProjectForm: Updated project result:', updatedProject);
+        console.log('ProjectForm: Updated project featured status:', updatedProject?.featured);
         
         if (updatedProject) {
           console.log('ProjectForm: Successfully updated project:', updatedProject);
+          console.log('ProjectForm: Final featured status:', updatedProject.featured);
+          console.log('ProjectForm: Final status:', updatedProject.status);
           
-          // Show success message and redirect immediately
+          // Show success message but don't redirect immediately
           toast({
             title: "✅ Project Updated!",
-            description: "Redirecting to project details...",
+            description: "Project has been updated successfully. Check the portfolio page to see changes.",
           });
           
-          // Redirect to the updated project immediately
+          // Don't redirect - let user see the logs
+          console.log('ProjectForm: Update completed - check portfolio page for changes');
+          console.log('ProjectForm: You can now navigate to the portfolio page to see if the featured status changed');
+          
+          // Optional: Call onSuccess callback if provided
+          if (onSuccess) {
+            onSuccess();
+          }
+          
+          // Add a button to navigate to portfolio
+          const navigateButton = document.createElement('button');
+          navigateButton.textContent = 'Go to Portfolio';
+          navigateButton.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;';
+          navigateButton.onclick = () => {
+            window.location.href = '/portfolio';
+          };
+          document.body.appendChild(navigateButton);
+          
+          // Remove the button after 10 seconds
           setTimeout(() => {
-            window.location.href = `/portfolio/${projectId}`;
-          }, 1000);
+            if (document.body.contains(navigateButton)) {
+              document.body.removeChild(navigateButton);
+            }
+          }, 10000);
         } else {
           throw new Error("Failed to update project");
         }
@@ -263,10 +299,30 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           description: "Your new project has been created and is now live.",
         });
         
-        // Redirect to portfolio page to see the new project
-        setTimeout(() => {
+        // Don't redirect - let user see the logs
+        console.log('ProjectForm: Create completed - check portfolio page for changes');
+        console.log('ProjectForm: You can now navigate to the portfolio page to see the new project');
+        
+        // Optional: Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        // Add a button to navigate to portfolio
+        const navigateButton = document.createElement('button');
+        navigateButton.textContent = 'Go to Portfolio';
+        navigateButton.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;';
+        navigateButton.onclick = () => {
           window.location.href = '/portfolio';
-        }, 1000);
+        };
+        document.body.appendChild(navigateButton);
+        
+        // Remove the button after 10 seconds
+        setTimeout(() => {
+          if (document.body.contains(navigateButton)) {
+            document.body.removeChild(navigateButton);
+          }
+        }, 10000);
       }
     } catch (error) {
       console.error('ProjectForm: Error during form submission:', error);
@@ -437,6 +493,23 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
         });
       }
     }
+  };
+
+  // Debug function to test featured checkbox
+  const testFeaturedCheckbox = () => {
+    console.log('🧪 Testing Featured Checkbox...');
+    console.log('Current formData.featured:', formData.featured);
+    
+    // Toggle the featured state
+    const newFeaturedState = !formData.featured;
+    setFormData(prev => ({ ...prev, featured: newFeaturedState }));
+    
+    console.log('New formData.featured:', newFeaturedState);
+    
+    // Test after a short delay
+    setTimeout(() => {
+      console.log('After state update, formData.featured:', formData.featured);
+    }, 100);
   };
 
   return (
@@ -780,27 +853,57 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           <CardTitle>Project Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-                     <div className="flex items-center space-x-2">
-             <input
-               type="checkbox"
-               id="featured"
-               name="featured"
-               checked={formData.featured}
-               onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-               className="rounded"
-             />
-             <Label htmlFor="featured">Featured Project</Label>
-           </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="featured"
+              name="featured"
+              checked={formData.featured}
+              onChange={(e) => {
+                const newFeaturedValue = e.target.checked;
+                console.log('🔍 Featured checkbox changed:', newFeaturedValue);
+                console.log('🔍 Previous formData.featured:', formData.featured);
+                console.log('🔍 Checkbox checked state:', e.target.checked);
+                console.log('🔍 Checkbox value:', e.target.value);
+                
+                setFormData(prev => {
+                  console.log('🔍 Inside setFormData, prev.featured:', prev.featured);
+                  const updated = { ...prev, featured: newFeaturedValue };
+                  console.log('🔍 Updated formData.featured will be:', updated.featured);
+                  return updated;
+                });
+                
+                console.log('🔍 Setting formData.featured to:', newFeaturedValue);
+              }}
+              className="rounded"
+            />
+            <Label htmlFor="featured">Featured Project</Label>
+          </div>
           
-                     <div>
-             <Label htmlFor="status">Status</Label>
-             <select
-               id="status"
-               name="status"
-               value={formData.status}
-               onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-               className="w-full p-2 border rounded-md"
-             >
+          {/* Debug button */}
+          <div className="flex items-center space-x-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={testFeaturedCheckbox}
+            >
+              Test Featured Toggle
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Current: {formData.featured ? 'Featured' : 'Not Featured'}
+            </span>
+          </div>
+          
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+              className="w-full p-2 border rounded-md"
+            >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
               <option value="Live Demo">Live Demo</option>

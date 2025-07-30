@@ -46,12 +46,29 @@ const generateSlug = (title: string): string =>
 const initializeSampleData = (): UnifiedProject[] => [
   {
     id: '1',
+    title: 'Flow-SIGHT',
+    slug: 'flow-sight',
+    subtitle: 'Real-time Congestion Prediction Dashboard',
+    description: 'AI-powered urban mobility analysis system using Graph Neural Networks to predict traffic patterns and optimize city flow in real-time.',
+    content: 'FLOW-SIGHT\nPredictive Urban Mobility Intelligence\n\nAn advanced AI-powered urban mobility analysis system that leverages Graph Neural Networks to predict traffic patterns and optimize city flow in real-time. The system provides real-time congestion prediction, dynamic route optimization, and comprehensive urban mobility insights.',
+    image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
+    project_images: [],
+    technologies: ['Python', 'TensorFlow', 'React', 'Node.js', 'PostgreSQL'],
+    github_url: 'https://github.com/maheepmouli/flow-sight',
+    live_url: 'https://flow-sight.demo.com',
+    featured: true,
+    status: 'published',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
     title: 'HYPAR PORTABLES',
     slug: 'hypar-portables',
     subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
     description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
-    content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.\n\nKey Features:\n• Robotic fabrication techniques\n• Sustainable cork material usage\n• Modular design system\n• Adaptive urban applications\n• Lightweight construction\n\nTechnologies: Rhino, Grasshopper, Python, Robotics, Cork Materials',
-    image_url: '',
+    content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.',
+    image_url: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=600&fit=crop',
     project_images: [],
     technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
     github_url: '',
@@ -62,13 +79,13 @@ const initializeSampleData = (): UnifiedProject[] => [
     updated_at: new Date().toISOString()
   },
   {
-    id: '2',
+    id: '3',
     title: 'R&E - BioFoam Thermal Performance',
     slug: 'biofoam-thermal-performance',
     subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
     description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
-    content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.\n\nKey Features:\n• Bio-based material research\n• Thermal performance analysis\n• Porosity optimization\n• Sustainable building materials\n• Experimental methodology\n\nTechnologies: Material Science, Thermal Analysis, Bio-materials, Research Methods',
-    image_url: '',
+    content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.',
+    image_url: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop',
     project_images: [],
     technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
     github_url: '',
@@ -79,13 +96,13 @@ const initializeSampleData = (): UnifiedProject[] => [
     updated_at: new Date().toISOString()
   },
   {
-    id: '3',
+    id: '4',
     title: 'Blasters Park: Multi-Functional Stadium Complex',
     slug: 'blasters-park-stadium',
     subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
     description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
-    content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.\n\nKey Features:\n• 52-acre urban development\n• Multi-functional stadium design\n• Integrated recreational facilities\n• Urban planning integration\n• Comprehensive thesis work\n\nTechnologies: AutoCAD, SketchUp, Urban Planning, Architectural Design',
-    image_url: '',
+    content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.',
+    image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
     project_images: [],
     technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
     github_url: '',
@@ -143,6 +160,97 @@ const saveProjectsToLocalStorage = (projects: UnifiedProject[]) => {
   }
 };
 
+const clearStorage = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(BACKUP_KEY);
+    console.log('UnifiedService: Storage cleared');
+  } catch (error) {
+    console.error('UnifiedService: Error clearing storage:', error);
+  }
+};
+
+const forceFreshData = (): UnifiedProject[] => {
+  console.log('UnifiedService: Forcing fresh data...');
+  clearStorage();
+  
+  const freshData = [
+    {
+      id: '1',
+      title: 'Flow-SIGHT',
+      slug: 'flow-sight',
+      subtitle: 'Real-time Congestion Prediction Dashboard',
+      description: 'AI-powered urban mobility analysis system using Graph Neural Networks to predict traffic patterns and optimize city flow in real-time.',
+      content: 'FLOW-SIGHT\nPredictive Urban Mobility Intelligence\n\nAn advanced AI-powered urban mobility analysis system that leverages Graph Neural Networks to predict traffic patterns and optimize city flow in real-time. The system provides real-time congestion prediction, dynamic route optimization, and comprehensive urban mobility insights.',
+      image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
+      project_images: [],
+      technologies: ['Python', 'TensorFlow', 'React', 'Node.js', 'PostgreSQL'],
+      github_url: 'https://github.com/maheepmouli/flow-sight',
+      live_url: 'https://flow-sight.demo.com',
+      featured: true,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '2',
+      title: 'HYPAR PORTABLES',
+      slug: 'hypar-portables',
+      subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
+      description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
+      content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.',
+      image_url: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=600&fit=crop',
+      project_images: [],
+      technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
+      github_url: '',
+      live_url: '',
+      featured: true,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '3',
+      title: 'R&E - BioFoam Thermal Performance',
+      slug: 'biofoam-thermal-performance',
+      subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
+      description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
+      content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.',
+      image_url: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop',
+      project_images: [],
+      technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
+      github_url: '',
+      live_url: '',
+      featured: true,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '4',
+      title: 'Blasters Park: Multi-Functional Stadium Complex',
+      slug: 'blasters-park-stadium',
+      subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
+      description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
+      content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.',
+      image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
+      project_images: [],
+      technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
+      github_url: '',
+      live_url: '',
+      featured: true,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ];
+  
+  saveProjectsToLocalStorage(freshData);
+  createBackup(freshData);
+  console.log('UnifiedService: Fresh data saved');
+  return freshData;
+};
+
 // Enhanced sync function with better error handling
 export const syncLocalStorageToSupabase = async (): Promise<void> => {
   try {
@@ -186,69 +294,47 @@ export const syncLocalStorageToSupabase = async (): Promise<void> => {
 export const unifiedProjectsService = {
   // Get all projects - prioritize Supabase, fallback to localStorage
   async getAllProjects(): Promise<UnifiedProject[]> {
-    try {
-      console.log('UnifiedService: Attempting to fetch from Supabase...');
-      
-      // Initialize data recovery to ensure all content is preserved
-      const recoveredProjects = initializeDataRecovery();
-      console.log('UnifiedService: Data recovery completed, found projects:', recoveredProjects.length);
-      
-      if (!supabase) {
-        console.log('UnifiedService: Supabase client not available, using recovered data...');
-        return recoveredProjects;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('UnifiedService: Supabase query error:', error);
-          console.log('UnifiedService: Using recovered data...');
-          return recoveredProjects;
-        }
-
-        console.log('UnifiedService: Supabase query successful');
-        console.log('UnifiedService: Data received:', data);
-        console.log('UnifiedService: Data length:', data?.length || 0);
-
-        if (data && data.length > 0) {
-          console.log('UnifiedService: Found projects in Supabase:', data.length);
-          const unifiedProjects = data.map(project => ({
-            ...project,
-            id: project.id.toString(),
-            user_id: project.user_id?.toString() || null,
-            project_images: project.images || project.project_images || []
-          }));
-          
-          // Merge with recovered projects to ensure no data is lost
-          const mergedProjects = [...unifiedProjects];
-          recoveredProjects.forEach(recoveredProject => {
-            if (!mergedProjects.find(p => p.id === recoveredProject.id)) {
-              mergedProjects.push(recoveredProject);
-            }
-          });
-          
-          // Sync with localStorage
-          saveProjectsToLocalStorage(mergedProjects);
-          createBackup(mergedProjects);
-          return mergedProjects;
-        } else {
-          console.log('UnifiedService: No projects found in Supabase, using recovered data...');
-          return recoveredProjects;
-        }
-      } catch (supabaseError) {
-        console.error('UnifiedService: Supabase connection error:', supabaseError);
-        console.log('UnifiedService: Using recovered data...');
-        return recoveredProjects;
-      }
-    } catch (error) {
-      console.error('UnifiedService: Error fetching projects:', error);
-      console.log('UnifiedService: Using recovered data...');
-      return initializeDataRecovery();
+    console.log('UnifiedService: Getting all projects...');
+    
+    // First try to recover existing data
+    const recoveredProjects = initializeDataRecovery();
+    console.log('UnifiedService: Data recovery completed, found projects:', recoveredProjects.length);
+    console.log('UnifiedService: Recovered projects details:', recoveredProjects.map(p => ({
+      title: p.title,
+      featured: p.featured,
+      status: p.status,
+      id: p.id
+    })));
+    
+    // If we have projects, return them directly
+    if (recoveredProjects.length > 0) {
+      console.log('UnifiedService: Returning recovered projects');
+      return recoveredProjects;
     }
+    
+    // Only use sample data if we have NO projects at all
+    console.log('UnifiedService: No projects found, using sample data...');
+    return forceFreshData();
+  },
+
+  // Manual clear storage function for debugging
+  clearAllStorage(): void {
+    clearStorage();
+    console.log('UnifiedService: All storage cleared manually');
+  },
+
+  // Force fresh data function for debugging
+  forceFreshData(): UnifiedProject[] {
+    return forceFreshData();
+  },
+
+  // Force complete refresh - clear storage and return fresh data
+  forceCompleteRefresh(): UnifiedProject[] {
+    console.log('UnifiedService: Force complete refresh...');
+    clearStorage();
+    const freshData = forceFreshData();
+    console.log('UnifiedService: Complete refresh completed with', freshData.length, 'projects');
+    return freshData;
   },
 
   // Get project by ID

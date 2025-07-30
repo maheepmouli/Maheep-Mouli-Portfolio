@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check LocalStorage Data</title>
+</head>
+<body>
+    <h1>LocalStorage Data Check</h1>
+    <div id="output"></div>
+    
+    <script>
+        function checkData() {
+            const output = document.getElementById('output');
+            let html = '<h2>=== CHECKING LOCALSTORAGE DATA ===</h2>';
+            
+            // Check all localStorage keys
+            html += '<h3>All localStorage keys:</h3>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                html += `<p>Key ${i}: ${key}</p>`;
+            }
+            
+            // Check specific project-related keys
+            const keysToCheck = [
+                'portfolio_projects',
+                'portfolio_projects_backup',
+                'projects',
+                'projects_backup',
+                'unified_projects',
+                'unified_projects_backup'
+            ];
+            
+            html += '<h3>=== CHECKING PROJECT DATA ===</h3>';
+            keysToCheck.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        html += `<h4>${key}:</h4>`;
+                        html += `<p>- Type: ${typeof parsed}</p>`;
+                        html += `<p>- Length: ${Array.isArray(parsed) ? parsed.length : 'N/A'}</p>`;
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            html += `<p>- Projects: ${parsed.map(p => p.title || 'Unknown').join(', ')}</p>`;
+                            html += `<p>- Sample project: <pre>${JSON.stringify(parsed[0], null, 2)}</pre></p>`;
+                        }
+                    } catch (e) {
+                        html += `<p>${key}: Error parsing - ${e.message}</p>`;
+                    }
+                } else {
+                    html += `<p>${key}: Not found</p>`;
+                }
+            });
+            
+            html += '<h3>=== DONE ===</h3>';
+            output.innerHTML = html;
+        }
+        
+        // Run the check when page loads
+        window.onload = checkData;
+    </script>
+</body>
+</html> 

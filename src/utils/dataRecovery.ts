@@ -95,6 +95,23 @@ export const mergeWithSampleData = (recoveredProjects: RecoveredProject[]): Reco
   const sampleProjects: RecoveredProject[] = [
     {
       id: '1',
+      title: 'Flow-SIGHT',
+      slug: 'flow-sight',
+      subtitle: 'Real-time Congestion Prediction Dashboard',
+      description: 'AI-powered urban mobility analysis system using Graph Neural Networks to predict traffic patterns and optimize city flow in real-time.',
+      content: 'FLOW-SIGHT\nPredictive Urban Mobility Intelligence\n\nAn advanced AI-powered urban mobility analysis system that leverages Graph Neural Networks to predict traffic patterns and optimize city flow in real-time. The system provides real-time congestion prediction, dynamic route optimization, and comprehensive urban mobility insights.',
+      image_url: '',
+      project_images: [],
+      technologies: ['Python', 'TensorFlow', 'React', 'Node.js', 'PostgreSQL'],
+      github_url: 'https://github.com/maheepmouli/flow-sight',
+      live_url: 'https://flow-sight.demo.com',
+      featured: true,
+      status: 'published',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '2',
       title: 'HYPAR PORTABLES',
       slug: 'hypar-portables',
       subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
@@ -111,7 +128,7 @@ export const mergeWithSampleData = (recoveredProjects: RecoveredProject[]): Reco
       updated_at: new Date().toISOString()
     },
     {
-      id: '2',
+      id: '3',
       title: 'R&E - BioFoam Thermal Performance',
       slug: 'biofoam-thermal-performance',
       subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
@@ -128,7 +145,7 @@ export const mergeWithSampleData = (recoveredProjects: RecoveredProject[]): Reco
       updated_at: new Date().toISOString()
     },
     {
-      id: '3',
+      id: '4',
       title: 'Blasters Park: Multi-Functional Stadium Complex',
       slug: 'blasters-park-stadium',
       subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
@@ -166,12 +183,18 @@ export const initializeDataRecovery = (): RecoveredProject[] => {
   // Recover existing data
   const recoveredProjects = recoverExistingData();
   
-  // Merge with sample data
-  const mergedProjects = mergeWithSampleData(recoveredProjects);
+  // Only merge with sample data if we have NO projects at all
+  if (recoveredProjects.length === 0) {
+    console.log('DataRecovery: No projects found, merging with sample data...');
+    const mergedProjects = mergeWithSampleData(recoveredProjects);
+    saveRecoveredData(mergedProjects);
+    console.log('DataRecovery: Recovery process completed. Total projects:', mergedProjects.length);
+    return mergedProjects;
+  }
   
-  // Save merged data
-  saveRecoveredData(mergedProjects);
-  
-  console.log('DataRecovery: Recovery process completed. Total projects:', mergedProjects.length);
-  return mergedProjects;
+  // If we have projects, just save them as they are
+  console.log('DataRecovery: Found existing projects, preserving them...');
+  saveRecoveredData(recoveredProjects);
+  console.log('DataRecovery: Recovery process completed. Total projects:', recoveredProjects.length);
+  return recoveredProjects;
 }; 

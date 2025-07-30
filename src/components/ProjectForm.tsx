@@ -98,24 +98,24 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
       console.log('ProjectForm: Project videos from database:', project.videos);
       console.log('ProjectForm: Project location from database:', project.location);
       
-      setFormData({
-        title: project.title || '',
-        subtitle: project.subtitle || '',
-        description: project.description || '',
-        content: project.content || '',
-        image_url: project.image_url || '',
-        project_images: project.project_images || [],
-        tags: project.technologies || [], // Use technologies instead of tags
-        status: 'draft', // Default status since it's not in UnifiedProject
-        featured: project.featured || false,
-        project_url: project.live_url || '', // Use live_url instead of project_url
-        github_url: project.github_url || '',
-        location: project.location || project.subtitle || '', // Use location if available, fallback to subtitle
-        duration: '', // Not available in UnifiedProject
-        team_size: '', // Not available in UnifiedProject
-        technologies: project.technologies || [],
-        videos: project.videos || [] // Load existing videos
-      });
+             setFormData({
+         title: project.title || '',
+         subtitle: project.subtitle || '',
+         description: project.description || '',
+         content: project.content || '',
+         image_url: project.image_url || '',
+         project_images: project.project_images || [],
+         tags: project.technologies || [], // Use technologies instead of tags
+         status: (project as any).status || 'draft', // Load actual status from database
+         featured: project.featured || false,
+         project_url: project.live_url || '', // Use live_url instead of project_url
+         github_url: project.github_url || '',
+         location: project.location || project.subtitle || '', // Use location if available, fallback to subtitle
+         duration: '', // Not available in UnifiedProject
+         team_size: '', // Not available in UnifiedProject
+         technologies: project.technologies || [],
+         videos: project.videos || [] // Load existing videos
+       });
 
       // Load existing project images
       if (project.project_images && project.project_images.length > 0) {
@@ -149,6 +149,8 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
     e.preventDefault();
     console.log('ProjectForm: Form submitted');
     console.log('ProjectForm: Current form data:', formData);
+    console.log('ProjectForm: Featured value:', formData.featured);
+    console.log('ProjectForm: Status value:', formData.status);
     console.log('ProjectForm: Project images:', projectImages);
     console.log('ProjectForm: User authenticated:', !!user);
     console.log('ProjectForm: Is editing:', isEditing);
@@ -178,21 +180,29 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           .replace(/^-+|-+$/g, '');
       };
 
+      // FIXED: Explicitly include featured and status in projectData
       const projectData = {
         ...formData,
         slug: generateSlug(formData.title),
         technologies: formData.technologies,
-        images: projectImages.map(img => img.image_url), // Changed from project_images to images
+        project_images: projectImages.map(img => img.image_url), // Use project_images to match database column
         videos: formData.videos || [],
         location: formData.location || formData.subtitle || '',
         duration: formData.duration || '',
         team_size: formData.team_size || '',
         project_url: formData.project_url || '',
-        github_url: formData.github_url || ''
+        github_url: formData.github_url || '',
+        // EXPLICITLY INCLUDE THESE FIELDS
+        featured: formData.featured,
+        status: formData.status
       };
       
       console.log('ProjectForm: Videos being saved:', formData.videos);
       console.log('ProjectForm: Location being saved:', formData.location);
+             console.log('ProjectForm: Featured being saved:', formData.featured);
+       console.log('ProjectForm: Status being saved:', formData.status);
+       console.log('ProjectForm: Featured type:', typeof formData.featured);
+       console.log('ProjectForm: Status type:', typeof formData.status);
       
       console.log('ProjectForm: Project data being saved:', projectData);
       console.log('ProjectForm: Project images being saved:', projectImages.map(img => img.image_url));
@@ -770,25 +780,27 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           <CardTitle>Project Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="featured"
-              checked={formData.featured}
-              onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-              className="rounded"
-            />
-            <Label htmlFor="featured">Featured Project</Label>
-          </div>
+                     <div className="flex items-center space-x-2">
+             <input
+               type="checkbox"
+               id="featured"
+               name="featured"
+               checked={formData.featured}
+               onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
+               className="rounded"
+             />
+             <Label htmlFor="featured">Featured Project</Label>
+           </div>
           
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <select
-              id="status"
-              value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-              className="w-full p-2 border rounded-md"
-            >
+                     <div>
+             <Label htmlFor="status">Status</Label>
+             <select
+               id="status"
+               name="status"
+               value={formData.status}
+               onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+               className="w-full p-2 border rounded-md"
+             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
               <option value="Live Demo">Live Demo</option>

@@ -11,4 +11,7 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
-Allow: / 
+Allow: /
+
+# Sitemap
+Sitemap: https://maheep-portfolio.vercel.app/sitemap.xml 

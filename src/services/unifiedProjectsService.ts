@@ -27,6 +27,7 @@ export interface UnifiedProject {
   live_url?: string;
   project_url?: string;
   featured: boolean;
+  status?: string; // Add status field
   videos?: VideoItem[];
   location?: string;
   duration?: string;
@@ -330,6 +331,13 @@ export const unifiedProjectsService = {
       // Try to update in Supabase first
       if (supabase) {
         try {
+          console.log('UnifiedService: Sending update to Supabase:', {
+            id,
+            updates,
+            featured: updates.featured,
+            status: updates.status
+          });
+          
           const { error } = await supabase
             .from('projects')
             .update({

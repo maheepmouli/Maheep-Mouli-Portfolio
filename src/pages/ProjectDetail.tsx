@@ -487,12 +487,24 @@ const ProjectDetail = () => {
                     )}
                   </div>
 
-                  {/* Featured Badge */}
-                  {project.featured && (
-                    <div className="pt-4 border-t">
-                      <Badge variant="default">Featured Project</Badge>
-                    </div>
-                  )}
+                  {/* Project Status and Featured Badge */}
+                  <div className="pt-4 border-t space-y-2">
+                    {/* Status Badge */}
+                    {project.status && (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">
+                          {project.status}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Featured Badge */}
+                    {project.featured && (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default">Featured Project</Badge>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>

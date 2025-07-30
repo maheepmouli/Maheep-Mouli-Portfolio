@@ -255,9 +255,35 @@ const Portfolio = () => {
                   size="sm" 
                   variant="destructive" 
                   className="bg-background/90 hover:bg-destructive hover:text-destructive-foreground backdrop-blur-sm"
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
-                      console.log('Deleting project:', project.title);
+                      try {
+                        console.log('Portfolio: Deleting project:', project.title);
+                        const success = await unifiedProjectsService.deleteProject(project.id);
+                        
+                        if (success) {
+                          toast({
+                            title: "✅ Project Deleted",
+                            description: `"${project.title}" has been deleted successfully.`,
+                          });
+                          
+                          // Refresh the projects list
+                          loadProjects();
+                        } else {
+                          toast({
+                            title: "❌ Delete Failed",
+                            description: "Failed to delete project. Please try again.",
+                            variant: "destructive"
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Portfolio: Error deleting project:', error);
+                        toast({
+                          title: "❌ Error",
+                          description: "An error occurred while deleting the project.",
+                          variant: "destructive"
+                        });
+                      }
                     }
                   }}
                 >
@@ -426,9 +452,35 @@ const Portfolio = () => {
                   size="sm" 
                   variant="destructive" 
                   className="bg-background/90 hover:bg-destructive hover:text-destructive-foreground backdrop-blur-sm"
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
-                      console.log('Deleting project:', project.title);
+                      try {
+                        console.log('Portfolio: Deleting project:', project.title);
+                        const success = await unifiedProjectsService.deleteProject(project.id);
+                        
+                        if (success) {
+                          toast({
+                            title: "✅ Project Deleted",
+                            description: `"${project.title}" has been deleted successfully.`,
+                          });
+                          
+                          // Refresh the projects list
+                          loadProjects();
+                        } else {
+                          toast({
+                            title: "❌ Delete Failed",
+                            description: "Failed to delete project. Please try again.",
+                            variant: "destructive"
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Portfolio: Error deleting project:', error);
+                        toast({
+                          title: "❌ Error",
+                          description: "An error occurred while deleting the project.",
+                          variant: "destructive"
+                        });
+                      }
                     }
                   }}
                 >

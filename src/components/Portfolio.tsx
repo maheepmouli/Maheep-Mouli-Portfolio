@@ -97,8 +97,25 @@ const Portfolio = () => {
   const loadProjects = async () => {
     setIsLoading(true);
     try {
+      // First cleanup any duplicate projects
+      await unifiedProjectsService.cleanupProjects();
+      
       const projects = await unifiedProjectsService.getAllProjects();
+      console.log("📋 Portfolio: Loaded projects:", projects.map(p => ({
+        title: p.title,
+        image_url: p.image_url,
+        featured: p.featured
+      })));
       setProjects(projects);
+      
+      // Preload images for better performance
+      projects.forEach(project => {
+        if (project.image_url && !project.image_url.startsWith('data:')) {
+          console.log("🖼️ Preloading image for:", project.title, "URL:", project.image_url);
+          const img = new Image();
+          img.src = project.image_url;
+        }
+      });
     } catch (error) {
       console.error('Portfolio: Error loading projects:', error);
       setProjects(fallbackProjects);
@@ -109,6 +126,16 @@ const Portfolio = () => {
 
   useEffect(() => {
     loadProjects();
+    
+    // Preload images for better performance
+    const preloadImages = (projects: UnifiedProject[]) => {
+      projects.forEach(project => {
+        if (project.image_url && !project.image_url.startsWith('data:')) {
+          const img = new Image();
+          img.src = project.image_url;
+        }
+      });
+    };
     
     // Listen for project updates to refresh the data
     const handleProjectUpdate = (event: CustomEvent) => {
@@ -164,7 +191,7 @@ const Portfolio = () => {
   const ProjectCard = ({ project }: { project: UnifiedProject }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(false); // Start as false
+    const [imageLoading, setImageLoading] = useState(true); // Start as true to show loading state
 
     console.log("🔍 ProjectCard rendering for:", project.title);
     console.log("🔍 Project status:", project.status);
@@ -172,8 +199,8 @@ const Portfolio = () => {
 
     // Reset image error state when project changes
     useEffect(() => {
+      console.log("🖼️ ProjectCard: Image URL:", project.image_url);
       setImageError(false);
-      setImageLoading(false); // Don't start loading unless there's actually an image
       
       if (!project.image_url || project.image_url === '') {
         setImageLoading(false);
@@ -184,8 +211,19 @@ const Portfolio = () => {
       if (project.image_url.startsWith('data:')) {
         setImageLoading(false);
         setImageError(false);
-      } else if (project.image_url) {
+      } else {
         setImageLoading(true);
+        // Force image to start loading
+        const img = new Image();
+        img.onload = () => {
+          setImageError(false);
+          setImageLoading(false);
+        };
+        img.onerror = () => {
+          setImageError(true);
+          setImageLoading(false);
+        };
+        img.src = project.image_url;
       }
     }, [project.id, project.image_url]);
 
@@ -198,7 +236,18 @@ const Portfolio = () => {
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl">
           <div className="relative overflow-hidden">
-            {project.image_url && !imageError ? (
+            {/* Loading State */}
+            {imageLoading && project.image_url && !imageError && (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm">Loading...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Image */}
+            {project.image_url && !imageError && !imageLoading && (
               <img 
                 src={project.image_url} 
                 alt={project.title}
@@ -212,15 +261,9 @@ const Portfolio = () => {
                   setImageLoading(false);
                 }}
               />
-            ) : null}
-            {imageLoading && project.image_url && !imageError ? (
-              <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm">Loading...</p>
-                </div>
-              </div>
-            ) : null}
+            )}
+            
+            {/* Fallback for no image or error */}
             {(!project.image_url || imageError) && !imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
@@ -358,12 +401,12 @@ const Portfolio = () => {
   const FeaturedProjectCard = ({ project }: { project: UnifiedProject }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
 
     // Reset image error state when project changes
     useEffect(() => {
+      console.log("🖼️ FeaturedProjectCard: Image URL:", project.image_url);
       setImageError(false);
-      setImageLoading(false);
       
       if (!project.image_url || project.image_url === '') {
         setImageLoading(false);
@@ -374,8 +417,19 @@ const Portfolio = () => {
       if (project.image_url.startsWith('data:')) {
         setImageLoading(false);
         setImageError(false);
-      } else if (project.image_url) {
+      } else {
         setImageLoading(true);
+        // Force image to start loading
+        const img = new Image();
+        img.onload = () => {
+          setImageError(false);
+          setImageLoading(false);
+        };
+        img.onerror = () => {
+          setImageError(true);
+          setImageLoading(false);
+        };
+        img.src = project.image_url;
       }
     }, [project.id, project.image_url]);
 
@@ -388,7 +442,18 @@ const Portfolio = () => {
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl border-2 border-primary/20 hover:border-primary/40">
           <div className="relative overflow-hidden">
-            {project.image_url && !imageError ? (
+            {/* Loading State */}
+            {imageLoading && project.image_url && !imageError && (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm">Loading...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Image */}
+            {project.image_url && !imageError && !imageLoading && (
               <img 
                 src={project.image_url} 
                 alt={project.title}
@@ -402,15 +467,9 @@ const Portfolio = () => {
                   setImageLoading(false);
                 }}
               />
-            ) : null}
-            {imageLoading && project.image_url && !imageError ? (
-              <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm">Loading...</p>
-                </div>
-              </div>
-            ) : null}
+            )}
+            
+            {/* Fallback for no image or error */}
             {(!project.image_url || imageError) && !imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
@@ -661,7 +720,10 @@ const Portfolio = () => {
         {/* Projects Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading projects...</p>
+            </div>
           </div>
         ) : (
           <motion.div 

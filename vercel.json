@@ -6,6 +6,22 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
+      "source": "/googledb3f62552904aecb.html",
+      "destination": "/googledb3f62552904aecb.html"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

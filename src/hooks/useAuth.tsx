@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (cleanEmail === ADMIN_EMAIL && cleanPassword === ADMIN_PASSWORD) {
       console.log('Login successful!');
       const userData: User = {
-        id: '1',
+        id: '550e8400-e29b-41d4-a716-446655440000', // Proper UUID format
         email: ADMIN_EMAIL,
         displayName: 'Maheep Mouli Shashi'
       };

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, ArrowRight, Plus, Search, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabaseBlogsService, SupabaseBlog } from '@/services/supabaseBlogsService';
 
 interface BlogPost {
   id: string;
@@ -30,6 +31,7 @@ const BlogPage = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log('BlogPage: useEffect triggered, calling fetchPosts...');
     fetchPosts();
   }, []);
 
@@ -39,18 +41,33 @@ const BlogPage = () => {
 
   const fetchPosts = async () => {
     try {
-      // Get blog posts from localStorage
-      const storedPosts = localStorage.getItem('blog_posts');
-      const allPosts = storedPosts ? JSON.parse(storedPosts) : [];
+      console.log('BlogPage: Fetching posts from Supabase...');
+      
+      // Get all blogs from Supabase
+      const allBlogs = await supabaseBlogsService.getAllBlogs();
+      console.log('BlogPage: Fetched blogs from Supabase:', allBlogs);
+      
+      // Convert SupabaseBlog to BlogPost format
+      const blogPosts: BlogPost[] = allBlogs.map((blog: SupabaseBlog) => ({
+        id: blog.id,
+        title: blog.title,
+        excerpt: blog.excerpt || '',
+        slug: blog.slug,
+        content: blog.content,
+        tags: blog.tags || [],
+        created_at: blog.created_at,
+        status: blog.status
+      }));
       
       // Filter only published posts and sort by creation date
-      const publishedPosts = allPosts
+      const publishedPosts = blogPosts
         .filter((post: BlogPost) => post.status === 'published')
         .sort((a: BlogPost, b: BlogPost) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
+      console.log('BlogPage: Published posts:', publishedPosts);
       setPosts(publishedPosts);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('BlogPage: Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
@@ -161,7 +178,7 @@ const BlogPage = () => {
             {/* Admin Actions */}
             {user && (
               <motion.div 
-                className="flex justify-center mb-8"
+                className="flex justify-center mb-8 gap-4"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -172,6 +189,15 @@ const BlogPage = () => {
                     Create New Post
                   </Button>
                 </Link>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    console.log('BlogPage: Manual refresh triggered');
+                    fetchPosts();
+                  }}
+                >
+                  🔄 Refresh Posts
+                </Button>
               </motion.div>
             )}
           </motion.div>

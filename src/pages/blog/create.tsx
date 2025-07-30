@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseProjectsService } from '@/services/supabaseProjectsService';
+import { supabaseBlogsService } from '@/services/supabaseBlogsService';
 
 const BlogCreatePage = () => {
   const navigate = useNavigate();
@@ -20,7 +20,6 @@ const BlogCreatePage = () => {
     title: '',
     excerpt: '',
     content: '',
-    cover_image_url: '',
     tags: [] as string[],
     status: 'draft' as 'draft' | 'published'
   });
@@ -46,34 +45,21 @@ const BlogCreatePage = () => {
         .replace(/(^-|-$)/g, '');
 
       // Create new blog post in Supabase
-      const newPost = {
+      const newBlog = {
         title: formData.title,
-        excerpt: formData.excerpt,
         content: formData.content,
-        cover_image_url: formData.cover_image_url,
+        excerpt: formData.excerpt,
         tags: formData.tags,
         status: formData.status,
         slug: slug,
         user_id: user.id
       };
 
-      // For now, we'll use the projects table as a temporary solution
-      // In a real app, you'd have a separate blogs table
-      const blogAsProject = {
-        title: formData.title,
-        subtitle: formData.excerpt,
-        description: formData.excerpt,
-        content: formData.content,
-        image_url: formData.cover_image_url,
-        status: formData.status,
-        featured: false,
-        technologies: formData.tags,
-        tags: formData.tags
-      };
+      console.log('Creating blog post with data:', newBlog);
 
-      const createdProject = await supabaseProjectsService.createProject(blogAsProject);
+      const createdBlog = await supabaseBlogsService.createBlog(newBlog);
 
-      if (!createdProject) {
+      if (!createdBlog) {
         throw new Error("Failed to create blog post in Supabase");
       }
 
@@ -164,15 +150,7 @@ const BlogCreatePage = () => {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="cover_image_url">Cover Image URL</Label>
-                    <Input
-                      id="cover_image_url"
-                      value={formData.cover_image_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
+
                 </CardContent>
               </Card>
 

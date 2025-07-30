@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabaseBlogsService } from '@/services/supabaseBlogsService';
 
 interface BlogPost {
   id: string;
@@ -16,7 +17,6 @@ interface BlogPost {
   excerpt: string;
   slug: string;
   content: string;
-  cover_image_url?: string;
   tags: string[];
   created_at: string;
   status: string;
@@ -32,7 +32,6 @@ const BlogEditPage = () => {
     title: '',
     excerpt: '',
     content: '',
-    cover_image_url: '',
     tags: [] as string[],
     status: 'draft' as 'draft' | 'published'
   });
@@ -50,12 +49,8 @@ const BlogEditPage = () => {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      // Get posts from localStorage
-      const storedPosts = localStorage.getItem('blog_posts');
-      const posts = storedPosts ? JSON.parse(storedPosts) : [];
-      
-      // Find the post by slug
-      const foundPost = posts.find((p: BlogPost) => p.slug === postSlug);
+      // Get post from Supabase
+      const foundPost = await supabaseBlogsService.getBlogBySlug(postSlug);
 
       if (foundPost) {
         setPost(foundPost);
@@ -63,7 +58,6 @@ const BlogEditPage = () => {
           title: foundPost.title || '',
           excerpt: foundPost.excerpt || '',
           content: foundPost.content || '',
-          cover_image_url: foundPost.cover_image_url || '',
           tags: foundPost.tags || [],
           status: (foundPost.status as 'draft' | 'published') || 'draft'
         });
@@ -93,46 +87,39 @@ const BlogEditPage = () => {
     setSaving(true);
 
     try {
+      if (!post) {
+        throw new Error('Post not found');
+      }
+
       // Generate new slug from title
       const newSlug = formData.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      // Get existing posts from localStorage
-      const storedPosts = localStorage.getItem('blog_posts');
-      const posts = storedPosts ? JSON.parse(storedPosts) : [];
-      
-      // Find and update the post
-      const postIndex = posts.findIndex((p: BlogPost) => p.id === post?.id);
-      
-      if (postIndex !== -1) {
-        posts[postIndex] = {
-          ...posts[postIndex],
-          title: formData.title,
-          excerpt: formData.excerpt,
-          content: formData.content,
-          cover_image_url: formData.cover_image_url,
-          tags: formData.tags,
-          status: formData.status,
-          slug: newSlug,
-          updated_at: new Date().toISOString()
-        };
-        
-        // Save back to localStorage
-        localStorage.setItem('blog_posts', JSON.stringify(posts));
+      // Update blog in Supabase
+      const updatedBlog = await supabaseBlogsService.updateBlog(post.id, {
+        title: formData.title,
+        content: formData.content,
+        excerpt: formData.excerpt,
+        cover_image_url: formData.cover_image_url,
+        tags: formData.tags,
+        status: formData.status,
+        slug: newSlug
+      });
 
-        toast({
-          title: "Post updated successfully!",
-          description: formData.status === 'published' 
-            ? "Your post is now live on the blog."
-            : "Your draft has been saved."
-        });
-
-        navigate(`/blog/${newSlug}`);
-      } else {
-        throw new Error('Post not found');
+      if (!updatedBlog) {
+        throw new Error('Failed to update blog post');
       }
+
+      toast({
+        title: "Post updated successfully!",
+        description: formData.status === 'published' 
+          ? "Your post is now live on the blog."
+          : "Your draft has been saved."
+      });
+
+      navigate(`/blog/${newSlug}`);
     } catch (error) {
       console.error('Error updating post:', error);
       toast({

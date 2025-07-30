@@ -111,6 +111,23 @@ const initializeSampleData = (): UnifiedProject[] => [
     status: 'published',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
+  },
+  {
+    id: '5',
+    title: 'WOOD-ID',
+    slug: 'wood-id',
+    subtitle: 'ML-driven Wood Optimization & Fabrication Pipeline',
+    description: 'WOOD-ID is a machine learning-driven wood optimization and fabrication pipeline that uses advanced algorithms to optimize wood cutting patterns and fabrication processes.',
+    content: 'WOOD-ID\nML-driven Wood Optimization & Fabrication Pipeline\n\nThis innovative project combines machine learning with traditional woodworking techniques to create an optimized fabrication pipeline. The system uses advanced algorithms to optimize wood cutting patterns, reduce waste, and improve efficiency in wood fabrication processes.',
+    image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
+    project_images: [],
+    technologies: ['Machine Learning', 'Python', 'Grasshopper3D', 'KUKA|prc', 'C# Scripting'],
+    github_url: '',
+    live_url: '',
+    featured: true,
+    status: 'published',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];
 
@@ -251,6 +268,34 @@ const forceFreshData = (): UnifiedProject[] => {
   return freshData;
 };
 
+// List of projects to KEEP (the 6 good ones)
+const GOOD_PROJECTS = [
+  "HYPAR PORTABLES",
+  "R&E – BioFoam Thermal Performance", 
+  "Blasters Park: Multi-Functional Stadium Complex",
+  "KHC-HOSPITAL",
+  "WOOD-ID",
+  "Flow-SIGHT"
+];
+
+// Function to remove unwanted projects and ensure no duplicates
+const removeBottomProjects = (projects: UnifiedProject[]): UnifiedProject[] => {
+  console.log('UnifiedService: Filtering to keep only good projects...');
+  
+  // First remove duplicates based on title
+  const uniqueProjects = projects.filter((project, index, self) => 
+    index === self.findIndex(p => p.title === project.title)
+  );
+  
+  // Then keep only the good projects
+  const goodProjects = uniqueProjects.filter(project => 
+    GOOD_PROJECTS.includes(project.title)
+  );
+  
+  console.log('UnifiedService: Kept good projects:', goodProjects.map(p => p.title));
+  return goodProjects;
+};
+
 // Enhanced sync function with better error handling
 export const syncLocalStorageToSupabase = async (): Promise<void> => {
   try {
@@ -306,10 +351,17 @@ export const unifiedProjectsService = {
       id: p.id
     })));
     
-    // If we have projects, return them directly
+    // If we have projects, filter them to remove duplicates and bottom 7
     if (recoveredProjects.length > 0) {
-      console.log('UnifiedService: Returning recovered projects');
-      return recoveredProjects;
+      console.log('UnifiedService: Filtering recovered projects...');
+      const filteredProjects = removeBottomProjects(recoveredProjects);
+      
+      // Save the filtered projects back to storage
+      saveProjectsToLocalStorage(filteredProjects);
+      createBackup(filteredProjects);
+      
+      console.log('UnifiedService: Returning filtered projects');
+      return filteredProjects;
     }
     
     // Only use sample data if we have NO projects at all
@@ -335,6 +387,20 @@ export const unifiedProjectsService = {
     const freshData = forceFreshData();
     console.log('UnifiedService: Complete refresh completed with', freshData.length, 'projects');
     return freshData;
+  },
+
+  // Clean up projects - remove duplicates and bottom 7
+  async cleanupProjects(): Promise<UnifiedProject[]> {
+    console.log('UnifiedService: Cleaning up projects...');
+    const currentProjects = await this.getAllProjects();
+    const cleanedProjects = removeBottomProjects(currentProjects);
+    
+    // Save cleaned projects back to storage
+    saveProjectsToLocalStorage(cleanedProjects);
+    createBackup(cleanedProjects);
+    
+    console.log('UnifiedService: Cleanup completed with', cleanedProjects.length, 'projects');
+    return cleanedProjects;
   },
 
   // Get project by ID
@@ -382,8 +448,8 @@ export const unifiedProjectsService = {
             user_id: data.user_id?.toString() || null
           };
 
-          // Update localStorage
-          const currentProjects = await this.getAllProjects();
+          // Update localStorage directly without triggering getAllProjects
+          const currentProjects = getProjectsFromLocalStorage();
           const updatedProjects = [unifiedProject, ...currentProjects];
           saveProjectsToLocalStorage(updatedProjects);
           createBackup(updatedProjects);
@@ -406,7 +472,7 @@ export const unifiedProjectsService = {
         user_id: null
       };
 
-      const currentProjects = await this.getAllProjects();
+      const currentProjects = getProjectsFromLocalStorage();
       const updatedProjects = [newProject, ...currentProjects];
       saveProjectsToLocalStorage(updatedProjects);
       createBackup(updatedProjects);
@@ -424,7 +490,7 @@ export const unifiedProjectsService = {
   // Update existing project
   async updateProject(id: string, updates: Partial<UnifiedProject>): Promise<UnifiedProject | null> {
     try {
-      const projects = await this.getAllProjects();
+      const projects = getProjectsFromLocalStorage();
       const projectIndex = projects.findIndex(p => p.id === id);
       
       if (projectIndex === -1) {
@@ -502,7 +568,7 @@ export const unifiedProjectsService = {
 
       // Try to delete from localStorage
       try {
-        const projects = await this.getAllProjects();
+        const projects = getProjectsFromLocalStorage();
         const filteredProjects = projects.filter(p => p.id !== id);
         
         saveProjectsToLocalStorage(filteredProjects);

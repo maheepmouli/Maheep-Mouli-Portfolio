@@ -7,11 +7,31 @@ export interface SupabaseBlog {
   slug: string;
   content: string;
   excerpt?: string;
+  cover_image_url?: string;
   tags: string[];
   status: 'draft' | 'published';
   created_at: string;
   updated_at: string;
 }
+
+// Define excluded slugs that should not be shown to anyone
+const EXCLUDED_SLUGS = [
+  'atelier24-khc-hospital-hotel',
+  'bioplastic-lab',
+  'chopra-residence',
+  'flow-sight-urban-traffic-analytics',
+  'kt',
+  'fed',
+  'fox-dz',
+  'gh-dgugh',
+  'slunszuj',
+  'wsrdvrg'
+];
+
+// Helper function to filter out excluded slugs
+const filterExcludedSlugs = (blogs: SupabaseBlog[]): SupabaseBlog[] => {
+  return blogs.filter(blog => !EXCLUDED_SLUGS.includes(blog.slug));
+};
 
 // Helper function to check which table exists
 const getBlogTableName = async (): Promise<string> => {
@@ -53,7 +73,7 @@ const getBlogTableName = async (): Promise<string> => {
 };
 
 export const supabaseBlogsService = {
-  // Get all blogs
+  // Get all blogs (with server-side filtering)
   async getAllBlogs(): Promise<SupabaseBlog[]> {
     try {
       if (!supabase) {
@@ -72,18 +92,28 @@ export const supabaseBlogsService = {
         return [];
       }
 
-      return data || [];
+      // Apply server-side filtering to exclude unwanted slugs
+      const filteredData = filterExcludedSlugs(data || []);
+      console.log(`Supabase: Filtered out ${(data?.length || 0) - filteredData.length} excluded blogs`);
+      
+      return filteredData;
     } catch (error) {
       console.error('Supabase: Exception in getAllBlogs:', error);
       return [];
     }
   },
 
-  // Get blog by slug
+  // Get blog by slug (with server-side filtering)
   async getBlogBySlug(slug: string): Promise<SupabaseBlog | null> {
     try {
       if (!supabase) {
         console.error('Supabase not configured, cannot get blog');
+        return null;
+      }
+
+      // Check if slug is in excluded list
+      if (EXCLUDED_SLUGS.includes(slug)) {
+        console.log(`Supabase: Slug "${slug}" is in excluded list, returning null`);
         return null;
       }
 
@@ -245,7 +275,7 @@ export const supabaseBlogsService = {
     }
   },
 
-  // Get published blogs
+  // Get published blogs (with server-side filtering)
   async getPublishedBlogs(): Promise<SupabaseBlog[]> {
     try {
       if (!supabase) {
@@ -265,7 +295,11 @@ export const supabaseBlogsService = {
         return [];
       }
 
-      return data || [];
+      // Apply server-side filtering to exclude unwanted slugs
+      const filteredData = filterExcludedSlugs(data || []);
+      console.log(`Supabase: Filtered out ${(data?.length || 0) - filteredData.length} excluded published blogs`);
+      
+      return filteredData;
     } catch (error) {
       console.error('Supabase: Exception in getPublishedBlogs:', error);
       return [];

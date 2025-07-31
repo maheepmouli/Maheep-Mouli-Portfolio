@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Clock, Edit, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabaseBlogsService, SupabaseBlog } from '@/services/supabaseBlogsService';
+import SocialShare from '@/components/SocialShare';
 
 interface BlogPost {
   id: string;
@@ -33,22 +35,34 @@ const BlogPostPage = () => {
 
   const fetchPost = async (postSlug: string) => {
     try {
-      // Get posts from localStorage
-      const storedPosts = localStorage.getItem('blog_posts');
-      const posts = storedPosts ? JSON.parse(storedPosts) : [];
+      console.log('BlogPostPage: Fetching post with slug:', postSlug);
       
-      // Find the post by slug and status
-      const foundPost = posts.find((p: BlogPost) => 
-        p.slug === postSlug && p.status === 'published'
-      );
-
-      if (foundPost) {
-        setPost(foundPost);
+      // Use Supabase service with proper filtering
+      const blogPost = await supabaseBlogsService.getBlogBySlug(postSlug);
+      
+      if (blogPost) {
+        // Convert SupabaseBlog to BlogPost format
+        const post: BlogPost = {
+          id: blogPost.id,
+          title: blogPost.title,
+          excerpt: blogPost.excerpt || '',
+          slug: blogPost.slug,
+          content: blogPost.content,
+          cover_image_url: blogPost.cover_image_url,
+          tags: blogPost.tags || [],
+          created_at: blogPost.created_at,
+          updated_at: blogPost.updated_at,
+          status: blogPost.status
+        };
+        
+        console.log('BlogPostPage: Found post:', post);
+        setPost(post);
       } else {
+        console.log('BlogPostPage: Post not found or excluded');
         setNotFound(true);
       }
     } catch (error) {
-      console.error('Error fetching post:', error);
+      console.error('BlogPostPage: Error fetching post:', error);
       setNotFound(true);
     } finally {
       setLoading(false);
@@ -188,16 +202,13 @@ const BlogPostPage = () => {
                   </Button>
                 </Link>
                 
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    const url = window.location.href;
-                    navigator.clipboard.writeText(url);
-                  }}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
+                {post.status === 'published' && (
+                  <SocialShare 
+                    title={post.title}
+                    url={window.location.href}
+                    excerpt={post.excerpt}
+                  />
+                )}
               </div>
             </div>
           </footer>

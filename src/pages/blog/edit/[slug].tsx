@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, X, Upload } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseBlogsService } from '@/services/supabaseBlogsService';
+import supabase from '@/lib/supabaseClient';
 
 interface BlogPost {
   id: string;
@@ -33,13 +34,17 @@ const BlogEditPage = () => {
     excerpt: '',
     content: '',
     tags: [] as string[],
-    status: 'draft' as 'draft' | 'published'
+    status: 'draft' as 'draft' | 'published',
+    cover_image_url: ''
   });
   
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (slug) {
@@ -59,7 +64,8 @@ const BlogEditPage = () => {
           excerpt: foundPost.excerpt || '',
           content: foundPost.content || '',
           tags: foundPost.tags || [],
-          status: (foundPost.status as 'draft' | 'published') || 'draft'
+          status: (foundPost.status as 'draft' | 'published') || 'draft',
+          cover_image_url: foundPost.cover_image_url || ''
         });
       } else {
         toast({
@@ -91,6 +97,20 @@ const BlogEditPage = () => {
         throw new Error('Post not found');
       }
 
+      let finalImageUrl = formData.cover_image_url;
+
+      // Upload image if selected
+      if (selectedFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) {
+          finalImageUrl = uploadedUrl;
+        } else {
+          // If upload failed, don't proceed
+          setSaving(false);
+          return;
+        }
+      }
+
       // Generate new slug from title
       const newSlug = formData.title
         .toLowerCase()
@@ -102,7 +122,7 @@ const BlogEditPage = () => {
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt,
-        cover_image_url: formData.cover_image_url,
+        cover_image_url: finalImageUrl,
         tags: formData.tags,
         status: formData.status,
         slug: newSlug
@@ -154,6 +174,113 @@ const BlogEditPage = () => {
       e.preventDefault();
       addTag();
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file (JPEG, PNG, GIF, etc.)",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!selectedFile || !user) return null;
+
+    setUploading(true);
+    try {
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('Attempting to upload image to Supabase...');
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) {
+        console.error('Supabase upload failed:', uploadError);
+        
+        // Fallback: Convert to base64 and store as data URL
+        console.log('Using fallback: converting to base64...');
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string;
+            toast({
+              title: "Image converted to data URL",
+              description: "Image stored locally due to upload restrictions."
+            });
+            resolve(dataUrl);
+          };
+          reader.readAsDataURL(selectedFile);
+        });
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath);
+
+      toast({
+        title: "Image uploaded successfully!",
+        description: "Your image has been uploaded to Supabase."
+      });
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      
+      // Fallback: Convert to base64
+      console.log('Using fallback due to error...');
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          toast({
+            title: "Image converted to data URL",
+            description: "Image stored locally due to upload restrictions.",
+            variant: "default"
+          });
+          resolve(dataUrl);
+        };
+        reader.readAsDataURL(selectedFile);
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedFile(null);
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, cover_image_url: '' }));
   };
 
   if (loading) {
@@ -226,14 +353,73 @@ const BlogEditPage = () => {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="cover_image_url">Cover Image URL</Label>
-                    <Input
-                      id="cover_image_url"
-                      value={formData.cover_image_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                      placeholder="https://example.com/image.jpg"
-                    />
+                  {/* Image Upload Section */}
+                  <div className="space-y-4">
+                    <Label>Cover Image</Label>
+                    
+                    {/* Upload from Computer */}
+                    <div className="space-y-2">
+                      <Label htmlFor="image-upload" className="text-sm font-medium">
+                        Upload from Computer
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileSelect}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Choose File
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: JPEG, PNG, GIF. Max size: 5MB
+                      </p>
+                    </div>
+
+                    {/* Or Enter URL */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cover_image_url" className="text-sm font-medium">
+                        Or Enter Image URL
+                      </Label>
+                      <Input
+                        id="cover_image_url"
+                        value={formData.cover_image_url}
+                        onChange={(e) => setFormData(prev => ({ ...prev, cover_image_url: e.target.value }))}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+
+                    {/* Image Preview */}
+                    {(imagePreview || formData.cover_image_url) && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Preview</Label>
+                        <div className="relative inline-block">
+                          <img
+                            src={imagePreview || formData.cover_image_url}
+                            alt="Cover preview"
+                            className="max-w-xs max-h-48 object-cover rounded-lg border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                            onClick={clearImage}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -330,11 +516,11 @@ const BlogEditPage = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={saving}
+                  disabled={saving || uploading}
                   className="btn-hero"
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  {saving ? 'Saving...' : 'Update Post'}
+                  {saving ? 'Saving...' : uploading ? 'Uploading...' : 'Update Post'}
                 </Button>
               </div>
             </div>

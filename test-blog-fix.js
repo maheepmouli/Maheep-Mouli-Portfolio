@@ -1,41 +1,46 @@
-// Test script for blog creation fix
-console.log('🧪 Testing Blog Creation Fix...');
+// Quick test to verify blog fix
+console.log('🧪 TESTING BLOG FIX...');
+console.log('=====================================');
 
-// Test data with correct field mapping (no image_url)
-const testBlogData = {
-  title: 'Test Blog Post',
-  subtitle: 'This is a test blog post',
-  content: 'This is the content of the test blog post.',
-  excerpt: 'This is a test blog post excerpt',
-  cover_image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
-  tags: ['test', 'blog', 'supabase'],
-  status: 'draft',
-  slug: 'test-blog-post',
-  user_id: 'test-user-id'
-};
+// Check current state
+const debugInfo = document.querySelector('.text-xs.text-red-500');
+if (debugInfo) {
+  console.log('📊 Current Debug Info:', debugInfo.textContent);
+}
 
-console.log('📋 Test blog data (corrected):', testBlogData);
+// Check for blog cards
+const blogCards = document.querySelectorAll('.project-card');
+console.log(`📋 Blog cards found: ${blogCards.length}`);
 
-console.log('\n🔧 Fixes Applied:');
-console.log('✅ Removed image_url field (doesn\'t exist in blog_posts table)');
-console.log('✅ Updated SupabaseBlog interface');
-console.log('✅ Updated blog creation form');
-console.log('✅ Updated blog edit form');
-console.log('✅ Table detection working correctly');
+if (blogCards.length > 0) {
+  console.log('✅ SUCCESS! Blog posts are now displaying!');
+  blogCards.forEach((card, index) => {
+    const title = card.querySelector('.text-xl');
+    if (title) {
+      console.log(`📝 Blog ${index + 1}: ${title.textContent}`);
+    }
+  });
+} else {
+  console.log('❌ Still no blog cards found');
+  
+  // Check for loading
+  const loadingElements = document.querySelectorAll('[class*="loading"], [class*="spinner"]');
+  if (loadingElements.length > 0) {
+    console.log('⏳ Still loading...');
+  } else {
+    console.log('💡 Check the debug info above for post counts');
+  }
+}
 
-console.log('\n📋 Manual Testing Instructions:');
-console.log('1. Go to the blog creation page (/blog/create)');
-console.log('2. Fill in the blog post form with test data');
-console.log('3. Submit the form');
-console.log('4. Should see successful creation logs');
-console.log('5. No more "image_url column not found" errors');
+// Check for specific content
+const pageText = document.body.textContent;
+if (pageText.includes('Why I Use Graph ML to Design Smarter Cities')) {
+  console.log('✅ Found the specific blog post!');
+} else {
+  console.log('❌ Specific blog post not found');
+}
 
-console.log('\n🔧 Expected Console Output:');
-console.log('Supabase: Checking for blog tables...');
-console.log('Supabase: ❌ blogs table not found: [error message]');
-console.log('Supabase: ✅ Found blog_posts table, using it');
-console.log('Supabase: Attempting to create blog with data: [data]');
-console.log('Supabase: Using table: blog_posts');
-console.log('Supabase: Blog created successfully: [data]');
-
-console.log('\n✅ Blog creation should now work without field mapping errors!'); 
+console.log('\n💡 If posts are still not showing:');
+console.log('1. Check the debug info for post counts');
+console.log('2. Try refreshing the page');
+console.log('3. Check browser console for any errors'); 

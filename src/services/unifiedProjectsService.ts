@@ -42,6 +42,33 @@ const generateId = (): string => Date.now().toString();
 const generateSlug = (title: string): string => 
   title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+// Server-side filtering function
+const filterOutUnwantedProjects = (projects: UnifiedProject[]): UnifiedProject[] => {
+  console.log('UnifiedService: Filtering out unwanted projects...');
+  const filteredProjects = projects.filter(project => !EXCLUDED_SLUGS.includes(project.slug));
+  console.log('UnifiedService: Filtered out', projects.length - filteredProjects.length, 'unwanted projects');
+  return filteredProjects;
+};
+
+// List of projects to exclude from public view
+const EXCLUDED_SLUGS = [
+  'atelier24-khc-hospital-hotel',
+  'bioplastic-lab', 
+  'chopra-residence',
+  'flow-sight-urban-traffic-analytics',
+  'kt',
+  'fed',
+  'fox-dz',
+  'gh-dgugh',
+  'slunszuj',
+  'wsrdvrg',
+  'k',
+  'fxv-dz',
+  'gh-ch-gch',
+  'slinszid',
+  'wsrdvfg'
+];
+
 // Enhanced sample data with your actual projects
 const initializeSampleData = (): UnifiedProject[] => [
   {
@@ -337,36 +364,95 @@ export const syncLocalStorageToSupabase = async (): Promise<void> => {
 };
 
 export const unifiedProjectsService = {
-  // Get all projects - prioritize Supabase, fallback to localStorage
+  // Get all projects - Sync with Supabase and localStorage
   async getAllProjects(): Promise<UnifiedProject[]> {
     console.log('UnifiedService: Getting all projects...');
     
-    // First try to recover existing data
-    const recoveredProjects = initializeDataRecovery();
-    console.log('UnifiedService: Data recovery completed, found projects:', recoveredProjects.length);
-    console.log('UnifiedService: Recovered projects details:', recoveredProjects.map(p => ({
-      title: p.title,
-      featured: p.featured,
-      status: p.status,
-      id: p.id
-    })));
+    try {
+      // Try to get projects from Supabase first
+      if (supabase) {
+        console.log('UnifiedService: Fetching from Supabase...');
+        const { data: supabaseProjects, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('UnifiedService: Supabase error:', error);
+        } else if (supabaseProjects && supabaseProjects.length > 0) {
+          console.log('UnifiedService: Found projects in Supabase:', supabaseProjects.length);
+          
+          // Convert Supabase projects to UnifiedProject format
+          const unifiedProjects: UnifiedProject[] = supabaseProjects.map(project => ({
+            id: project.id.toString(),
+            user_id: project.user_id?.toString() || null,
+            title: project.title,
+            slug: project.slug,
+            subtitle: project.subtitle,
+            description: project.description,
+            content: project.content,
+            image_url: project.image_url,
+            project_images: project.project_images || [],
+            technologies: project.technologies || [],
+            github_url: project.github_url,
+            live_url: project.live_url,
+            project_url: project.project_url,
+            featured: project.featured || false,
+            status: project.status || 'published',
+            videos: project.videos || [],
+            location: project.location,
+            duration: project.duration,
+            team_size: project.team_size,
+            created_at: project.created_at,
+            updated_at: project.updated_at
+          }));
+
+          // Update localStorage with Supabase data
+          saveProjectsToLocalStorage(unifiedProjects);
+          createBackup(unifiedProjects);
+          
+          console.log('UnifiedService: Returning Supabase projects');
+          return unifiedProjects;
+        }
+      }
+    } catch (error) {
+      console.error('UnifiedService: Error fetching from Supabase:', error);
+    }
+
+    // Fallback to localStorage
+    const localStorageProjects = getProjectsFromLocalStorage();
+    console.log('UnifiedService: Found projects in localStorage:', localStorageProjects.length);
     
-    // If we have projects, filter them to remove duplicates and bottom 7
-    if (recoveredProjects.length > 0) {
-      console.log('UnifiedService: Filtering recovered projects...');
-      const filteredProjects = removeBottomProjects(recoveredProjects);
-      
-      // Save the filtered projects back to storage
-      saveProjectsToLocalStorage(filteredProjects);
-      createBackup(filteredProjects);
-      
-      console.log('UnifiedService: Returning filtered projects');
-      return filteredProjects;
+    if (localStorageProjects.length > 0) {
+      console.log('UnifiedService: Returning localStorage projects');
+      return localStorageProjects;
     }
     
-    // Only use sample data if we have NO projects at all
-    console.log('UnifiedService: No projects found, using sample data...');
-    return forceFreshData();
+    // If no projects anywhere, use data recovery
+    const recoveredProjects = initializeDataRecovery();
+    console.log('UnifiedService: Data recovery completed, found projects:', recoveredProjects.length);
+    
+    // Convert to UnifiedProject format
+    const unifiedProjects: UnifiedProject[] = recoveredProjects.map(project => ({
+      id: project.id,
+      title: project.title,
+      slug: project.slug,
+      subtitle: project.subtitle,
+      description: project.description,
+      content: project.content,
+      image_url: project.image_url,
+      project_images: project.project_images || [],
+      technologies: project.technologies,
+      github_url: project.github_url,
+      live_url: project.live_url,
+      featured: project.featured,
+      status: project.status || 'published',
+      created_at: project.created_at,
+      updated_at: project.updated_at
+    }));
+    
+    console.log('UnifiedService: Returning recovered projects');
+    return unifiedProjects;
   },
 
   // Manual clear storage function for debugging
@@ -427,6 +513,7 @@ export const unifiedProjectsService = {
 
       console.log('UnifiedService: Project data prepared for Supabase:', projectToCreate);
 
+      // Try to create in Supabase first
       if (supabase) {
         try {
           const { data, error } = await supabase
@@ -448,13 +535,13 @@ export const unifiedProjectsService = {
             user_id: data.user_id?.toString() || null
           };
 
-          // Update localStorage directly without triggering getAllProjects
+          // Update localStorage with Supabase data
           const currentProjects = getProjectsFromLocalStorage();
           const updatedProjects = [unifiedProject, ...currentProjects];
           saveProjectsToLocalStorage(updatedProjects);
           createBackup(updatedProjects);
 
-          // Trigger update events
+          // Trigger update events for real-time updates
           this.triggerUpdateEvents('created', unifiedProject.id, unifiedProject.image_url || '');
 
           return unifiedProject;
@@ -464,7 +551,7 @@ export const unifiedProjectsService = {
         }
       }
 
-      // Fallback to localStorage
+      // Fallback to localStorage only
       console.log('UnifiedService: Creating project in localStorage...');
       const newProject: UnifiedProject = {
         id: generateId(),

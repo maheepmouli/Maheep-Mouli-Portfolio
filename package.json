@@ -43,6 +43,7 @@
     "@supabase/supabase-js": "^2.53.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "dotenv": "^17.2.1",
     "framer-motion": "^12.23.9",
     "gsap": "^3.13.0",
     "lucide-react": "^0.294.0",

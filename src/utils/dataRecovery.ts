@@ -104,129 +104,39 @@ export const saveRecoveredData = (projects: RecoveredProject[]): void => {
   }
 };
 
-// Initialize data recovery - only use sample data if NO good projects exist
+// Initialize data recovery - FORCE CLEAN DATA
 export const initializeDataRecovery = (): RecoveredProject[] => {
-  console.log('DataRecovery: Starting data recovery process...');
+  console.log('DataRecovery: Starting FORCED data recovery process...');
   
-  // Recover existing data (only good projects)
-  const recoveredProjects = recoverExistingData();
+  // START WITH EMPTY PORTFOLIO - Allow project creation
+  console.log('DataRecovery: Starting with empty portfolio - allowing project creation...');
   
-  // Only use sample data if we have NO good projects at all
-  if (recoveredProjects.length === 0) {
-    console.log('DataRecovery: No good projects found, using sample data...');
-    const sampleProjects: RecoveredProject[] = [
-      {
-        id: '1',
-        title: 'Flow-SIGHT',
-        slug: 'flow-sight',
-        subtitle: 'Real-time Congestion Prediction Dashboard',
-        description: 'AI-powered urban mobility analysis system using Graph Neural Networks to predict traffic patterns and optimize city flow in real-time.',
-        content: 'FLOW-SIGHT\nPredictive Urban Mobility Intelligence\n\nAn advanced AI-powered urban mobility analysis system that leverages Graph Neural Networks to predict traffic patterns and optimize city flow in real-time. The system provides real-time congestion prediction, dynamic route optimization, and comprehensive urban mobility insights.',
-        image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['Python', 'TensorFlow', 'React', 'Node.js', 'PostgreSQL'],
-        github_url: 'https://github.com/maheepmouli/flow-sight',
-        live_url: 'https://flow-sight.demo.com',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'HYPAR PORTABLES',
-        slug: 'hypar-portables',
-        subtitle: 'Robotic Assembly of Lightweight Cork Modules for Adaptive Urbanism',
-        description: 'Hypar Portables is a robotically fabricated, modular seating system created using natural cork panels. The project explores adaptive urbanism through lightweight, sustainable materials and robotic assembly techniques.',
-        content: 'HYPAR PORTABLES\nRobotic Assembly of Lightweight Cork Modules for Adaptive Urbanism\n\nThis innovative project explores the intersection of robotic fabrication, sustainable materials, and adaptive urban design. Using natural cork panels, we created a modular seating system that can be robotically assembled and adapted to various urban contexts.',
-        image_url: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['Rhino', 'Grasshopper', 'Python', 'Robotics', 'Cork Materials'],
-        github_url: '',
-        live_url: '',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '3',
-        title: 'R&E - BioFoam Thermal Performance',
-        slug: 'biofoam-thermal-performance',
-        subtitle: 'Investigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics',
-        description: 'This project investigates the thermal performance of bio-based materials by experimenting with bioplastics derived from banana and agar. The research focuses on porosity optimization for thermal insulation applications.',
-        content: 'R&E - BIOFOAM THERMAL PERFORMANCE\nInvestigating Porosity & Thermal Insulation in Banana-Agar Based Bioplastics\n\nThis research project explores the thermal properties of bio-based materials, specifically focusing on bioplastics derived from banana and agar. The study investigates how porosity affects thermal insulation performance in sustainable building materials.',
-        image_url: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['Material Science', 'Thermal Analysis', 'Bio-materials', 'Research'],
-        github_url: '',
-        live_url: '',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '4',
-        title: 'Blasters Park: Multi-Functional Stadium Complex',
-        slug: 'blasters-park-stadium',
-        subtitle: 'Bachelor Thesis Project - 52 Acres of Integrated Design Thinking',
-        description: 'A 52-acre urban-scale stadium and recreational complex designed as a comprehensive thesis project. The development integrates multiple functions within a cohesive urban framework.',
-        content: 'BLASTERS PARK: MULTI-FUNCTIONAL STADIUM COMPLEX\nBachelor Thesis Project - 52 Acres of Integrated Design Thinking\n\nThis comprehensive thesis project explores the design of a 52-acre urban-scale stadium and recreational complex. The project demonstrates integrated design thinking across multiple scales, from urban planning to architectural detail.',
-        image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['AutoCAD', 'SketchUp', 'Urban Planning', 'Architectural Design'],
-        github_url: '',
-        live_url: '',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '5',
-        title: 'WOOD-ID',
-        slug: 'wood-id',
-        subtitle: 'ML-driven Wood Optimization & Fabrication Pipeline',
-        description: 'WOOD-ID is a machine learning-driven wood optimization and fabrication pipeline that uses advanced algorithms to optimize wood cutting patterns and fabrication processes.',
-        content: 'WOOD-ID\nML-driven Wood Optimization & Fabrication Pipeline\n\nThis innovative project combines machine learning with traditional woodworking techniques to create an optimized fabrication pipeline. The system uses advanced algorithms to optimize wood cutting patterns, reduce waste, and improve efficiency in wood fabrication processes.',
-        image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['Machine Learning', 'Python', 'Grasshopper3D', 'KUKA|prc', 'C# Scripting'],
-        github_url: '',
-        live_url: '',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '6',
-        title: 'KHC-HOSPITAL',
-        slug: 'khc-hospital',
-        subtitle: '14,000 m² Multidisciplinary Healthcare Complex - India',
-        description: 'A comprehensive healthcare facility designed to provide multidisciplinary medical services in a modern, patient-centered environment.',
-        content: 'KHC-HOSPITAL\n14,000 m² Multidisciplinary Healthcare Complex - India\n\nThis comprehensive healthcare facility is designed to provide multidisciplinary medical services in a modern, patient-centered environment. The project demonstrates advanced healthcare architecture with integrated technology and sustainable design principles.',
-        image_url: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=600&fit=crop',
-        project_images: [],
-        technologies: ['Revit', 'AutoCAD', 'BIM', 'Healthcare Design', 'Sustainable Architecture'],
-        github_url: '',
-        live_url: '',
-        featured: true,
-        status: 'published',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-    
-    saveRecoveredData(sampleProjects);
-    console.log('DataRecovery: Recovery process completed. Total projects:', sampleProjects.length);
-    return sampleProjects;
+  // Check if there are any existing projects in localStorage
+  const existingProjects = recoverExistingData();
+  
+  if (existingProjects.length > 0) {
+    console.log('DataRecovery: Found existing projects, preserving them...');
+    saveRecoveredData(existingProjects);
+    return existingProjects;
   }
   
-  // If we have good projects, just save them as they are
-  console.log('DataRecovery: Found existing good projects, preserving them...');
-  saveRecoveredData(recoveredProjects);
-  console.log('DataRecovery: Recovery process completed. Total projects:', recoveredProjects.length);
-  return recoveredProjects;
+  // Start with empty portfolio
+  const sampleProjects: RecoveredProject[] = [];
+  
+  // Clear any existing data first
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('project') || key.includes('portfolio')) {
+        localStorage.removeItem(key);
+        console.log('DataRecovery: Cleared old data:', key);
+      }
+    });
+  } catch (error) {
+    console.error('DataRecovery: Error clearing old data:', error);
+  }
+  
+  // Save clean data
+  saveRecoveredData(sampleProjects);
+  console.log('DataRecovery: FORCED recovery completed. Total projects:', sampleProjects.length);
+  return sampleProjects;
 }; 

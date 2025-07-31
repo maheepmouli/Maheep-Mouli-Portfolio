@@ -1,0 +1,5 @@
+[33mf433238[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Remove unwanted projects and fix blog display - comprehensive cleanup applied
+[33mc23f54b[m Fix project delete functionality - implement actual delete with confirmation and toast notifications
+[33m349318e[m Fix featured projects display - remove 2-project limit and improve grid layout
+[33m3fbdb70[m Fix portfolio functionality: Add data recovery, robust error handling, and preserve uploaded content
+[33ma5d907d[m Add SEO improvements: sitemap, enhanced meta tags, Google verification file

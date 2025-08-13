@@ -1,8 +1,14 @@
+User-agent: *
+Allow: /
+
+# Specific bot allowances
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -10,8 +16,20 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+User-agent: LinkedInBot
 Allow: /
 
+User-agent: WhatsApp
+Allow: /
+
+# Disallow admin areas
+Disallow: /admin
+Disallow: /login
+Disallow: /portfolio/create
+Disallow: /portfolio/edit/
+Disallow: /blog/create
+Disallow: /blog/edit/
+Disallow: /supabase-config
+
 # Sitemap
-Sitemap: https://maheep-portfolio.vercel.app/sitemap.xml 
+Sitemap: https://maheep-mouli-portfolio.work/sitemap.xml 

@@ -609,34 +609,29 @@ const Portfolio = () => {
   return (
     <section id="portfolio" className="section-spacing">
       <div className="container mx-auto px-6">
-        <motion.div 
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6"> 
+        {/* Section Header */}
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect">
             My <span className="kinetic-text">Portfolio</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
             {t('portfolio.subtitle')}
           </p>
-          
-          <motion.div 
-            className="flex justify-center mt-8"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            viewport={{ once: true }}
-          >
-            <Link to={user ? "/portfolio/create" : "/login"}>
-              <Button className="btn-hero">
-                <Plus size={18} className="mr-2" />
-                {t('portfolio.addNewProject')}
-              </Button>
-            </Link>
-          </motion.div>
+        </div>
+
+        <motion.div 
+          className="flex justify-center mt-8"
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          viewport={{ once: true }}
+        >
+          <Link to={user ? "/portfolio/create" : "/login"}>
+            <Button className="btn-hero">
+              <Plus size={18} className="mr-2" />
+              {t('portfolio.addNewProject')}
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Filter Buttons */}

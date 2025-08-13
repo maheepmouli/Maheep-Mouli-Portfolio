@@ -109,7 +109,6 @@ const Navigation = () => {
                 whileHover={{ rotate: 5 }}
                 transition={{ duration: 0.3 }}
               />
-              <span className="text-2xl font-bold text-foreground">MMS</span>
             </Link>
           </motion.div>
 

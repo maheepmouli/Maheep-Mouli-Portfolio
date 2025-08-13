@@ -32,8 +32,8 @@ const About = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect">
               About <span className="kinetic-text">Maheep</span>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
@@ -46,7 +46,7 @@ const About = () => {
             {/* Left Column - Philosophy & Location */}
             <div className="space-y-6 sm:space-y-8">
               {/* Design Philosophy */}
-              <Card className="p-6 sm:p-8 hover-lift">
+              <Card className="p-4 sm:p-6 md:p-8 hover-lift">
                 <div className="flex items-start gap-3 sm:gap-4 mb-4">
                   <Brain className="text-primary mt-1 flex-shrink-0" size={24} />
                   <h3 className="text-xl sm:text-2xl font-bold">{t('about.designPhilosophy')}</h3>
@@ -60,7 +60,7 @@ const About = () => {
               </Card>
 
               {/* Location & Contact */}
-              <Card className="p-6 sm:p-8 hover-lift">
+              <Card className="p-4 sm:p-6 md:p-8 hover-lift">
                 <div className="flex items-start gap-3 sm:gap-4 mb-4">
                   <MapPin className="text-primary mt-1 flex-shrink-0" size={24} />
                   <h3 className="text-xl sm:text-2xl font-bold">{t('about.location')}</h3>

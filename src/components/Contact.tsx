@@ -163,7 +163,7 @@ This message was sent from your portfolio website contact form.`);
       <div className="container mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 underline-effect">
             {t('contact.title')} <span className="kinetic-text">Collaborate</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto color-wave-text">

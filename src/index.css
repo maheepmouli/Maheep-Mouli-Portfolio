@@ -155,9 +155,41 @@ body {
     background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--primary-glow)), hsl(var(--highlight)));
     background-size: 200% 200%;
     -webkit-background-clip: text;
-    background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     animation: kinetic-gradient 4s ease-in-out infinite;
+  }
+
+  .underline-effect {
+    position: relative;
+    display: inline-block;
+  }
+
+  .underline-effect::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+  }
+
+  .underline-effect:hover::after {
+    width: 100%;
+  }
+
+  .underline-effect::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: hsl(var(--border));
+    opacity: 0.3;
   }
   
   .hero-glow {
@@ -519,5 +551,131 @@ body {
     h1 { font-size: 2rem; }
     h2 { font-size: 1.75rem; }
     h3 { font-size: 1.25rem; }
+  }
+
+  /* Mobile-specific fixes for viewport and spacing issues */
+  @media (max-width: 768px) {
+    .section-spacing {
+      padding: 3rem 0;
+    }
+
+    .container {
+      padding: 0 1rem;
+      max-width: 100%;
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+    }
+
+    .project-card {
+      padding: 1rem;
+    }
+
+    .form-input {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .btn-hero, .btn-accent {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .grid {
+      gap: 1rem;
+    }
+
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 2rem; }
+    h3 { font-size: 1.5rem; }
+
+    .space-y-8 > * + * {
+      margin-top: 1.5rem;
+    }
+
+    .space-y-12 > * + * {
+      margin-top: 2rem;
+    }
+
+    /* Fix for mobile viewport height */
+    .min-h-screen {
+      min-height: 100vh;
+      min-height: 100dvh; /* Dynamic viewport height for mobile */
+    }
+
+    /* Reduce hero section height on mobile */
+    .hero-section {
+      min-height: 90vh;
+      min-height: 90dvh;
+      padding: 2rem 0;
+    }
+
+    /* Improve mobile spacing */
+    .mb-8 {
+      margin-bottom: 1.5rem;
+    }
+
+    .mb-12 {
+      margin-bottom: 2rem;
+    }
+
+    /* Reduce text sizes on mobile */
+    .text-5xl {
+      font-size: 2.5rem;
+    }
+
+    .text-7xl {
+      font-size: 3rem;
+    }
+
+    .text-xl {
+      font-size: 1.125rem;
+    }
+
+    .text-2xl {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .section-spacing {
+      padding: 2rem 0;
+    }
+
+    .container {
+      padding: 0 0.75rem;
+    }
+
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.25rem; }
+
+    /* Further reduce hero height on very small screens */
+    .hero-section {
+      min-height: 85vh;
+      min-height: 85dvh;
+      padding: 1.5rem 0;
+    }
+
+    /* Reduce margins on very small screens */
+    .mb-8 {
+      margin-bottom: 1rem;
+    }
+
+    .mb-12 {
+      margin-bottom: 1.5rem;
+    }
+
+    /* Smaller profile image on mobile */
+    .profile-image {
+      width: 120px;
+      height: 120px;
+    }
+
+    /* Reduce button sizes */
+    .btn-hero, .btn-accent {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+    }
   }
 } 

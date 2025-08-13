@@ -109,9 +109,13 @@ const Hero = () => {
   return (
     <motion.section 
       ref={heroRef}
-      id="hero" 
-      className="relative h-screen flex items-center justify-center text-center overflow-hidden"
-      style={{ y, opacity }}
+      className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-secondary/20 to-background"
+      style={{
+        background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0, 200, 255, 0.1) 0%, transparent 50%)`,
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
     >
       {/* Enhanced Dynamic Background */}
       <div className="absolute inset-0 gradient-bg bg-gradient-to-br from-background via-background to-muted/20">
@@ -221,7 +225,7 @@ const Hero = () => {
       ))}
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <motion.div 
           className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
           initial="hidden"
@@ -229,7 +233,7 @@ const Hero = () => {
         >
           {/* Profile Image */}
           <motion.div 
-            className="mb-8"
+            className="mb-8 flex justify-center"
             variants={imageVariants}
           >
             <div className="relative inline-block">
@@ -249,7 +253,7 @@ const Hero = () => {
                 <img 
                   src={profileImage} 
                   alt="Maheep Mouli Shashi" 
-                  className="relative w-40 h-40 rounded-full object-cover border-4 border-background shadow-2xl"
+                  className="profile-image relative w-40 h-40 md:w-40 md:h-40 rounded-full object-cover border-4 border-background shadow-2xl"
                   onError={() => setProfileImage('/maheep.jpg')}
                 />
               </motion.div>
@@ -263,7 +267,7 @@ const Hero = () => {
             custom={0}
           >
             <motion.span 
-              className="kinetic-text"
+              className="kinetic-text underline-effect"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >

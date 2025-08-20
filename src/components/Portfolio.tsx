@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +11,23 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
 
 const Portfolio = () => {
-  console.log("🚀 Portfolio component mounting...");
   
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
-  const filters = ['All', 'Architecture', 'Urban Design', 'Computational Design', 'AI/ML', 'BIM', 'Research'];
+  const filters = ['All', 'Python', 'React', 'Rhino', 'Grasshopper', 'Robotics', 'Research', 'Architecture'];
+  
+  // Category mapping for better filtering
+  const categoryMapping = {
+    'Python': ['Python', 'TensorFlow', 'AI/ML'],
+    'React': ['React', 'Node.js', 'Web Development'],
+    'Rhino': ['Rhino', 'Grasshopper', 'Computational Design'],
+    'Grasshopper': ['Rhino', 'Grasshopper', 'Computational Design'],
+    'Robotics': ['Robotics', 'Fabrication'],
+    'Research': ['Research', 'Material Science', 'Thermal Analysis', 'Bio-materials'],
+    'Architecture': ['Architecture', 'Urban Planning', 'AutoCAD', 'SketchUp', 'Architectural Design']
+  };
 
   const [projects, setProjects] = useState<UnifiedProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,17 +111,11 @@ const Portfolio = () => {
       await unifiedProjectsService.cleanupProjects();
       
       const projects = await unifiedProjectsService.getAllProjects();
-      console.log("📋 Portfolio: Loaded projects:", projects.map(p => ({
-        title: p.title,
-        image_url: p.image_url,
-        featured: p.featured
-      })));
       setProjects(projects);
       
       // Preload images for better performance
       projects.forEach(project => {
         if (project.image_url && !project.image_url.startsWith('data:')) {
-          console.log("🖼️ Preloading image for:", project.title, "URL:", project.image_url);
           const img = new Image();
           img.src = project.image_url;
         }
@@ -139,9 +143,7 @@ const Portfolio = () => {
     
     // Listen for project updates to refresh the data
     const handleProjectUpdate = (event: CustomEvent) => {
-      console.log('Portfolio: Received project update event:', event.detail);
       if (event.detail.action === 'updated' || event.detail.action === 'created') {
-        console.log('Portfolio: Refreshing projects after update...');
         loadProjects();
       }
     };
@@ -154,17 +156,18 @@ const Portfolio = () => {
     };
   }, [language]);
 
-  const filteredProjects = activeFilter === 'All' ? projects : projects.filter(project => project.technologies.includes(activeFilter));
-
-  // Debug logging
-  console.log("🔍 Portfolio: Processing projects:", {
-    totalProjects: projects.length,
-    filteredProjects: filteredProjects.length,
-    activeFilter,
-    featuredProjects: projects.filter(p => p.featured).length,
-    nonFeaturedProjects: projects.filter(p => !p.featured).length,
-    projectTitles: projects.map(p => p.title)
-  });
+  const filteredProjects = activeFilter === 'All' 
+    ? projects 
+    : projects.filter(project => {
+        // Check if any of the project's technologies match the selected category
+        const categoryTechnologies = categoryMapping[activeFilter as keyof typeof categoryMapping] || [];
+        return project.technologies.some(tech => 
+          categoryTechnologies.some(catTech => 
+            tech.toLowerCase().includes(catTech.toLowerCase()) || 
+            catTech.toLowerCase().includes(tech.toLowerCase())
+          )
+        );
+      });
 
   // Animation variants
   const containerVariants = {
@@ -193,13 +196,8 @@ const Portfolio = () => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true); // Start as true to show loading state
 
-    console.log("🔍 ProjectCard rendering for:", project.title);
-    console.log("🔍 Project status:", project.status);
-    console.log("🔍 Project featured:", project.featured);
-
     // Reset image error state when project changes
     useEffect(() => {
-      console.log("🖼️ ProjectCard: Image URL:", project.image_url);
       setImageError(false);
       
       if (!project.image_url || project.image_url === '') {
@@ -301,7 +299,6 @@ const Portfolio = () => {
                   onClick={async () => {
                     if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
                       try {
-                        console.log('Portfolio: Deleting project:', project.title);
                         const success = await unifiedProjectsService.deleteProject(project.id);
                         
                         if (success) {
@@ -405,7 +402,6 @@ const Portfolio = () => {
 
     // Reset image error state when project changes
     useEffect(() => {
-      console.log("🖼️ FeaturedProjectCard: Image URL:", project.image_url);
       setImageError(false);
       
       if (!project.image_url || project.image_url === '') {
@@ -514,7 +510,6 @@ const Portfolio = () => {
                   onClick={async () => {
                     if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
                       try {
-                        console.log('Portfolio: Deleting project:', project.title);
                         const success = await unifiedProjectsService.deleteProject(project.id);
                         
                         if (success) {
@@ -606,6 +601,11 @@ const Portfolio = () => {
     );
   };
 
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
+  const shouldShowButton = user || !isHomePage;
+
   return (
     <section id="portfolio" className="section-spacing">
       <div className="container mx-auto px-6">
@@ -619,20 +619,25 @@ const Portfolio = () => {
           </p>
         </div>
 
-        <motion.div 
-          className="flex justify-center mt-8"
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          <Link to={user ? "/portfolio/create" : "/login"}>
-            <Button className="btn-hero">
-              <Plus size={18} className="mr-2" />
-              {t('portfolio.addNewProject')}
-            </Button>
-          </Link>
-        </motion.div>
+        {/* Add New Project Button - Only show for authenticated users */}
+        {(() => {
+          return shouldShowButton && (
+            <motion.div 
+              className="flex justify-center mt-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Button asChild className="btn-hero">
+                <Link to="/portfolio/create">
+                  <Plus size={18} className="mr-2" />
+                  {t('portfolio.addNewProject')}
+                </Link>
+              </Button>
+            </motion.div>
+          );
+        })()}
 
         {/* Filter Buttons */}
         <motion.div 
@@ -658,6 +663,12 @@ const Portfolio = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Filter Status */}
+        <div className="text-center mb-4 text-sm text-muted-foreground">
+          Showing {filteredProjects.length} of {projects.length} projects
+          {activeFilter !== 'All' && ` (filtered by: ${activeFilter})`}
+        </div>
 
         {/* Featured Projects Section */}
         {!isLoading && projects.filter(p => p.featured).length > 0 && (
@@ -720,18 +731,27 @@ const Portfolio = () => {
               <p className="text-muted-foreground">Loading projects...</p>
             </div>
           </div>
+        ) : filteredProjects.length > 0 ? (
+          <>
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </motion.div>
+          </>
         ) : (
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </motion.div>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              No projects found for "{activeFilter}" filter. 
+              {activeFilter !== 'All' && ' Try selecting a different filter or "All" to see all projects.'}
+            </p>
+          </div>
         )}
 
         {/* Show message if no projects */}

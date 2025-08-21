@@ -24,10 +24,6 @@
     {
       "source": "/manifest.json",
       "destination": "/site.webmanifest"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [

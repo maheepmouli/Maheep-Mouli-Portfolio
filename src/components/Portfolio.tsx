@@ -639,7 +639,41 @@ const Portfolio = () => {
           );
         })()}
 
-        {/* Filter Buttons */}
+        {/* Featured Projects Section */}
+        {!isLoading && projects.filter(p => p.featured).length > 0 && (
+          <motion.div 
+            className="mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <div className="text-center mb-8">
+              <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="kinetic-text">Featured</span> Projects
+              </h3>
+              <p className="text-muted-foreground">
+                Highlighted works showcasing innovative design and technology
+              </p>
+            </div>
+            
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {projects
+                .filter(project => project.featured)
+                .map((project) => (
+                  <FeaturedProjectCard key={project.id} project={project} />
+                ))}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Filter Buttons - Moved below Featured Projects */}
         <motion.div 
           className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -669,40 +703,6 @@ const Portfolio = () => {
           Showing {filteredProjects.length} of {projects.length} projects
           {activeFilter !== 'All' && ` (filtered by: ${activeFilter})`}
         </div>
-
-        {/* Featured Projects Section */}
-        {!isLoading && projects.filter(p => p.featured).length > 0 && (
-          <motion.div 
-            className="mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                <span className="kinetic-text">Featured</span> Projects
-              </h3>
-              <p className="text-muted-foreground">
-                Highlighted works showcasing innovative design and technology
-              </p>
-            </div>
-            
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {projects
-                .filter(project => project.featured)
-                .map((project) => (
-                  <FeaturedProjectCard key={project.id} project={project} />
-                ))}
-            </motion.div>
-          </motion.div>
-        )}
 
         {/* All Projects Section */}
         {!isLoading && projects.filter(p => !p.featured).length > 0 && (

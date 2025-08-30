@@ -90,9 +90,9 @@ const Navigation = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'
       }`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
@@ -115,28 +115,50 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item, index) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Link
-                  to={item.href}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`nav-link relative text-foreground hover:text-primary transition-colors font-medium ${
-                    location.pathname === item.href ? 'text-primary' : ''
-                  }`}
+                              <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                  {item.label}
-                  {location.pathname === item.href && (
+                <motion.div
+                  animate={{
+                    scale: location.pathname === item.href ? 1.1 : 0.95,
+                    fontWeight: location.pathname === item.href ? 600 : 500
+                  }}
+                  whileHover={{ 
+                    scale: location.pathname === item.href ? 1.15 : 1.05,
+                    transition: { duration: 0.2 }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
+                  <Link
+                    to={item.href}
+                    onClick={() => handleNavClick(item.href)}
+                    className={`nav-link relative text-foreground hover:text-primary transition-colors font-medium group ${
+                      location.pathname === item.href ? 'text-primary' : ''
+                    }`}
+                  >
+                    {item.label}
+                    {/* Active underline */}
+                    {location.pathname === item.href && (
+                      <motion.div
+                        className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      />
+                    )}
+                    {/* Hover underline */}
                     <motion.div
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
-                      layoutId="activeTab"
-                      transition={{ duration: 0.3 }}
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary/50"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
                     />
-                  )}
-                </Link>
+                  </Link>
+                </motion.div>
               </motion.div>
             ))}
           </div>

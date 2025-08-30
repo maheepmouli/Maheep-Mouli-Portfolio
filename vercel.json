@@ -24,6 +24,10 @@
     {
       "source": "/manifest.json",
       "destination": "/site.webmanifest"
+    },
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [

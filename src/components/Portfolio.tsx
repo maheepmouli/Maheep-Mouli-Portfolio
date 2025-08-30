@@ -16,17 +16,27 @@ const Portfolio = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
-  const filters = ['All', 'Python', 'React', 'Rhino', 'Grasshopper', 'Robotics', 'Research', 'Architecture'];
+  // Translated filters
+  const filters = [
+    t('filters.all'),
+    t('filters.python'),
+    t('filters.react'),
+    t('filters.rhino'),
+    t('filters.grasshopper'),
+    t('filters.robotics'),
+    t('filters.research'),
+    t('filters.architecture')
+  ];
   
-  // Category mapping for better filtering
+  // Category mapping for better filtering (using original English keys for mapping)
   const categoryMapping = {
-    'Python': ['Python', 'TensorFlow', 'AI/ML'],
-    'React': ['React', 'Node.js', 'Web Development'],
-    'Rhino': ['Rhino', 'Grasshopper', 'Computational Design'],
-    'Grasshopper': ['Rhino', 'Grasshopper', 'Computational Design'],
-    'Robotics': ['Robotics', 'Fabrication'],
-    'Research': ['Research', 'Material Science', 'Thermal Analysis', 'Bio-materials'],
-    'Architecture': ['Architecture', 'Urban Planning', 'AutoCAD', 'SketchUp', 'Architectural Design']
+    [t('filters.python')]: ['Python', 'TensorFlow', 'AI/ML'],
+    [t('filters.react')]: ['React', 'Node.js', 'Web Development'],
+    [t('filters.rhino')]: ['Rhino', 'Grasshopper', 'Computational Design'],
+    [t('filters.grasshopper')]: ['Rhino', 'Grasshopper', 'Computational Design'],
+    [t('filters.robotics')]: ['Robotics', 'Fabrication'],
+    [t('filters.research')]: ['Research', 'Material Science', 'Thermal Analysis', 'Bio-materials'],
+    [t('filters.architecture')]: ['Architecture', 'Urban Planning', 'AutoCAD', 'SketchUp', 'Architectural Design']
   };
 
   const [projects, setProjects] = useState<UnifiedProject[]>([]);
@@ -111,6 +121,7 @@ const Portfolio = () => {
       await unifiedProjectsService.cleanupProjects();
       
       const projects = await unifiedProjectsService.getAllProjects();
+      console.log('Portfolio: Loaded projects:', projects.length, projects);
       setProjects(projects);
       
       // Preload images for better performance
@@ -122,6 +133,7 @@ const Portfolio = () => {
       });
     } catch (error) {
       console.error('Portfolio: Error loading projects:', error);
+      console.log('Portfolio: Using fallback projects:', fallbackProjects.length);
       setProjects(fallbackProjects);
     } finally {
       setIsLoading(false);
@@ -156,11 +168,19 @@ const Portfolio = () => {
     };
   }, [language]);
 
-  const filteredProjects = activeFilter === 'All' 
+  // Update activeFilter when language changes to ensure "All" filter works correctly
+  useEffect(() => {
+    if (activeFilter === 'All') {
+      setActiveFilter(t('filters.all'));
+    }
+  }, [language, activeFilter, t]);
+
+  const filteredProjects = activeFilter === t('filters.all') || activeFilter === 'All'
     ? projects 
     : projects.filter(project => {
         // Check if any of the project's technologies match the selected category
-        const categoryTechnologies = categoryMapping[activeFilter as keyof typeof categoryMapping] || [];
+        const categoryTechnologies = categoryMapping[activeFilter] || [];
+        console.log('Portfolio: Filtering projects for:', activeFilter, 'with technologies:', categoryTechnologies);
         return project.technologies.some(tech => 
           categoryTechnologies.some(catTech => 
             tech.toLowerCase().includes(catTech.toLowerCase()) || 
@@ -169,24 +189,29 @@ const Portfolio = () => {
         );
       });
 
-  // Animation variants
+  console.log('Portfolio: Active filter:', activeFilter, 'Projects:', projects.length, 'Filtered:', filteredProjects.length);
+
+  // Animation variants for portfolio content
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.1,
+        delayChildren: 0.3
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: {
       opacity: 1,
       y: 0,
+      scale: 1,
       transition: {
-        duration: 0.5
+        duration: 0.5,
+        ease: "easeOut" as const
       }
     }
   };
@@ -194,7 +219,7 @@ const Portfolio = () => {
   const ProjectCard = ({ project }: { project: UnifiedProject }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(true); // Start as true to show loading state
+    const [imageLoading, setImageLoading] = useState(true);
 
     // Reset image error state when project changes
     useEffect(() => {
@@ -231,6 +256,11 @@ const Portfolio = () => {
         className="group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={{ cursor: 'pointer' }}
+        whileHover={{ 
+          scale: 1.02,
+          transition: { duration: 0.2 }
+        }}
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl">
           <div className="relative overflow-hidden">
@@ -239,7 +269,7 @@ const Portfolio = () => {
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm">Loading...</p>
+                  <p className="text-sm">{t('project.loading')}</p>
                 </div>
               </div>
             )}
@@ -271,7 +301,7 @@ const Portfolio = () => {
                         <BookOpen size={24} className="text-primary" />
                       </div>
                       <p className="text-sm font-medium text-primary">{project.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Project Preview</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t('portfolio.projectPreview')}</p>
                     </div>
                   </div>
                 </div>
@@ -297,30 +327,30 @@ const Portfolio = () => {
                   variant="destructive" 
                   className="bg-background/90 hover:bg-destructive hover:text-destructive-foreground backdrop-blur-sm"
                   onClick={async () => {
-                    if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
+                    if (confirm(t('project.actions.confirmDelete', { title: project.title }))) {
                       try {
                         const success = await unifiedProjectsService.deleteProject(project.id);
                         
                         if (success) {
                           toast({
-                            title: "✅ Project Deleted",
-                            description: `"${project.title}" has been deleted successfully.`,
+                            title: t('project.actions.deleteSuccess'),
+                            description: t('project.actions.deleteDescription', { title: project.title }),
                           });
                           
                           // Refresh the projects list
                           loadProjects();
                         } else {
                           toast({
-                            title: "❌ Delete Failed",
-                            description: "Failed to delete project. Please try again.",
+                            title: t('project.actions.deleteFailed'),
+                            description: t('project.actions.deleteError'),
                             variant: "destructive"
                           });
                         }
                       } catch (error) {
                         console.error('Portfolio: Error deleting project:', error);
                         toast({
-                          title: "❌ Error",
-                          description: "An error occurred while deleting the project.",
+                          title: t('common.error'),
+                          description: t('project.actions.deleteErrorDescription'),
                           variant: "destructive"
                         });
                       }
@@ -352,12 +382,12 @@ const Portfolio = () => {
             <div className="flex flex-wrap gap-2 mb-4">
               {project.status && (
                 <Badge variant="secondary" className="text-xs">
-                  {project.status}
+                  {t(`project.status.${project.status.toLowerCase()}`)}
                 </Badge>
               )}
               {project.featured && (
                 <Badge variant="default" className="text-xs">
-                  Featured
+                  {t('project.status.featured')}
                 </Badge>
               )}
             </div>
@@ -385,7 +415,7 @@ const Portfolio = () => {
               <Link to={`/portfolio/${project.id || 'unknown'}`}>
                 <Button size="sm" className="btn-hero flex-1">
                   <Eye size={16} className="mr-2" />
-                  View Project
+                  {t('portfolio.viewProject')}
                 </Button>
               </Link>
             </motion.div>
@@ -435,6 +465,11 @@ const Portfolio = () => {
         className="group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={{ cursor: 'pointer' }}
+        whileHover={{ 
+          scale: 1.03,
+          transition: { duration: 0.3 }
+        }}
       >
         <Card className="h-full overflow-hidden project-card transition-all duration-300 hover:shadow-xl border-2 border-primary/20 hover:border-primary/40">
           <div className="relative overflow-hidden">
@@ -475,7 +510,7 @@ const Portfolio = () => {
                         <BookOpen size={24} className="text-primary" />
                       </div>
                       <p className="text-sm font-medium text-primary">{project.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Featured Project</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t('portfolio.featuredProject')}</p>
                     </div>
                   </div>
                 </div>
@@ -486,7 +521,7 @@ const Portfolio = () => {
             {/* Featured Badge */}
             <div className="absolute top-4 right-4">
               <Badge variant="default" className="bg-primary text-primary-foreground">
-                Featured
+                {t('project.status.featured')}
               </Badge>
             </div>
             
@@ -508,30 +543,30 @@ const Portfolio = () => {
                   variant="destructive" 
                   className="bg-background/90 hover:bg-destructive hover:text-destructive-foreground backdrop-blur-sm"
                   onClick={async () => {
-                    if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
+                    if (confirm(t('project.actions.confirmDelete', { title: project.title }))) {
                       try {
                         const success = await unifiedProjectsService.deleteProject(project.id);
                         
                         if (success) {
                           toast({
-                            title: "✅ Project Deleted",
-                            description: `"${project.title}" has been deleted successfully.`,
+                            title: t('project.actions.deleteSuccess'),
+                            description: t('project.actions.deleteDescription', { title: project.title }),
                           });
                           
                           // Refresh the projects list
                           loadProjects();
                         } else {
                           toast({
-                            title: "❌ Delete Failed",
-                            description: "Failed to delete project. Please try again.",
+                            title: t('project.actions.deleteFailed'),
+                            description: t('project.actions.deleteError'),
                             variant: "destructive"
                           });
                         }
                       } catch (error) {
                         console.error('Portfolio: Error deleting project:', error);
                         toast({
-                          title: "❌ Error",
-                          description: "An error occurred while deleting the project.",
+                          title: t('common.error'),
+                          description: t('project.actions.deleteErrorDescription'),
                           variant: "destructive"
                         });
                       }
@@ -563,7 +598,7 @@ const Portfolio = () => {
             <div className="flex flex-wrap gap-2 mb-6">
               {project.status && (
                 <Badge variant="secondary" className="text-xs">
-                  {project.status}
+                  {t(`project.status.${project.status.toLowerCase()}`)}
                 </Badge>
               )}
             </div>
@@ -591,7 +626,7 @@ const Portfolio = () => {
               <Link to={`/portfolio/${project.id || 'unknown'}`}>
                 <Button size="lg" className="btn-hero flex-1">
                   <Eye size={18} className="mr-2" />
-                  View Project
+                  {t('portfolio.viewProject')}
                 </Button>
               </Link>
             </motion.div>
@@ -604,20 +639,35 @@ const Portfolio = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
-  const shouldShowButton = user || !isHomePage;
+  const shouldShowButton = user; // Only show for authenticated users, not visitors
 
   return (
-    <section id="portfolio" className="section-spacing">
+    <motion.section 
+      id="portfolio" 
+      className="section-spacing"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      style={{ 
+        cursor: 'default',
+        pointerEvents: 'auto'
+      }}
+    >
       <div className="container mx-auto px-6">
         {/* Section Header */}
-        <div className="text-center mb-8 sm:mb-12 md:mb-16">
+        <motion.div 
+          className="text-center mb-8 sm:mb-12 md:mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect">
-            My <span className="kinetic-text">Portfolio</span>
+            {t('portfolio.title')}
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
             {t('portfolio.subtitle')}
           </p>
-        </div>
+        </motion.div>
 
         {/* Add New Project Button - Only show for authenticated users */}
         {(() => {
@@ -650,10 +700,10 @@ const Portfolio = () => {
           >
             <div className="text-center mb-8">
               <h3 className="text-3xl md:text-4xl font-bold mb-4">
-                <span className="kinetic-text">Featured</span> Projects
+                <span className="kinetic-text">{t('portfolio.featuredProjects')}</span>
               </h3>
               <p className="text-muted-foreground">
-                Highlighted works showcasing innovative design and technology
+                {t('portfolio.highlightedWorks')}
               </p>
             </div>
             
@@ -686,6 +736,7 @@ const Portfolio = () => {
               key={filter}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              style={{ cursor: 'pointer' }}
             >
               <Button
                 variant={activeFilter === filter ? "default" : "outline"}
@@ -700,8 +751,8 @@ const Portfolio = () => {
 
         {/* Filter Status */}
         <div className="text-center mb-4 text-sm text-muted-foreground">
-          Showing {filteredProjects.length} of {projects.length} projects
-          {activeFilter !== 'All' && ` (filtered by: ${activeFilter})`}
+          {t('portfolio.showingProjects', { count: filteredProjects.length, total: projects.length })}
+          {activeFilter !== t('filters.all') && activeFilter !== 'All' && ` (${t('portfolio.filteredBy', { filter: activeFilter })})`}
         </div>
 
         {/* All Projects Section */}
@@ -714,10 +765,10 @@ const Portfolio = () => {
           >
             <div className="text-center mb-8">
               <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                All <span className="kinetic-text">Projects</span>
+                {t('portfolio.allProjects')}
               </h3>
               <p className="text-muted-foreground">
-                Complete collection of computational design and urban technology projects
+                {t('portfolio.completeCollection')}
               </p>
             </div>
           </motion.div>
@@ -728,7 +779,7 @@ const Portfolio = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading projects...</p>
+              <p className="text-muted-foreground">{t('portfolio.loadingProjects')}</p>
             </div>
           </div>
         ) : filteredProjects.length > 0 ? (
@@ -748,8 +799,8 @@ const Portfolio = () => {
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
-              No projects found for "{activeFilter}" filter. 
-              {activeFilter !== 'All' && ' Try selecting a different filter or "All" to see all projects.'}
+              {t('portfolio.noProjectsForFilter', { filter: activeFilter })}
+              {activeFilter !== t('filters.all') && activeFilter !== 'All' && ` ${t('portfolio.tryDifferentFilter')}`}
             </p>
           </div>
         )}
@@ -758,7 +809,7 @@ const Portfolio = () => {
         {!isLoading && projects.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
-              No projects found. Please add some projects to your portfolio.
+              {t('portfolio.noProjectsFound')}
             </p>
           </div>
         )}
@@ -792,8 +843,8 @@ const Portfolio = () => {
               size="lg"
               className="btn-hero text-lg px-8 py-3"
               onClick={() => {
-                const subject = encodeURIComponent("Project Inquiry - Portfolio");
-                const body = encodeURIComponent(`Hi Maheep,\n\nI'm interested in discussing a potential project with you.\n\nBest regards,\n[Your Name]`);
+                const subject = encodeURIComponent(t('portfolio.projectInquiry'));
+                const body = encodeURIComponent(t('portfolio.emailBody'));
                 window.open(`mailto:maheep.mouli.shashi@gmail.com?subject=${subject}&body=${body}`, '_blank');
               }}
             >
@@ -802,7 +853,7 @@ const Portfolio = () => {
           </motion.div>
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

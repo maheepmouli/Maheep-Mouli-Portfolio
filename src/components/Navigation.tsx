@@ -86,13 +86,11 @@ const Navigation = () => {
   };
 
   return (
-    <motion.nav 
+    <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'
       }`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      style={{ pointerEvents: 'auto' }}
     >
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
@@ -100,6 +98,7 @@ const Navigation = () => {
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            style={{ cursor: 'pointer' }}
           >
             <Link to="/" className="flex items-center space-x-2 hover:text-primary transition-colors">
               <motion.img 
@@ -115,64 +114,50 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item, index) => (
-                              <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
+              <div
+                key={item.label}
+                className="relative"
+                style={{ cursor: 'pointer' }}
+              >
+                <Link
+                  to={item.href}
+                  onClick={() => handleNavClick(item.href)}
+                  className={`nav-link relative text-foreground hover:text-primary transition-all duration-500 font-medium ${
+                    location.pathname === item.href ? 'text-primary scale-125 font-bold' : 'scale-90 opacity-80'
+                  }`}
+                  style={{ cursor: 'pointer' }}
                 >
-                <motion.div
-                  animate={{
-                    scale: location.pathname === item.href ? 1.1 : 0.95,
-                    fontWeight: location.pathname === item.href ? 600 : 500
-                  }}
-                  whileHover={{ 
-                    scale: location.pathname === item.href ? 1.15 : 1.05,
-                    transition: { duration: 0.2 }
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <Link
-                    to={item.href}
-                    onClick={() => handleNavClick(item.href)}
-                    className={`nav-link relative text-foreground hover:text-primary transition-colors font-medium group ${
-                      location.pathname === item.href ? 'text-primary' : ''
-                    }`}
-                  >
+                  <span className="inline-block transform-gpu">
                     {item.label}
-                    {/* Active underline */}
-                    {location.pathname === item.href && (
-                      <motion.div
-                        className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                      />
-                    )}
-                    {/* Hover underline */}
-                    <motion.div
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary/50"
-                      initial={{ scaleX: 0 }}
-                      whileHover={{ scaleX: 1 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
+                  </span>
+                  {location.pathname === item.href && (
+                    <div
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
                     />
-                  </Link>
-                </motion.div>
-              </motion.div>
+                  )}
+                </Link>
+              </div>
             ))}
           </div>
 
           {/* Desktop CTA & User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Language Switcher */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }}
+              style={{ cursor: 'pointer' }}
+            >
               <LanguageSwitcher />
             </motion.div>
             
             {user ? (
               <>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="group">
                       <Settings className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
@@ -180,7 +165,11 @@ const Navigation = () => {
                     </Button>
                   </Link>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Button variant="outline" size="sm" onClick={handleSignOut} className="group">
                     <LogOut className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform duration-300" />
                     Sign Out
@@ -189,7 +178,11 @@ const Navigation = () => {
               </>
             ) : (
               <>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Link to="/login">
                     <Button variant="outline" size="sm" className="group">
                       <User className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
@@ -197,7 +190,11 @@ const Navigation = () => {
                     </Button>
                   </Link>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Link to="/contact">
                     <Button className="btn-accent group">
                       <span className="group-hover:translate-x-1 transition-transform duration-300">
@@ -215,6 +212,7 @@ const Navigation = () => {
             className="md:hidden"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            style={{ cursor: 'pointer' }}
           >
             <Button
               variant="ghost"
@@ -271,6 +269,7 @@ const Navigation = () => {
                       className={`block text-left text-foreground hover:text-primary transition-colors font-medium py-3 px-4 rounded-lg hover:bg-muted/50 ${
                         location.pathname === item.href ? 'text-primary bg-primary/10' : ''
                       }`}
+                      style={{ cursor: 'pointer' }}
                     >
                       {item.label}
                     </Link>
@@ -328,7 +327,7 @@ const Navigation = () => {
           )}
         </AnimatePresence>
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 

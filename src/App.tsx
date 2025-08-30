@@ -258,28 +258,28 @@ function App() {
       let cursorY = 0;
 
           const updateCursor = (e: MouseEvent) => {
-        // Update mouse position
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        
-        // Check if cursor is over navigation
-        const target = e.target as HTMLElement;
-        const isOverNavigation = target.closest('nav') || target.closest('.navigation');
-        
-        if (isOverNavigation) {
-          // Hide cursor when over navigation
-          if (cursor) cursor.style.opacity = '0';
-          trailElements.forEach(trail => {
-            if (trail) trail.style.opacity = '0';
-          });
-        } else {
-          // Show cursor when not over navigation
-          if (cursor) cursor.style.opacity = '1';
-          trailElements.forEach((trail, index) => {
-            if (trail) trail.style.opacity = (1 - index * 0.2).toString();
-          });
-        }
-      };
+      // Check if cursor is over navigation
+      const target = e.target as HTMLElement;
+      const isOverNavigation = target.closest('nav') || target.closest('.navigation');
+      
+      if (isOverNavigation) {
+        // Hide cursor when over navigation
+        if (cursor) cursor.style.opacity = '0';
+        trailElements.forEach(trail => {
+          if (trail) trail.style.opacity = '0';
+        });
+        return;
+      } else {
+        // Show cursor when not over navigation
+        if (cursor) cursor.style.opacity = '1';
+        trailElements.forEach((trail, index) => {
+          if (trail) trail.style.opacity = (1 - index * 0.2).toString();
+        });
+      }
+      
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
 
       const animateCursor = () => {
         try {
@@ -392,8 +392,36 @@ function App() {
         window.location.href = currentUrl.toString();
       };
 
-      // Cursor effects are now stable with fixed navigation
-      console.log('Custom cursor effects initialized successfully');
+      // Safety mechanism: disable cursor effects if they cause issues
+      setTimeout(() => {
+        try {
+          // Check if navigation is glitched
+          const navElements = document.querySelectorAll('nav a, nav button');
+          let hasGlitch = false;
+          
+          navElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const htmlEl = el as HTMLElement;
+            if (rect.width === 0 || rect.height === 0 || !htmlEl.offsetParent) {
+              hasGlitch = true;
+            }
+          });
+          
+          if (hasGlitch) {
+            console.warn('Navigation glitch detected, disabling cursor effects');
+            if (cursor) cursor.style.display = 'none';
+            trailElements.forEach(trail => {
+              if (trail) trail.style.display = 'none';
+            });
+          }
+        } catch (error) {
+          console.warn('Safety check failed, disabling cursor effects:', error);
+          if (cursor) cursor.style.display = 'none';
+          trailElements.forEach(trail => {
+            if (trail) trail.style.display = 'none';
+          });
+        }
+      }, 2000);
 
       // Cleanup
       return () => {

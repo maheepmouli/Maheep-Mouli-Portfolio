@@ -5,7 +5,7 @@ export type Language = 'en' | 'es' | 'ca';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, variables?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -67,6 +67,50 @@ const translations = {
     'portfolio.deleteProject': 'Delete Project',
     'portfolio.hireMe': 'Hire Me',
     'portfolio.digitalPortfolio': 'Digital Portfolio',
+    'portfolio.projectPreview': 'Project Preview',
+    'portfolio.featuredProject': 'Featured Project',
+    'portfolio.loadingProjects': 'Loading projects...',
+    'portfolio.noProjectsFound': 'No projects found. Please add some projects to your portfolio.',
+    'portfolio.noProjectsForFilter': 'No projects found for "{filter}" filter.',
+    'portfolio.tryDifferentFilter': 'Try selecting a different filter or "All" to see all projects.',
+    'portfolio.showingProjects': 'Showing {count} of {total} projects',
+    'portfolio.filteredBy': 'filtered by: {filter}',
+    'portfolio.completeCollection': 'Complete collection of computational design and urban technology projects',
+    'portfolio.highlightedWorks': 'Highlighted works showcasing innovative design and technology',
+    'portfolio.projectInquiry': 'Project Inquiry - Portfolio',
+    'portfolio.emailBody': 'Hi Maheep,\n\nI\'m interested in discussing a potential project with you.\n\nBest regards,\n[Your Name]',
+    
+    // Project Filters
+    'filters.all': 'All',
+    'filters.python': 'Python',
+    'filters.react': 'React',
+    'filters.rhino': 'Rhino',
+    'filters.grasshopper': 'Grasshopper',
+    'filters.robotics': 'Robotics',
+    'filters.research': 'Research',
+    'filters.architecture': 'Architecture',
+    
+    // Project Status
+    'project.status.published': 'Published',
+    'project.status.draft': 'Draft',
+    'project.status.archived': 'Archived',
+    'project.status.featured': 'Featured',
+    
+    // Project Actions
+    'project.actions.view': 'View Project',
+    'project.actions.edit': 'Edit',
+    'project.actions.delete': 'Delete',
+    'project.actions.confirmDelete': 'Are you sure you want to delete "{title}"?',
+    'project.actions.deleteSuccess': 'Project Deleted',
+    'project.actions.deleteFailed': 'Delete Failed',
+    'project.actions.deleteDescription': '"{title}" has been deleted successfully.',
+    'project.actions.deleteError': 'Failed to delete project. Please try again.',
+    'project.actions.deleteErrorDescription': 'An error occurred while deleting the project.',
+    
+    // Project Loading States
+    'project.loading': 'Loading...',
+    'project.imageError': 'Image failed to load',
+    'project.noImage': 'No image available',
 
     // Services Section
     'services.title': 'Services',
@@ -178,6 +222,50 @@ const translations = {
     'portfolio.deleteProject': 'Eliminar Proyecto',
     'portfolio.hireMe': 'Contrátame',
     'portfolio.digitalPortfolio': 'Portafolio Digital',
+    'portfolio.projectPreview': 'Vista Previa del Proyecto',
+    'portfolio.featuredProject': 'Proyecto Destacado',
+    'portfolio.loadingProjects': 'Cargando proyectos...',
+    'portfolio.noProjectsFound': 'No se encontraron proyectos. Por favor, agregue algunos proyectos a su portafolio.',
+    'portfolio.noProjectsForFilter': 'No se encontraron proyectos para el filtro "{filter}"',
+    'portfolio.tryDifferentFilter': 'Intente seleccionar un filtro diferente o "Todos" para ver todos los proyectos.',
+    'portfolio.showingProjects': 'Mostrando {count} de {total} proyectos',
+    'portfolio.filteredBy': 'filtrado por: {filter}',
+    'portfolio.completeCollection': 'Colección completa de proyectos de diseño computacional y tecnología urbana',
+    'portfolio.highlightedWorks': 'Trabajos destacados que muestran diseño innovador y tecnología',
+    'portfolio.projectInquiry': 'Inquérito de Proyecto - Portafolio',
+    'portfolio.emailBody': 'Hola Maheep,\n\nEstoy interesado en discutir un proyecto potencial con usted.\n\nSaludos,\n[Su Nombre]',
+    
+    // Project Filters
+    'filters.all': 'Todos',
+    'filters.python': 'Python',
+    'filters.react': 'React',
+    'filters.rhino': 'Rhino',
+    'filters.grasshopper': 'Grasshopper',
+    'filters.robotics': 'Robótica',
+    'filters.research': 'Investigación',
+    'filters.architecture': 'Arquitectura',
+    
+    // Project Status
+    'project.status.published': 'Publicado',
+    'project.status.draft': 'Borrador',
+    'project.status.archived': 'Archivado',
+    'project.status.featured': 'Destacado',
+    
+    // Project Actions
+    'project.actions.view': 'Ver Proyecto',
+    'project.actions.edit': 'Editar',
+    'project.actions.delete': 'Eliminar',
+    'project.actions.confirmDelete': '¿Está seguro de que desea eliminar "{title}"?',
+    'project.actions.deleteSuccess': 'Proyecto Eliminado',
+    'project.actions.deleteFailed': 'Eliminación Fallida',
+    'project.actions.deleteDescription': '"{title}" ha sido eliminado correctamente.',
+    'project.actions.deleteError': 'Error al eliminar el proyecto. Por favor, inténtelo de nuevo.',
+    'project.actions.deleteErrorDescription': 'Ocurrió un error al eliminar el proyecto.',
+    
+    // Project Loading States
+    'project.loading': 'Cargando...',
+    'project.imageError': 'Error al cargar la imagen',
+    'project.noImage': 'No hay imagen disponible',
 
     // Services Section
     'services.title': 'Servicios',
@@ -287,6 +375,50 @@ const translations = {
     'portfolio.deleteProject': 'Eliminar Projecte',
     'portfolio.hireMe': 'Contracta\'m',
     'portfolio.digitalPortfolio': 'Portafoli Digital',
+    'portfolio.projectPreview': 'Vista Previa del Projecte',
+    'portfolio.featuredProject': 'Projecte Destacat',
+    'portfolio.loadingProjects': 'Carregant projectes...',
+    'portfolio.noProjectsFound': 'No s\'han trobat projectes. Si us plau, afegiu alguns projectes al vostre portafoli.',
+    'portfolio.noProjectsForFilter': 'No s\'han trobat projectes per al filtre "{filter}"',
+    'portfolio.tryDifferentFilter': 'Intenteu seleccionar un filtre diferent o "Tots" per veure tots els projectes.',
+    'portfolio.showingProjects': 'Mostrant {count} de {total} projectes',
+    'portfolio.filteredBy': 'filtrat per: {filter}',
+    'portfolio.completeCollection': 'Col·lecció completa de projectes de disseny computacional i tecnologia urbana',
+    'portfolio.highlightedWorks': 'Trabajos destacats que mostren disseny innovador i tecnologia',
+    'portfolio.projectInquiry': 'Inquérit de Projecte - Portafoli',
+    'portfolio.emailBody': 'Hola Maheep,\n\nEstic interessat en discutir un projecte potencial amb tu.\n\nSalutacions,\n[El Vostre Nom]',
+    
+    // Project Filters
+    'filters.all': 'Tots',
+    'filters.python': 'Python',
+    'filters.react': 'React',
+    'filters.rhino': 'Rhino',
+    'filters.grasshopper': 'Grasshopper',
+    'filters.robotics': 'Robòtica',
+    'filters.research': 'Investigació',
+    'filters.architecture': 'Arquitectura',
+    
+    // Project Status
+    'project.status.published': 'Publicat',
+    'project.status.draft': 'Borrador',
+    'project.status.archived': 'Arxivat',
+    'project.status.featured': 'Destacat',
+    
+    // Project Actions
+    'project.actions.view': 'Veure Projecte',
+    'project.actions.edit': 'Editar',
+    'project.actions.delete': 'Eliminar',
+    'project.actions.confirmDelete': 'Esteu segur de que voleu eliminar "{title}"?',
+    'project.actions.deleteSuccess': 'Projecte Eliminat',
+    'project.actions.deleteFailed': 'Eliminació Fallida',
+    'project.actions.deleteDescription': '"{title}" ha estat eliminat correctament.',
+    'project.actions.deleteError': 'Error al eliminar el projecte. Si us plau, torni a intentar.',
+    'project.actions.deleteErrorDescription': 'S\'ha produït un error al eliminar el projecte.',
+    
+    // Project Loading States
+    'project.loading': 'Carregant...',
+    'project.imageError': 'Error al carregar l\'imatge',
+    'project.noImage': 'No hi ha imatge disponible',
 
     // Services Section
     'services.title': 'Serveis',
@@ -355,8 +487,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('language', lang);
   };
 
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[typeof language]] || key;
+  const t = (key: string, variables?: Record<string, string | number>): string => {
+    let translation = translations[language][key as keyof typeof translations[typeof language]] || key;
+    
+    // Replace variables in translation strings
+    if (variables) {
+      Object.entries(variables).forEach(([varKey, value]) => {
+        translation = translation.replace(new RegExp(`{${varKey}}`, 'g'), String(value));
+      });
+    }
+    
+    return translation;
   };
 
   useEffect(() => {

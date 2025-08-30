@@ -7,6 +7,27 @@
   box-sizing: border-box;
 }
 
+/* Cursor and pointer events fixes */
+html, body {
+  cursor: default;
+}
+
+/* Ensure navigation elements show proper cursor */
+nav, nav * {
+  cursor: auto !important;
+}
+
+/* Interactive elements should show pointer cursor */
+button, a, [role="button"], .cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Non-interactive elements should show default cursor */
+p, h1, h2, h3, h4, h5, h6, div, span {
+  cursor: default;
+}
+
+/* Ensure proper rendering */
 html {
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;
@@ -834,4 +855,62 @@ body {
       transition-duration: 0.01ms !important;
     }
   }
+} 
+
+/* Navigation stability fixes */
+.nav-link {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.nav-link span {
+  display: inline-block;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: auto;
+}
+
+/* Prevent layout shift during navigation morphing */
+nav .motion-div {
+  contain: layout style paint;
+}
+
+/* Ensure navigation items maintain consistent spacing */
+nav .hidden.md\:flex.items-center.space-x-8 > div {
+  min-width: fit-content;
+  text-align: center;
+} 
+
+/* Clean navigation transitions */
+.nav-link {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
+}
+
+.nav-link.scale-125 {
+  transform: scale(1.25);
+}
+
+.nav-link.scale-90 {
+  transform: scale(0.9);
+}
+
+.nav-link.opacity-80 {
+  opacity: 0.8;
+}
+
+/* Prevent text rendering issues */
+.nav-link * {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 } 

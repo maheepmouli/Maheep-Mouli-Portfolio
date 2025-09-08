@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState('/maheep.jpg');
+  const [profileImage, setProfileImage] = useState('/maheep.png');
   const [currentDescriptor, setCurrentDescriptor] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLElement>(null);
@@ -254,7 +254,7 @@ const Hero = () => {
                   src={profileImage} 
                   alt="Maheep Mouli Shashi" 
                   className="profile-image relative w-40 h-40 md:w-40 md:h-40 rounded-full object-cover border-4 border-background shadow-2xl"
-                  onError={() => setProfileImage('/maheep.jpg')}
+                  onError={() => setProfileImage('/maheep.png')}
                 />
               </motion.div>
             </div>

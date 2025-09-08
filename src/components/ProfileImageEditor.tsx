@@ -164,7 +164,7 @@ const ProfileImageEditor = ({ currentImageUrl, onImageChange, onCancel }: Profil
                 className="w-32 h-32 rounded-full object-cover border-4 border-background shadow-2xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/maheep.jpg'; // Fallback to default image
+                  target.src = '/maheep.png'; // Fallback to default image
                 }}
               />
             </div>

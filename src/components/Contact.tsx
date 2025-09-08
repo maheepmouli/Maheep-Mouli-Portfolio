@@ -166,7 +166,7 @@ This message was sent from your portfolio website contact form.`);
           <h2 className="text-4xl md:text-5xl font-bold mb-6 underline-effect">
             {t('contact.title')} <span className="kinetic-text">Collaborate</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto color-wave-text">
+          <p className="text-xl !text-white/90 max-w-3xl mx-auto color-wave-text font-medium">
             {t('contact.subtitle')}
           </p>
         </div>
@@ -182,7 +182,7 @@ This message was sent from your portfolio website contact form.`);
                     <div key={index} className="flex items-center gap-4">
                       <div className="text-primary">{info.icon}</div>
                       <div>
-                        <p className="text-sm text-muted-foreground">{info.label}</p>
+                        <p className="text-sm !text-white/70 font-medium">{info.label}</p>
                         {info.link ? (
                           <a
                             href={info.link}
@@ -254,7 +254,16 @@ This message was sent from your portfolio website contact form.`);
 
             {/* Contact Form */}
             <Card className="p-8 hover-lift">
-                              <h3 className="text-2xl font-bold mb-6">{t('contact.sendMessage')}</h3>
+              <h3 className="text-2xl font-bold mb-6">{t('contact.sendMessage')}</h3>
+              
+              {/* Personal Invite Line */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg">
+                <p className="text-foreground font-medium leading-relaxed">
+                  I'm currently open to new opportunities in architecture, computational design, and BIM. 
+                  Whether you're hiring, collaborating, or just curious, drop me a quick note — I reply within 24 hours.
+                </p>
+              </div>
+              
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -316,7 +325,7 @@ This message was sent from your portfolio website contact form.`);
                   {isSubmitting ? 'Sending...' : t('contact.sendMessage')}
                 </Button>
               </form>
-              <p className="text-xs text-muted-foreground mt-4 text-center">
+              <p className="text-xs !text-white/70 mt-4 text-center font-medium">
                 Your message will be sent directly to Maheep. Your information is secure and will never be shared with third parties.
               </p>
             </Card>

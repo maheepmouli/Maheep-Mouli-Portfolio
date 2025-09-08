@@ -36,7 +36,7 @@ const About = () => {
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect">
               About <span className="kinetic-text">Maheep</span>
             </h2>
-            <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
+            <p className="text-base sm:text-lg !text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4 font-medium">
               {t('about.description')}
             </p>
           </div>
@@ -54,7 +54,7 @@ const About = () => {
                 <blockquote className="text-base sm:text-lg text-foreground/90 italic leading-relaxed border-l-4 border-primary pl-4 sm:pl-6">
                   {t('about.philosophyQuote')}
                 </blockquote>
-                <p className="text-muted-foreground mt-4 leading-relaxed text-sm sm:text-base">
+                <p className="!text-white/80 mt-4 leading-relaxed text-sm sm:text-base font-medium">
                   {t('about.philosophyDescription')}
                 </p>
               </Card>
@@ -65,7 +65,7 @@ const About = () => {
                   <MapPin className="text-primary mt-1 flex-shrink-0" size={24} />
                   <h3 className="text-xl sm:text-2xl font-bold">{t('about.location')}</h3>
                 </div>
-                <p className="text-muted-foreground mb-4 text-sm sm:text-base">
+                <p className="!text-white/80 mb-4 text-sm sm:text-base font-medium">
                   {t('about.locationDescription')}
                 </p>
                 <p className="text-sm text-highlight font-medium">
@@ -87,7 +87,7 @@ const About = () => {
                     <Card key={index} className="p-4 sm:p-6 hover-lift">
                       <h4 className="text-base sm:text-lg font-semibold text-primary mb-2">{edu.degree}</h4>
                       <p className="text-foreground font-medium mb-1 text-sm sm:text-base">{edu.institution}</p>
-                      <p className="text-muted-foreground text-xs sm:text-sm mb-2">{edu.period}</p>
+                      <p className="!text-white/70 text-xs sm:text-sm mb-2 font-medium">{edu.period}</p>
                       <p className="text-xs sm:text-sm text-highlight">{edu.focus}</p>
                     </Card>
                   ))}
@@ -97,7 +97,7 @@ const About = () => {
               {/* CV Download */}
               <Card className="p-4 sm:p-6 text-center hover-lift bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30">
                 <h4 className="text-base sm:text-lg font-semibold mb-3">{t('about.completePortfolio')}</h4>
-                <p className="text-muted-foreground mb-4 text-xs sm:text-sm">
+                <p className="!text-white/80 mb-4 text-xs sm:text-sm font-medium">
                   {t('about.portfolioDescription')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -147,17 +147,17 @@ const About = () => {
                 <Building className="text-accent" size={24} />
                 <h3 className="text-xl sm:text-2xl font-bold">{t('about.professionalExperience')}</h3>
               </div>
-              <p className="text-muted-foreground mb-6 text-sm sm:text-base">
+              <p className="!text-white/80 mb-6 text-sm sm:text-base font-medium">
                 {t('about.experienceDescription')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm sm:text-base">
                 <div>
                   <div className="text-2xl sm:text-3xl font-bold text-primary">10+</div>
-                  <div className="text-muted-foreground">{t('about.projectsCompleted')}</div>
+                  <div className="!text-white/70 font-medium">{t('about.projectsCompleted')}</div>
                 </div>
                 <div>
                   <div className="text-2xl sm:text-3xl font-bold text-accent">3+</div>
-                  <div className="text-muted-foreground">{t('about.yearsExperience')}</div>
+                  <div className="!text-white/70 font-medium">{t('about.yearsExperience')}</div>
                 </div>
               </div>
             </Card>

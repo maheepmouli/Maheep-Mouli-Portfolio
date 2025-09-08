@@ -124,7 +124,7 @@ const Services = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 underline-effect">
             <span className="kinetic-text">{t('services.title')}</span> & Expertise
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl !text-white/90 max-w-3xl mx-auto font-medium">
             {t('services.subtitle')}
           </p>
         </div>
@@ -143,7 +143,7 @@ const Services = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold mb-2">{service.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed mb-4">
+                  <p className="!text-white/80 leading-relaxed mb-4 font-medium">
                     {service.description}
                   </p>
                 </div>
@@ -199,12 +199,12 @@ const Services = () => {
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1 text-left">
                 <h3 className="text-3xl font-bold mb-4">Ready to Collaborate?</h3>
-                <p className="text-muted-foreground mb-4 leading-relaxed">
+                <p className="!text-white/80 mb-4 leading-relaxed font-medium">
                   Let's explore how computational design, AI integration, and urban technology 
                   can transform your next project. I specialize in creating innovative solutions 
                   that bridge technical complexity with human-centered design.
                 </p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm !text-white/70 font-medium">
                   <div className="flex items-center gap-2">
                     <Monitor size={16} />
                     Remote & On-site

@@ -187,8 +187,8 @@ const ProjectDetail = () => {
     return (
       <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
         <div className="text-center">
-          <Video size={48} className="mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Video not supported</p>
+          <Video size={48} className="mx-auto mb-2 !text-white/60" />
+          <p className="text-sm !text-white/70">Video not supported</p>
           <a 
             href={videoUrl} 
             target="_blank" 
@@ -223,7 +223,7 @@ const ProjectDetail = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <h1 className="text-2xl font-bold mb-4">Loading Project...</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="!text-white/90 mb-6 font-medium">
               Please wait while we fetch the project details.
             </p>
 
@@ -240,7 +240,7 @@ const ProjectDetail = () => {
         <div className="container mx-auto px-6 py-24">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="!text-white/90 mb-6 font-medium">
               {id === 'unknown' 
                 ? "The project ID is not available. Please try refreshing the page."
                 : "The project you're looking for doesn't exist."
@@ -264,7 +264,7 @@ const ProjectDetail = () => {
         <div className="container mx-auto px-6 py-24">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Invalid Project Data</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="!text-white/90 mb-6 font-medium">
               The project data is corrupted. Please try refreshing the page.
             </p>
             <Button onClick={() => navigate('/portfolio')}>
@@ -364,14 +364,14 @@ const ProjectDetail = () => {
                               }}
                             />
                             <div className="hidden absolute inset-0 bg-muted flex items-center justify-center rounded-lg">
-                              <div className="text-center text-muted-foreground">
+                              <div className="text-center !text-white/70">
                                 <ImageIcon size={48} className="mx-auto mb-2" />
                                 <p className="text-sm">Image not found</p>
                               </div>
                             </div>
                           </div>
                           {image.caption && (
-                            <p className="text-sm text-muted-foreground text-center">
+                            <p className="text-sm !text-white/80 text-center font-medium">
                               {image.caption}
                             </p>
                           )}
@@ -407,7 +407,7 @@ const ProjectDetail = () => {
                       <div className="relative">
                         <h4 className="font-medium mb-2">{video.title}</h4>
                         {video.description && (
-                          <p className="text-sm text-muted-foreground mb-3">{video.description}</p>
+                          <p className="text-sm !text-white/80 mb-3 font-medium">{video.description}</p>
                         )}
                         <div className="aspect-video rounded-lg overflow-hidden bg-muted">
                           {renderVideoEmbed(video.url)}
@@ -427,9 +427,9 @@ const ProjectDetail = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.9 }}
               >
-                <h3 className="text-xl font-semibold mb-4">Project Details</h3>
+                <h3 className="text-xl font-semibold mb-4 !text-white">Project Details</h3>
                 <div 
-                  className="text-muted-foreground leading-relaxed whitespace-pre-wrap"
+                  className="!text-white/90 leading-relaxed whitespace-pre-wrap font-medium"
                   dangerouslySetInnerHTML={{ 
                     __html: project.content.replace(/\n/g, '<br>') 
                   }}
@@ -451,38 +451,38 @@ const ProjectDetail = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-2">{project.title}</h2>
                     {project.subtitle && (
-                      <p className="text-muted-foreground">{project.subtitle}</p>
+                      <p className="!text-white/90 font-medium">{project.subtitle}</p>
                     )}
                   </div>
 
                   {project.description && (
-                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                    <p className="text-sm !text-white/80 font-medium">{project.description}</p>
                   )}
 
                   {/* Project Stats */}
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     {project.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.location}</span>
+                        <MapPin size={16} className="!text-white/60" />
+                        <span className="text-sm !text-white/80 font-medium">{project.location}</span>
                       </div>
                     )}
                     {project.subtitle && !project.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.subtitle}</span>
+                        <MapPin size={16} className="!text-white/60" />
+                        <span className="text-sm !text-white/80 font-medium">{project.subtitle}</span>
                       </div>
                     )}
                     {project.duration && (
                       <div className="flex items-center gap-2">
-                        <Clock size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.duration}</span>
+                        <Clock size={16} className="!text-white/60" />
+                        <span className="text-sm !text-white/80 font-medium">{project.duration}</span>
                       </div>
                     )}
                     {project.team_size && (
                       <div className="flex items-center gap-2">
-                        <Users size={16} className="text-muted-foreground" />
-                        <span className="text-sm">{project.team_size}</span>
+                        <Users size={16} className="!text-white/60" />
+                        <span className="text-sm !text-white/80 font-medium">{project.team_size}</span>
                       </div>
                     )}
                   </div>

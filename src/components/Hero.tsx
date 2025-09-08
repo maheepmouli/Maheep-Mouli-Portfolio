@@ -283,7 +283,7 @@ const Hero = () => {
           </motion.h1>
           
           <motion.p 
-            className="text-xl md:text-2xl text-muted-foreground mb-8 color-wave-text"
+            className="text-xl md:text-2xl !text-white/90 mb-8 color-wave-text font-medium"
             variants={textVariants}
             custom={2}
           >
@@ -291,7 +291,7 @@ const Hero = () => {
           </motion.p>
           
           <motion.p 
-            className="text-lg md:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto color-wave-text"
+            className="text-lg md:text-xl !text-white/80 mb-12 max-w-3xl mx-auto color-wave-text font-medium"
             variants={textVariants}
             custom={3}
           >

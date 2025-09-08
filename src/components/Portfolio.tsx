@@ -267,9 +267,9 @@ const Portfolio = () => {
             {/* Loading State */}
             {imageLoading && project.image_url && !imageError && (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
+                <div className="text-center !text-white/70">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm">{t('project.loading')}</p>
+                  <p className="text-sm font-medium">{t('project.loading')}</p>
                 </div>
               </div>
             )}
@@ -294,14 +294,14 @@ const Portfolio = () => {
             {/* Fallback for no image or error */}
             {(!project.image_url || imageError) && !imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
+                <div className="text-center !text-white/70">
                   <div className="w-full h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-primary/30 rounded-full flex items-center justify-center mx-auto mb-3">
                         <BookOpen size={24} className="text-primary" />
                       </div>
                       <p className="text-sm font-medium text-primary">{project.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{t('portfolio.projectPreview')}</p>
+                      <p className="text-xs !text-white/60 mt-1 font-medium">{t('portfolio.projectPreview')}</p>
                     </div>
                   </div>
                 </div>
@@ -371,10 +371,10 @@ const Portfolio = () => {
             >
               {project.title}
             </motion.h4>
-            <p className="text-muted-foreground text-sm mb-3">
+            <p className="!text-white/80 text-sm mb-3 font-medium">
               {project.subtitle}
             </p>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+            <p className="!text-white/70 text-sm leading-relaxed mb-4 font-medium">
               {project.description.slice(0, 100) + '...'}
             </p>
             
@@ -476,9 +476,9 @@ const Portfolio = () => {
             {/* Loading State */}
             {imageLoading && project.image_url && !imageError && (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
+                <div className="text-center !text-white/70">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm">Loading...</p>
+                  <p className="text-sm font-medium">Loading...</p>
                 </div>
               </div>
             )}
@@ -503,14 +503,14 @@ const Portfolio = () => {
             {/* Fallback for no image or error */}
             {(!project.image_url || imageError) && !imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
+                <div className="text-center !text-white/70">
                   <div className="w-full h-64 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-primary/30 rounded-full flex items-center justify-center mx-auto mb-3">
                         <BookOpen size={24} className="text-primary" />
                       </div>
                       <p className="text-sm font-medium text-primary">{project.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{t('portfolio.featuredProject')}</p>
+                      <p className="text-xs !text-white/60 mt-1 font-medium">{t('portfolio.featuredProject')}</p>
                     </div>
                   </div>
                 </div>
@@ -587,10 +587,10 @@ const Portfolio = () => {
             >
               {project.title}
             </motion.h4>
-            <p className="text-muted-foreground text-base mb-4">
+            <p className="!text-white/80 text-base mb-4 font-medium">
               {project.subtitle}
             </p>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            <p className="!text-white/70 text-sm leading-relaxed mb-6 font-medium">
               {project.description.slice(0, 150) + '...'}
             </p>
             
@@ -661,10 +661,10 @@ const Portfolio = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 underline-effect !text-white">
             {t('portfolio.title')}
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto color-wave-text px-4">
+          <p className="text-base sm:text-lg !text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto font-medium px-4">
             {t('portfolio.subtitle')}
           </p>
         </motion.div>
@@ -699,10 +699,10 @@ const Portfolio = () => {
             viewport={{ once: true }}
           >
             <div className="text-center mb-8">
-              <h3 className="text-3xl md:text-4xl font-bold mb-4">
+              <h3 className="text-3xl md:text-4xl font-bold mb-4 !text-white">
                 <span className="kinetic-text">{t('portfolio.featuredProjects')}</span>
               </h3>
-              <p className="text-muted-foreground">
+              <p className="!text-white/80 font-medium">
                 {t('portfolio.highlightedWorks')}
               </p>
             </div>
@@ -750,7 +750,7 @@ const Portfolio = () => {
         </motion.div>
 
         {/* Filter Status */}
-        <div className="text-center mb-4 text-sm text-muted-foreground">
+        <div className="text-center mb-4 text-sm !text-white/70 font-medium">
           {t('portfolio.showingProjects', { count: filteredProjects.length, total: projects.length })}
           {activeFilter !== t('filters.all') && activeFilter !== 'All' && ` (${t('portfolio.filteredBy', { filter: activeFilter })})`}
         </div>
@@ -764,10 +764,10 @@ const Portfolio = () => {
             viewport={{ once: true }}
           >
             <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">
+              <h3 className="text-2xl md:text-3xl font-bold mb-4 !text-white">
                 {t('portfolio.allProjects')}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="!text-white/80 font-medium">
                 {t('portfolio.completeCollection')}
               </p>
             </div>
@@ -779,7 +779,7 @@ const Portfolio = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">{t('portfolio.loadingProjects')}</p>
+              <p className="!text-white/80 font-medium">{t('portfolio.loadingProjects')}</p>
             </div>
           </div>
         ) : filteredProjects.length > 0 ? (
@@ -798,7 +798,7 @@ const Portfolio = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
+            <p className="!text-white/80 text-lg font-medium">
               {t('portfolio.noProjectsForFilter', { filter: activeFilter })}
               {activeFilter !== t('filters.all') && activeFilter !== 'All' && ` ${t('portfolio.tryDifferentFilter')}`}
             </p>
@@ -808,7 +808,7 @@ const Portfolio = () => {
         {/* Show message if no projects */}
         {!isLoading && projects.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
+            <p className="!text-white/80 text-lg font-medium">
               {t('portfolio.noProjectsFound')}
             </p>
           </div>

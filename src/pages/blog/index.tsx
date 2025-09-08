@@ -284,10 +284,10 @@ const BlogPage = () => {
             transition={{ duration: 0.8 }}
           >
             <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 !text-white">
                 Blog & <span className="kinetic-text">Insights</span>
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl !text-white/90 max-w-3xl mx-auto font-medium">
                 Exploring the intersection of computational design, urban technology, and AI-driven solutions
               </p>
             </div>
@@ -328,7 +328,7 @@ const BlogPage = () => {
           >
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 !text-white/60" size={20} />
                 <Input
                   type="text"
                   placeholder="Search posts..."
@@ -338,8 +338,8 @@ const BlogPage = () => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Filter size={20} className="text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filter by tags:</span>
+                <Filter size={20} className="!text-white/60" />
+                <span className="text-sm !text-white/80 font-medium">Filter by tags:</span>
               </div>
             </div>
 
@@ -369,7 +369,7 @@ const BlogPage = () => {
 
           {/* Posts Count */}
           <div className="max-w-4xl mx-auto mb-8">
-            <p className="text-center text-muted-foreground">
+            <p className="text-center !text-white/80 font-medium">
               Showing {filteredPosts.length > 0 ? filteredPosts.length : posts.length} of {posts.length} posts
             </p>
           </div>
@@ -383,8 +383,8 @@ const BlogPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-2xl font-semibold mb-4">No posts found</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-2xl font-semibold mb-4 !text-white">No posts found</h3>
+                <p className="!text-white/80 mb-6 font-medium">
                   Check back soon for insights on computational design and urban technology.
                 </p>
                 {user && (
@@ -403,8 +403,8 @@ const BlogPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-2xl font-semibold mb-4">No posts match your filters</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-2xl font-semibold mb-4 !text-white">No posts match your filters</h3>
+                <p className="!text-white/80 mb-6 font-medium">
                   Try adjusting your search or filter criteria.
                 </p>
                 <Button 
@@ -455,8 +455,8 @@ const BlogPage = () => {
                         )}
                         <CardHeader>
                           <div className="flex items-center gap-2 mb-3">
-                            <Calendar size={16} className="text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
+                            <Calendar size={16} className="!text-white/60" />
+                            <span className="text-sm !text-white/70 font-medium">
                               {formatDate(post.created_at)}
                             </span>
                             {user && post.status === 'draft' && (
@@ -471,7 +471,7 @@ const BlogPage = () => {
                         </CardHeader>
                         <CardContent className="flex flex-col flex-1">
                         {post.excerpt && (
-                          <p className="text-muted-foreground mb-4 leading-relaxed flex-grow">
+                          <p className="!text-white/80 mb-4 leading-relaxed flex-grow font-medium">
                             {post.excerpt}
                           </p>
                         )}

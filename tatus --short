@@ -1,0 +1,9 @@
+warning: in the working copy of 'src/components/Portfolio.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/RichTextEditor.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/Index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/ProjectDetail.tsx', LF will be replaced by CRLF the next time Git touches it
+src/components/Portfolio.tsx
+src/components/ProjectForm.tsx
+src/components/RichTextEditor.tsx
+src/pages/Index.tsx
+src/pages/ProjectDetail.tsx

@@ -526,33 +526,34 @@ const ProjectForm = ({ projectId, onSuccess, onCancel }: ProjectFormProps) => {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="title">Project Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              <RichTextEditor
+                content={formData.title}
+                onChange={(content) => setFormData(prev => ({ ...prev, title: content }))}
                 placeholder="e.g., Flow-SIGHT"
-                required
+                compact={true}
+                minHeight="min-h-[60px]"
               />
             </div>
             <div>
               <Label htmlFor="subtitle">Subtitle</Label>
-              <Input
-                id="subtitle"
-                value={formData.subtitle}
-                onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+              <RichTextEditor
+                content={formData.subtitle}
+                onChange={(content) => setFormData(prev => ({ ...prev, subtitle: content }))}
                 placeholder="e.g., Real-time Congestion Prediction Dashboard"
+                compact={true}
+                minHeight="min-h-[60px]"
               />
             </div>
           </div>
 
           <div>
             <Label htmlFor="description">Short Description *</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            <RichTextEditor
+              content={formData.description}
+              onChange={(content) => setFormData(prev => ({ ...prev, description: content }))}
               placeholder="Brief description of the project..."
-              required
+              compact={true}
+              minHeight="min-h-[120px]"
             />
           </div>
 

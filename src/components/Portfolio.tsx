@@ -4,11 +4,69 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Eye, Edit, Trash2, BookOpen, Plus, Image as ImageIcon } from 'lucide-react';
+import { Eye, Edit, Trash2, BookOpen, Plus, Image as ImageIcon, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { unifiedProjectsService, UnifiedProject } from '@/services/unifiedProjectsService';
+
+// Helper function to strip HTML tags for length calculation
+const stripHtmlTags = (text: string): string => {
+  if (!text) return '';
+  // Remove HTML tags but keep text content
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+    .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
+    .replace(/__(.*?)__/g, '$1'); // Remove markdown underline
+};
+
+// Helper function to render formatted text (markdown/HTML to HTML)
+const renderFormattedText = (text: string, maxLength?: number): string => {
+  if (!text) return '';
+  
+  // If maxLength is provided, truncate the plain text version first
+  let processedText = text;
+  if (maxLength) {
+    const plainText = stripHtmlTags(text);
+    if (plainText.length > maxLength) {
+      // Find where to cut while preserving HTML structure
+      let charCount = 0;
+      let inTag = false;
+      let cutIndex = text.length;
+      
+      for (let i = 0; i < text.length && charCount < maxLength; i++) {
+        if (text[i] === '<') inTag = true;
+        else if (text[i] === '>') inTag = false;
+        else if (!inTag && !text.substring(i).match(/^\*\*|\*|__/)) {
+          charCount++;
+          cutIndex = i + 1;
+        }
+      }
+      processedText = text.substring(0, cutIndex);
+    }
+  }
+  
+  let html = processedText
+    // Process markdown bold and italic first
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+    // Handle markdown underline
+    .replace(/__(.*?)__/g, '<u class="underline decoration-current">$1</u>')
+    // Handle HTML underline tags - preserve nested formatting
+    .replace(/<u>((?:[^<]|<(?!\/u>)(?:[^<]|<(?!\/u>))*?)*?)<\/u>/g, (match, content) => {
+      return `<u class="underline decoration-current">${content}</u>`;
+    })
+    // Handle color spans
+    .replace(/<span style="color: ([^"]+)">(.*?)<\/span>/g, '<span style="color: $1">$2</span>')
+    // Handle gradient spans
+    .replace(/<span style="background: ([^"]+); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">(.*?)<\/span>/g, '<span style="background: $1; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$2</span>')
+    // Fix nested structures: If span wraps underline, reorder so underline wraps span
+    .replace(/<span style="color: ([^"]+)">(<u[^>]*>)(.*?)(<\/u>)<\/span>/g, '<u class="underline decoration-current"><span style="color: $1">$3</span></u>')
+    .replace(/<span style="background: ([^"]+); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">(<u[^>]*>)(.*?)(<\/u>)<\/span>/g, '<u class="underline decoration-current"><span style="background: $1; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$3</span></u>');
+  
+  return html;
+};
 
 const Portfolio = () => {
   
@@ -363,62 +421,135 @@ const Portfolio = () => {
             )}
           </div>
           
-          <div className="p-6">
-            <motion.h4 
-              className="text-xl font-bold mb-2 group-hover:text-primary transition-colors"
-              whileHover={{ x: 5 }}
-              transition={{ duration: 0.2 }}
-            >
-              {project.title}
-            </motion.h4>
-            <p className="!text-white/80 text-sm mb-3 font-medium">
-              {project.subtitle}
-            </p>
-            <p className="!text-white/70 text-sm leading-relaxed mb-4 font-medium">
-              {project.description.slice(0, 100) + '...'}
-            </p>
+          <div className="p-6 bg-gradient-to-b from-card to-card/95 relative overflow-hidden">
+            {/* Decorative gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
-            {/* Status and Featured Badges */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {project.status && (
-                <Badge variant="secondary" className="text-xs">
-                  {t(`project.status.${project.status.toLowerCase()}`)}
-                </Badge>
-              )}
-              {project.featured && (
-                <Badge variant="default" className="text-xs">
-                  {t('project.status.featured')}
-                </Badge>
-              )}
+            <div className="relative z-10">
+              {/* Title with enhanced typography */}
+              <motion.div
+                className="mb-3"
+                whileHover={{ x: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h4 
+                  className="text-xl font-bold mb-2 group-hover:text-primary transition-colors bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text"
+                  dangerouslySetInnerHTML={{ __html: renderFormattedText(project.title) }}
+                />
+                {project.subtitle && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-1 w-1 rounded-full bg-primary animate-pulse"></div>
+                    <p 
+                      className="!text-white/80 text-sm font-semibold tracking-wide"
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(project.subtitle) }}
+                    />
+                  </div>
+                )}
+              </motion.div>
+              
+              {/* Description with better formatting */}
+              <div className="mb-4 relative">
+                <p 
+                  className="!text-white/75 text-sm leading-relaxed font-medium line-clamp-3"
+                  dangerouslySetInnerHTML={{ 
+                    __html: (() => {
+                      const plainTextLength = stripHtmlTags(project.description).length;
+                      const truncated = plainTextLength > 120 
+                        ? renderFormattedText(project.description, 120) + '<span class="text-primary/70">...</span>'
+                        : renderFormattedText(project.description);
+                      return truncated;
+                    })()
+                  }}
+                />
+                {/* Reading time indicator */}
+                <div className="absolute bottom-0 right-0 bg-card/80 px-2 py-1 rounded-tl-lg text-xs !text-white/50">
+                  {Math.ceil(stripHtmlTags(project.description).length / 200)} min read
+                </div>
+              </div>
+              
+              {/* Status and Featured Badges with enhanced design */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {project.status && (
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs px-3 py-1 bg-gradient-to-r from-secondary to-secondary/80 border border-secondary-foreground/20 shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5 inline-block animate-pulse"></span>
+                      {t(`project.status.${project.status.toLowerCase()}`)}
+                    </Badge>
+                  </motion.div>
+                )}
+                {project.featured && (
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Badge 
+                      variant="default" 
+                      className="text-xs px-3 py-1 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/30"
+                    >
+                      ⭐ {t('project.status.featured')}
+                    </Badge>
+                  </motion.div>
+                )}
+              </div>
+              
+              {/* Technologies with enhanced visual design */}
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+                  <span className="text-xs !text-white/50 font-medium uppercase tracking-wider">Tech Stack</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {project.technologies.slice(0, 4).map((tech, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.1, y: -2 }}
+                    >
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs px-2.5 py-1 bg-gradient-to-br from-background to-muted/50 border-primary/20 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 cursor-default"
+                      >
+                        {tech}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                  {project.technologies.length > 4 && (
+                    <Badge variant="outline" className="text-xs px-2.5 py-1 !text-white/50">
+                      +{project.technologies.length - 4}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              {/* Enhanced CTA Button */}
+              <motion.div 
+                className="flex gap-2"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Link to={`/portfolio/${project.id || 'unknown'}`} className="flex-1">
+                  <Button 
+                    size="sm" 
+                    className="btn-hero w-full group/btn relative overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      <Eye size={16} className="mr-2 group-hover/btn:scale-110 transition-transform" />
+                      {t('portfolio.viewProject')}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                  </Button>
+                </Link>
+              </motion.div>
             </div>
-            
-            {/* Technologies */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {project.technologies.slice(0, 3).map((tech, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Badge variant="outline" className="text-xs">
-                    {tech}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-            
-            <motion.div 
-              className="flex gap-2"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link to={`/portfolio/${project.id || 'unknown'}`}>
-                <Button size="sm" className="btn-hero flex-1">
-                  <Eye size={16} className="mr-2" />
-                  {t('portfolio.viewProject')}
-                </Button>
-              </Link>
-            </motion.div>
           </div>
         </Card>
       </motion.div>
@@ -579,57 +710,129 @@ const Portfolio = () => {
             )}
           </div>
           
-          <div className="p-8">
-            <motion.h4 
-              className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors"
-              whileHover={{ x: 5 }}
-              transition={{ duration: 0.2 }}
-            >
-              {project.title}
-            </motion.h4>
-            <p className="!text-white/80 text-base mb-4 font-medium">
-              {project.subtitle}
-            </p>
-            <p className="!text-white/70 text-sm leading-relaxed mb-6 font-medium">
-              {project.description.slice(0, 150) + '...'}
-            </p>
+          <div className="p-8 bg-gradient-to-b from-card via-card/98 to-card/95 relative overflow-hidden">
+            {/* Enhanced decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
-            {/* Status Badge */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              {project.status && (
-                <Badge variant="secondary" className="text-xs">
-                  {t(`project.status.${project.status.toLowerCase()}`)}
-                </Badge>
-              )}
+            <div className="relative z-10">
+              {/* Enhanced Title Section */}
+              <motion.div
+                className="mb-4"
+                whileHover={{ x: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h4 
+                  className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text"
+                  dangerouslySetInnerHTML={{ __html: renderFormattedText(project.title) }}
+                />
+                {project.subtitle && (
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-lg shadow-primary/50"></div>
+                    <p 
+                      className="!text-white/85 text-base font-semibold tracking-wide"
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(project.subtitle) }}
+                    />
+                  </div>
+                )}
+              </motion.div>
+              
+              {/* Enhanced Description */}
+              <div className="mb-6 relative">
+                <p 
+                  className="!text-white/75 text-sm leading-relaxed font-medium line-clamp-4 mb-2"
+                  dangerouslySetInnerHTML={{ 
+                    __html: (() => {
+                      const plainTextLength = stripHtmlTags(project.description).length;
+                      const truncated = plainTextLength > 180 
+                        ? renderFormattedText(project.description, 180) + '<span class="text-primary/70">...</span>'
+                        : renderFormattedText(project.description);
+                      return truncated;
+                    })()
+                  }}
+                />
+                {/* Enhanced reading indicator */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs !text-white/50">
+                    <Clock size={12} />
+                    <span>{Math.ceil(stripHtmlTags(project.description).length / 200)} min read</span>
+                  </div>
+                  <div className="h-px flex-1 mx-2 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+                </div>
+              </div>
+              
+              {/* Enhanced Status Badge */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {project.status && (
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs px-3 py-1.5 bg-gradient-to-r from-secondary to-secondary/80 border border-secondary-foreground/20 shadow-md"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-primary mr-2 inline-block animate-pulse shadow-sm shadow-primary/50"></span>
+                      {t(`project.status.${project.status.toLowerCase()}`)}
+                    </Badge>
+                  </motion.div>
+                )}
+              </div>
+              
+              {/* Enhanced Technologies Section */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                  <span className="text-xs !text-white/60 font-semibold uppercase tracking-widest">Technologies</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {project.technologies.slice(0, 5).map((tech, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.15, y: -3, rotate: 2 }}
+                    >
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs px-3 py-1.5 bg-gradient-to-br from-background to-muted/50 border-primary/30 hover:border-primary/60 hover:bg-primary/15 transition-all duration-300 shadow-sm hover:shadow-md cursor-default"
+                      >
+                        {tech}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                  {project.technologies.length > 5 && (
+                    <Badge variant="outline" className="text-xs px-3 py-1.5 !text-white/50 bg-muted/30">
+                      +{project.technologies.length - 5} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              {/* Enhanced CTA Button */}
+              <motion.div 
+                className="flex gap-2"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Link to={`/portfolio/${project.id || 'unknown'}`} className="flex-1">
+                  <Button 
+                    size="lg" 
+                    className="btn-hero w-full group/btn relative overflow-hidden shadow-lg shadow-primary/20"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      <Eye size={18} className="mr-2 group-hover/btn:scale-110 transition-transform" />
+                      {t('portfolio.viewProject')}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-primary opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
+                  </Button>
+                </Link>
+              </motion.div>
             </div>
-            
-            {/* Technologies */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              {project.technologies.slice(0, 4).map((tech, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Badge variant="outline" className="text-xs">
-                    {tech}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-            
-            <motion.div 
-              className="flex gap-2"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link to={`/portfolio/${project.id || 'unknown'}`}>
-                <Button size="lg" className="btn-hero flex-1">
-                  <Eye size={18} className="mr-2" />
-                  {t('portfolio.viewProject')}
-                </Button>
-              </Link>
-            </motion.div>
           </div>
         </Card>
       </motion.div>

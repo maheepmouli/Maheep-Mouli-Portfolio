@@ -2,7 +2,7 @@
 
 A modern, interactive, and CMS-powered personal portfolio site built using **Next.js 15 App Router**, **Tailwind CSS**, **Framer Motion**, and **Supabase**.
 
-Live ➡️ [maheep-portfolio.vercel.app](https://maheep-portfolio.vercel.app)
+Live ➡️ [maheep-portfolio.vercel.app]([https://maheep-portfolio.vercel.app](https://maheep-mouli-portfolio.work/))
 
 ---
 
